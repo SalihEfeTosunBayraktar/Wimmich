@@ -36,6 +36,15 @@ echo   Installing base dependencies...
 pip install -r requirements.txt
 if errorlevel 1 goto :pip_failed
 
+REM Fetched here instead of left to its usual lazy on-demand download (see
+REM utils/ffmpeg_setup.py) specifically so start.bat opens instantly every
+REM time afterwards - all the "not found, downloading..." activity happens
+REM during install, where the user already expects downloads, not on a
+REM later "just open the server" run. Optional/best-effort: video support
+REM just runs limited if this fails, same as it always has.
+echo   Checking for FFmpeg (needed for video thumbnails/playback)...
+python -c "from utils.ffmpeg_setup import check_and_download_ffmpeg; check_and_download_ffmpeg()"
+
 echo.
 set /p GPU_CHOICE="  Do you have an Cuda Supported GPU (CUDA)? [Y/n]: "
 if /i "%GPU_CHOICE%"=="n" goto :install_cpu_torch

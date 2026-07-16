@@ -33,6 +33,13 @@ echo   Installing dependencies...
 pip install -r requirements.txt
 if errorlevel 1 goto :pip_failed
 
+REM Fetched here instead of left to its usual lazy on-demand download (see
+REM utils/ffmpeg_setup.py) so start.bat opens instantly afterwards instead
+REM of downloading on its first run. Optional/best-effort: video support
+REM just runs limited if this fails, same as it always has.
+echo   Checking for FFmpeg (needed for video thumbnails/playback)...
+python -c "from utils.ffmpeg_setup import check_and_download_ffmpeg; check_and_download_ffmpeg()"
+
 echo.
 echo   ====================================
 echo    Done! Run start.bat to launch Wimmich.
