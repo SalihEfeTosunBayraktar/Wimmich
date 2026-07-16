@@ -34,5 +34,8 @@ async def handle_job_dupcheck(db: AsyncSession, job: Job):
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()
+        # See clip_handler.py's identical expunge - keeps this job's RAM use
+        # bounded instead of holding every asset in the library at once.
+        db.expunge(asset)
 
     print(f"[JOB] Dupcheck completed: {updated}/{total} checksums computed")

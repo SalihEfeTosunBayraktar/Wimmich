@@ -44,10 +44,13 @@ async def handle_job_face(db: AsyncSession, job: Job):
 
         to_detect = []
         for asset in batch:
+            # Column-only select (not select(Face)) - a plain existence
+            # check has no business loading a full Face ORM object into the
+            # session's identity map for the rest of this job's run.
             face_result = await db.execute(
-                select(Face).where(Face.asset_id == asset.id).limit(1)
+                select(Face.id).where(Face.asset_id == asset.id).limit(1)
             )
-            if face_result.scalar_one_or_none():
+            if face_result.first():
                 processed += 1
                 continue
             to_detect.append(asset)
@@ -57,6 +60,7 @@ async def handle_job_face(db: AsyncSession, job: Job):
             return_exceptions=True,
         )
 
+        new_faces = []
         for asset, faces in zip(to_detect, results):
             processed += 1
             if isinstance(faces, Exception):
@@ -77,9 +81,17 @@ async def handle_job_face(db: AsyncSession, job: Job):
                     confidence=face_data.get("confidence"),
                 )
                 db.add(face)
+                new_faces.append(face)
 
         job.progress = int(processed / total * 100) if total > 0 else 100
         await db.commit()
+        # See clip_handler.py's identical expunge - both the assets loaded
+        # for this batch and the Face rows just created for it would
+        # otherwise stay attached (and un-freeable) for the job's whole run.
+        for asset in batch:
+            db.expunge(asset)
+        for face in new_faces:
+            db.expunge(face)
 
     # The OpenCV Haar Cascade fallback only locates faces - its crude embedding
     # (a resized grayscale patch) isn't discriminative enough to reliably tell

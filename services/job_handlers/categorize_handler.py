@@ -75,5 +75,9 @@ async def handle_job_categorize(db: AsyncSession, job: Job):
 
         job.progress = int(processed / total * 100) if total > 0 else 100
         await db.commit()
+        # See clip_handler.py's identical expunge - keeps this job's RAM use
+        # bounded by batch size instead of the whole library.
+        for asset in batch:
+            db.expunge(asset)
 
     print(f"[JOB] Categorize completed: {processed}/{total} assets classified")

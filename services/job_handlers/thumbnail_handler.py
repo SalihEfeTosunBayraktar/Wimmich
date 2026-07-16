@@ -48,7 +48,17 @@ async def handle_job_thumbnail(db: AsyncSession, job: Job):
         )
 
     result = await db.execute(assets_query)
-    assets = [a for a in result.scalars().all() if asset_id or not _has_valid_thumbnails(a)]
+    raw_assets = list(result.scalars().all())
+    # Assets that already have valid thumbnails are never touched again -
+    # expunge them right away instead of holding the whole library's worth
+    # of loaded objects in the session for this job's entire run just to
+    # have filtered most of them out.
+    assets = []
+    for a in raw_assets:
+        if asset_id or not _has_valid_thumbnails(a):
+            assets.append(a)
+        else:
+            db.expunge(a)
 
     total = len(assets)
     for i, asset in enumerate(assets):
@@ -67,3 +77,6 @@ async def handle_job_thumbnail(db: AsyncSession, job: Job):
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()
+        # See clip_handler.py's identical expunge - keeps this job's RAM use
+        # bounded instead of holding every processed asset for its whole run.
+        db.expunge(asset)

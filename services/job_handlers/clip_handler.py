@@ -65,6 +65,12 @@ async def handle_job_clip(db: AsyncSession, job: Job):
 
         job.progress = int(processed / total * 100) if total > 0 else 100
         await db.commit()
+        # Without this, the session's identity map keeps every asset ever
+        # loaded by this job attached for its whole run - on a big library
+        # (thousands of assets) that grows RAM steadily until the job ends,
+        # since a commit alone doesn't detach already-processed objects.
+        for asset in batch:
+            db.expunge(asset)
 
     if processed:
         from services.job_service import create_job, JobAlreadyExistsException
