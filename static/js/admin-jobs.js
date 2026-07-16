@@ -217,3 +217,15 @@ async function cancelAllAdminJobs() {
         pollAdminJobs();
     } catch (e) { toast(e.message, 'error'); }
 }
+
+async function shutdownServer() {
+    if (!confirm(t('admin_render.confirm_shutdown'))) return;
+    toast(t('admin_render.shutting_down_message'), 'success');
+    try {
+        await API.shutdownServer();
+    } catch (e) {
+        // The process exits mid-response on a clean shutdown, so the fetch
+        // itself failing here is the expected/successful outcome, not an
+        // error worth surfacing.
+    }
+}

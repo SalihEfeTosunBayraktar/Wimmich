@@ -103,3 +103,43 @@ async def list_users(
         })
 
     return {"users": user_list}
+
+
+@router.post("/shutdown")
+async def shutdown_server(
+    admin: User = Depends(get_admin_user),
+):
+    """Cleanly stop background work and release GPU/CPU memory, then exit
+    the process - the safe alternative to closing the console window while
+    a job is running. A hard window close kills everything at once with
+    none of this cleanup (the Cloudflare Tunnel child process included),
+    and can visibly stall the whole machine for a moment while Windows
+    reclaims several GB of abruptly-orphaned CUDA memory in one go instead
+    of it being released in an orderly way first.
+    """
+    import asyncio
+    import gc
+    import os
+
+    from services.job_service import job_worker
+    from services.tunnel_service import stop_tunnel
+
+    await job_worker.stop()
+    await stop_tunnel()
+
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except ImportError:
+        pass
+    gc.collect()
+
+    async def _exit_after_response():
+        # Give the HTTP response time to actually reach the browser before
+        # the process disappears out from under the connection.
+        await asyncio.sleep(0.5)
+        os._exit(0)
+
+    asyncio.create_task(_exit_after_response())
+    return {"message": "Sunucu kapatılıyor"}

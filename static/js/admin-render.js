@@ -69,6 +69,11 @@ registerTranslations({
         'admin_render.backup_failed_status': 'Last attempt failed ({when}): {error}',
         'admin_render.unknown_error': 'Unknown error',
         'admin_render.backup_success_status': 'Last successful backup: {when}',
+        'admin_render.server_control_heading': 'Server Control',
+        'admin_render.shutdown_server_btn': 'Shut Down Server',
+        'admin_render.shutdown_server_hint': 'Cleanly stops background jobs and the tunnel, frees GPU/CPU memory, then exits - the safe alternative to closing this window while a job is running.',
+        'admin_render.confirm_shutdown': 'Shut down the server now? Any running background job will be stopped first.',
+        'admin_render.shutting_down_message': 'Shutting down - freeing memory and stopping the server...',
     },
     tr: {
         'admin_render.stat_photos': 'Fotoğraf',
@@ -137,6 +142,11 @@ registerTranslations({
         'admin_render.backup_failed_status': 'Son deneme başarısız oldu ({when}): {error}',
         'admin_render.unknown_error': 'Bilinmeyen hata',
         'admin_render.backup_success_status': 'Son başarılı yedekleme: {when}',
+        'admin_render.server_control_heading': 'Sunucu Kontrolü',
+        'admin_render.shutdown_server_btn': 'Sunucuyu Kapat',
+        'admin_render.shutdown_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, GPU/CPU belleğini boşaltır, sonra kapatır — bir iş çalışırken bu pencereyi kapatmaya güvenli bir alternatif.',
+        'admin_render.confirm_shutdown': 'Sunucu şimdi kapatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
+        'admin_render.shutting_down_message': 'Kapatılıyor — bellek boşaltılıyor ve sunucu durduruluyor...',
     },
     fr: {
         'admin_render.stat_photos': 'Photos',
@@ -205,6 +215,11 @@ registerTranslations({
         'admin_render.backup_failed_status': 'La dernière tentative a échoué ({when}) : {error}',
         'admin_render.unknown_error': 'Erreur inconnue',
         'admin_render.backup_success_status': 'Dernière sauvegarde réussie : {when}',
+        'admin_render.server_control_heading': 'Contrôle du serveur',
+        'admin_render.shutdown_server_btn': 'Arrêter le serveur',
+        'admin_render.shutdown_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, libère la mémoire GPU/CPU, puis quitte - l'alternative sûre à la fermeture de cette fenêtre pendant qu'une tâche est en cours.",
+        'admin_render.confirm_shutdown': "Arrêter le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
+        'admin_render.shutting_down_message': 'Arrêt en cours - libération de la mémoire et arrêt du serveur...',
     },
     de: {
         'admin_render.stat_photos': 'Fotos',
@@ -273,6 +288,11 @@ registerTranslations({
         'admin_render.backup_failed_status': 'Letzter Versuch fehlgeschlagen ({when}): {error}',
         'admin_render.unknown_error': 'Unbekannter Fehler',
         'admin_render.backup_success_status': 'Letzte erfolgreiche Sicherung: {when}',
+        'admin_render.server_control_heading': 'Serversteuerung',
+        'admin_render.shutdown_server_btn': 'Server herunterfahren',
+        'admin_render.shutdown_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber, gibt GPU-/CPU-Speicher frei und beendet dann - die sichere Alternative zum Schließen dieses Fensters, während eine Aufgabe läuft.',
+        'admin_render.confirm_shutdown': 'Server jetzt herunterfahren? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
+        'admin_render.shutting_down_message': 'Wird heruntergefahren - Speicher wird freigegeben und der Server gestoppt...',
     },
 });
 
@@ -436,6 +456,14 @@ async function renderAdmin() {
                         <span style="font-size:10px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
                     </div>
                     <div id="job-list-content">${t('common.loading')}</div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3>🔌 ${t('admin_render.server_control_heading')}</h3>
+                <div class="admin-panel-box">
+                    <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
+                    <button class="btn btn-danger btn-sm" onclick="shutdownServer()">🛑 ${t('admin_render.shutdown_server_btn')}</button>
                 </div>
             </div>
         `;
