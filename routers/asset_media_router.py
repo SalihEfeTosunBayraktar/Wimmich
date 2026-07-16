@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from database import get_db
 from models import User
 from auth import get_current_user
@@ -12,6 +13,7 @@ from services import asset_query_service, download_service
 from services.memory_service import get_memories as _get_memories
 from utils.image_utils import RAW_EXTENSIONS
 from utils.serializers import asset_to_dict
+from utils.path_utils import resolve_data_path
 
 router = APIRouter(prefix="/api/assets", tags=["assets"])
 
@@ -34,19 +36,22 @@ async def get_asset_file(
     """
     asset = await asset_query_service.get_asset_or_404(db, asset_id, user.id)
 
-    if not original and asset.encoded_video_path and Path(asset.encoded_video_path).exists():
-        return FileResponse(asset.encoded_video_path, media_type="video/mp4", filename=asset.original_file_name)
+    encoded_path = resolve_data_path(asset.encoded_video_path, config.ENCODED_DIR)
+    if not original and encoded_path and encoded_path.exists():
+        return FileResponse(encoded_path, media_type="video/mp4", filename=asset.original_file_name)
 
     is_raw = Path(asset.file_path).suffix.lower() in RAW_EXTENSIONS
-    if not original and is_raw and asset.thumb_large_path and Path(asset.thumb_large_path).exists():
-        media_type = "image/webp" if asset.thumb_large_path.endswith(".webp") else "image/jpeg"
-        return FileResponse(asset.thumb_large_path, media_type=media_type)
+    thumb_large_path = resolve_data_path(asset.thumb_large_path, config.THUMB_DIR)
+    if not original and is_raw and thumb_large_path and thumb_large_path.exists():
+        media_type = "image/webp" if str(thumb_large_path).endswith(".webp") else "image/jpeg"
+        return FileResponse(thumb_large_path, media_type=media_type)
 
-    if not Path(asset.file_path).exists():
+    file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
+    if not file_path or not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found on disk")
 
     return FileResponse(
-        asset.file_path,
+        file_path,
         media_type=asset.mime_type,
         filename=asset.original_file_name,
     )
@@ -62,14 +67,16 @@ async def get_asset_thumbnail(
     """Get asset thumbnail."""
     asset = await asset_query_service.get_asset_or_404(db, asset_id, user.id)
 
-    thumb_path = getattr(asset, f"thumb_{size}_path", None)
-    if not thumb_path or not Path(thumb_path).exists():
+    stored_thumb_path = getattr(asset, f"thumb_{size}_path", None)
+    thumb_path = resolve_data_path(stored_thumb_path, config.THUMB_DIR)
+    if not thumb_path or not thumb_path.exists():
         # Fallback to original for images
-        if asset.file_type == "IMAGE" and Path(asset.file_path).exists():
-            return FileResponse(asset.file_path, media_type=asset.mime_type)
+        file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
+        if asset.file_type == "IMAGE" and file_path and file_path.exists():
+            return FileResponse(file_path, media_type=asset.mime_type)
         raise HTTPException(status_code=404, detail="Thumbnail not found")
 
-    media_type = "image/webp" if thumb_path.endswith(".webp") else "image/jpeg"
+    media_type = "image/webp" if str(thumb_path).endswith(".webp") else "image/jpeg"
     return FileResponse(thumb_path, media_type=media_type)
 
 
@@ -100,15 +107,19 @@ async def get_face_crop(
         raise HTTPException(status_code=404, detail="Face not found")
         
     # Extract values for the thread to avoid touching SQLAlchemy session/lazy-load in background thread
-    path_choices = [face.asset.thumb_large_path, face.asset.file_path]
+    path_choices = [
+        (face.asset.thumb_large_path, config.THUMB_DIR),
+        (face.asset.file_path, config.UPLOAD_DIR),
+    ]
     face_x, face_y, face_w, face_h = face.x, face.y, face.w, face.h
-        
+
     # Crop the image in a thread pool
     def crop_operation():
         path_to_crop = None
-        for p in path_choices:
-            if p and Path(p).exists():
-                path_to_crop = p
+        for stored, base_dir in path_choices:
+            resolved = resolve_data_path(stored, base_dir)
+            if resolved and resolved.exists():
+                path_to_crop = resolved
                 break
         if not path_to_crop:
             raise FileNotFoundError("Asset file not found")

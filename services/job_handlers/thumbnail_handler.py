@@ -1,19 +1,27 @@
 """THUMBNAIL job handler - (re)generate thumbnails for assets."""
 import asyncio
-import os
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from models import Asset, Job
 from services.job_core import check_job_cancelled
+from utils.path_utils import resolve_data_path
 
 
 def _has_valid_thumbnails(asset: Asset) -> bool:
     """DB columns alone aren't enough - checks the files themselves still
     exist, so a thumbnail deleted/corrupted outside the app still gets
-    regenerated instead of being silently treated as done."""
+    regenerated instead of being silently treated as done. Uses
+    resolve_data_path so thumbnails that are still sitting right there
+    under the current data folder aren't declared missing (and wastefully
+    regenerated) just because the data folder was moved/copied since the
+    stored absolute path was written."""
     paths = [asset.thumb_small_path, asset.thumb_medium_path, asset.thumb_large_path]
-    return all(paths) and all(os.path.isfile(p) for p in paths)
+    if not all(paths):
+        return False
+    resolved = [resolve_data_path(p, config.THUMB_DIR) for p in paths]
+    return all(r and r.is_file() for r in resolved)
 
 
 async def handle_job_thumbnail(db: AsyncSession, job: Job):

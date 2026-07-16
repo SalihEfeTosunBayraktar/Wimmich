@@ -7,7 +7,9 @@ from typing import List
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from models import Asset, User
+from utils.path_utils import resolve_data_path
 
 
 def _build_zip_sync(file_paths_and_names: List[tuple]) -> io.BytesIO:
@@ -30,8 +32,8 @@ async def build_zip_archive(db: AsyncSession, user: User, asset_ids: List[str]) 
     used_names = set()
     file_paths_and_names = []
     for asset in assets:
-        path = Path(asset.file_path)
-        if not path.exists():
+        path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
+        if not path or not path.exists():
             continue
 
         name = asset.original_file_name
