@@ -82,7 +82,7 @@ registerTranslations({
         'admin_render.apply_update_btn': 'Update Now',
         'admin_render.confirm_apply_update': 'Pull the latest code, reinstall dependencies, and restart the server now?',
         'admin_render.applying_update_msg': 'Updating - this can take a moment, the server will restart automatically...',
-        'admin_render.git_pull_only_hint': 'Only works on an install set up with git clone - pulls from the GitHub repo it was cloned from.',
+        'admin_render.git_pull_only_hint': 'Works on any install - a git clone pulls the latest commit, a zip download fetches and applies a fresh archive.',
     },
     tr: {
         'admin_render.stat_photos': 'Fotoğraf',
@@ -164,7 +164,7 @@ registerTranslations({
         'admin_render.apply_update_btn': 'Şimdi Güncelle',
         'admin_render.confirm_apply_update': 'En son kod çekilsin, bağımlılıklar yeniden kurulsun ve sunucu yeniden başlatılsın mı?',
         'admin_render.applying_update_msg': 'Güncelleniyor — bu biraz sürebilir, sunucu otomatik olarak yeniden başlayacak...',
-        'admin_render.git_pull_only_hint': 'Sadece git clone ile kurulmuş bir kopyada çalışır — klonlandığı GitHub deposundan çeker.',
+        'admin_render.git_pull_only_hint': 'Her kurulumda çalışır - git clone kurulumu en son commit\'i çeker, zip ile indirilen kurulum ise güncel bir arşiv indirip uygular.',
     },
     fr: {
         'admin_render.stat_photos': 'Photos',
@@ -246,7 +246,7 @@ registerTranslations({
         'admin_render.apply_update_btn': 'Mettre à jour maintenant',
         'admin_render.confirm_apply_update': 'Récupérer le dernier code, réinstaller les dépendances et redémarrer le serveur maintenant ?',
         'admin_render.applying_update_msg': 'Mise à jour en cours - cela peut prendre un moment, le serveur redémarrera automatiquement...',
-        'admin_render.git_pull_only_hint': "Fonctionne uniquement sur une installation faite avec git clone - récupère depuis le dépôt GitHub d'origine.",
+        'admin_render.git_pull_only_hint': "Fonctionne avec toute installation - un git clone récupère le dernier commit, un téléchargement zip récupère et applique une archive à jour.",
     },
     de: {
         'admin_render.stat_photos': 'Fotos',
@@ -328,7 +328,7 @@ registerTranslations({
         'admin_render.apply_update_btn': 'Jetzt aktualisieren',
         'admin_render.confirm_apply_update': 'Neuesten Code abrufen, Abhängigkeiten neu installieren und Server jetzt neu starten?',
         'admin_render.applying_update_msg': 'Wird aktualisiert - dies kann einen Moment dauern, der Server startet automatisch neu...',
-        'admin_render.git_pull_only_hint': 'Funktioniert nur bei einer mit git clone eingerichteten Installation - ruft vom ursprünglichen GitHub-Repository ab.',
+        'admin_render.git_pull_only_hint': 'Funktioniert bei jeder Installation - ein git clone zieht den neuesten Commit, ein Zip-Download lädt ein aktuelles Archiv herunter und wendet es an.',
     },
 });
 
