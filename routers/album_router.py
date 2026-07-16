@@ -42,6 +42,17 @@ async def list_albums(
     return await album_service.list_albums_for_user(db, user)
 
 
+@router.get("/share-targets")
+async def get_share_targets(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Other accounts on this server that an album can be shared with.
+    Registered before the /{album_id} routes below so "share-targets"
+    isn't swallowed as a path parameter."""
+    return await album_service.list_share_targets(db, user)
+
+
 @router.post("")
 async def create_album(
     req: AlbumCreateRequest,
@@ -116,3 +127,14 @@ async def share_album(
 ):
     """Share album with another user."""
     return await album_service.share_album(db, album_id, user.id, req.user_id, req.can_edit)
+
+
+@router.delete("/{album_id}/users/{target_user_id}")
+async def unshare_album(
+    album_id: str,
+    target_user_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Revoke a shared user's access to this album."""
+    return await album_service.unshare_album(db, album_id, user.id, target_user_id)

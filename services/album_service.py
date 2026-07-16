@@ -9,26 +9,33 @@ from utils.serializers import album_to_dict, asset_to_dict
 
 
 async def get_album_for_user(
-    db: AsyncSession, album_id: str, user_id: str, require_owner: bool = False
+    db: AsyncSession, album_id: str, user_id: str, require_owner: bool = False, require_edit: bool = False
 ) -> Album:
-    """Get album and verify access."""
+    """Get album and verify access. require_edit additionally rejects a
+    shared user whose access is view-only (can_edit=False) - the owner
+    always passes both checks."""
     result = await db.execute(select(Album).where(Album.id == album_id))
     album = result.scalar_one_or_none()
 
     if not album:
         raise HTTPException(status_code=404, detail="Album not found")
 
-    if require_owner and album.user_id != user_id:
+    if album.user_id == user_id:
+        return album
+
+    if require_owner:
         raise HTTPException(status_code=403, detail="Not album owner")
 
-    if album.user_id != user_id:
-        shared = await db.execute(
-            select(AlbumUser).where(
-                and_(AlbumUser.album_id == album_id, AlbumUser.user_id == user_id)
-            )
+    shared = await db.execute(
+        select(AlbumUser).where(
+            and_(AlbumUser.album_id == album_id, AlbumUser.user_id == user_id)
         )
-        if not shared.scalar_one_or_none():
-            raise HTTPException(status_code=403, detail="No access to this album")
+    )
+    share = shared.scalar_one_or_none()
+    if not share:
+        raise HTTPException(status_code=403, detail="No access to this album")
+    if require_edit and not share.can_edit:
+        raise HTTPException(status_code=403, detail="View-only access to this album")
 
     return album
 
@@ -39,12 +46,14 @@ async def list_albums_for_user(db: AsyncSession, user: User) -> dict:
     owned = list((await db.execute(stmt)).scalars().all())
 
     shared_stmt = (
-        select(Album)
+        select(Album, AlbumUser.can_edit)
         .join(AlbumUser, AlbumUser.album_id == Album.id)
         .where(AlbumUser.user_id == user.id)
         .order_by(Album.updated_at.desc())
     )
-    shared = list((await db.execute(shared_stmt)).scalars().all())
+    shared_rows = (await db.execute(shared_stmt)).all()
+    shared_can_edit = {album.id: can_edit for album, can_edit in shared_rows}
+    shared = [album for album, _ in shared_rows]
 
     albums = []
     for album in owned + shared:
@@ -65,7 +74,10 @@ async def list_albums_for_user(db: AsyncSession, user: User) -> dict:
         if cover_id:
             cover_thumb = f"/api/assets/{cover_id}/thumbnail?size=medium"
 
-        albums.append(album_to_dict(album, count, cover_thumb))
+        albums.append(album_to_dict(
+            album, count, cover_thumb,
+            viewer_id=user.id, viewer_can_edit=shared_can_edit.get(album.id, False),
+        ))
 
     return {"albums": albums}
 
@@ -83,7 +95,7 @@ async def create_album(
         album.cover_asset_id = asset_ids[0]
 
     await db.commit()
-    return album_to_dict(album, len(asset_ids or []))
+    return album_to_dict(album, len(asset_ids or []), viewer_id=user.id)
 
 
 async def get_album_detail(db: AsyncSession, album_id: str, user_id: str) -> dict:
@@ -98,8 +110,22 @@ async def get_album_detail(db: AsyncSession, album_id: str, user_id: str) -> dic
     )
     assets = list((await db.execute(stmt)).scalars().all())
 
-    album_data = album_to_dict(album, len(assets))
+    viewer_can_edit = None
+    if album.user_id != user_id:
+        own_share = await db.execute(
+            select(AlbumUser).where(
+                and_(AlbumUser.album_id == album_id, AlbumUser.user_id == user_id)
+            )
+        )
+        row = own_share.scalar_one_or_none()
+        viewer_can_edit = row.can_edit if row else False
+
+    album_data = album_to_dict(album, len(assets), viewer_id=user_id, viewer_can_edit=viewer_can_edit)
     album_data["assets"] = [asset_to_dict(a) for a in assets]
+
+    owner_result = await db.execute(select(User).where(User.id == album.user_id))
+    owner = owner_result.scalar_one_or_none()
+    album_data["owner_name"] = owner.name if owner else None
 
     shared_stmt = (
         select(AlbumUser, User)
@@ -140,7 +166,7 @@ async def delete_album(db: AsyncSession, album_id: str, user_id: str) -> dict:
 
 
 async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, asset_ids: List[str]) -> dict:
-    album = await get_album_for_user(db, album_id, user_id)
+    album = await get_album_for_user(db, album_id, user_id, require_edit=True)
 
     added = 0
     for aid in asset_ids:
@@ -161,7 +187,7 @@ async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, ass
 
 
 async def remove_assets_from_album(db: AsyncSession, album_id: str, user_id: str, asset_ids: List[str]) -> dict:
-    await get_album_for_user(db, album_id, user_id)
+    await get_album_for_user(db, album_id, user_id, require_edit=True)
 
     for aid in asset_ids:
         result = await db.execute(
@@ -195,3 +221,34 @@ async def share_album(db: AsyncSession, album_id: str, user_id: str, target_user
     db.add(AlbumUser(album_id=album_id, user_id=target_user_id, can_edit=can_edit))
     await db.commit()
     return {"message": "Album shared"}
+
+
+async def unshare_album(db: AsyncSession, album_id: str, user_id: str, target_user_id: str) -> dict:
+    """Revoke a shared user's access - owner-only, same as granting it."""
+    await get_album_for_user(db, album_id, user_id, require_owner=True)
+
+    result = await db.execute(
+        select(AlbumUser).where(
+            and_(AlbumUser.album_id == album_id, AlbumUser.user_id == target_user_id)
+        )
+    )
+    share = result.scalar_one_or_none()
+    if not share:
+        raise HTTPException(status_code=404, detail="Album is not shared with this user")
+
+    await db.delete(share)
+    await db.commit()
+    return {"message": "Share removed"}
+
+
+async def list_share_targets(db: AsyncSession, user: User) -> dict:
+    """Other approved accounts on this server that albums can be shared
+    with - deliberately minimal (id/name/email only, no admin/quota/
+    approval fields), unlike the admin-only full user list."""
+    stmt = (
+        select(User)
+        .where(and_(User.id != user.id, User.is_approved == True))
+        .order_by(User.name)
+    )
+    users = list((await db.execute(stmt)).scalars().all())
+    return {"users": [{"id": u.id, "name": u.name, "email": u.email} for u in users]}

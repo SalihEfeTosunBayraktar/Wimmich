@@ -46,8 +46,21 @@ def asset_to_dict(asset: Asset) -> dict:
     }
 
 
-def album_to_dict(album: Album, asset_count: int = 0, cover_thumb: Optional[str] = None) -> dict:
-    """Serialize an Album model to the API response shape."""
+def album_to_dict(
+    album: Album,
+    asset_count: int = 0,
+    cover_thumb: Optional[str] = None,
+    viewer_id: Optional[str] = None,
+    viewer_can_edit: Optional[bool] = None,
+) -> dict:
+    """Serialize an Album model to the API response shape.
+
+    viewer_id/viewer_can_edit describe the CURRENT requesting user's
+    relationship to the album (owner vs. shared, and whether a shared
+    viewer has edit rights) - omitted (None) when the caller doesn't know
+    who's asking, e.g. album_to_dict used outside a per-request context.
+    """
+    is_owner = viewer_id is not None and album.user_id == viewer_id
     return {
         "id": album.id,
         "name": album.name,
@@ -58,4 +71,6 @@ def album_to_dict(album: Album, asset_count: int = 0, cover_thumb: Optional[str]
         "created_at": album.created_at.isoformat() if album.created_at else None,
         "updated_at": album.updated_at.isoformat() if album.updated_at else None,
         "user_id": album.user_id,
+        "is_owner": is_owner if viewer_id is not None else None,
+        "can_edit": True if is_owner else viewer_can_edit,
     }

@@ -377,6 +377,35 @@
         </div>
     </div>
 
+    <!-- Album Account-Share Modal -->
+    <div class="modal-overlay hidden" id="album-share-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 data-i18n="albums.share_with_account_title"></h3>
+                <button class="btn-icon modal-close" id="album-share-modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="album-share-current-list"></div>
+                <div class="form-group" style="margin-top:16px">
+                    <label for="album-share-target" data-i18n="albums.add_person_label"></label>
+                    <select id="album-share-target"></select>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="album-share-can-edit">
+                        <span data-i18n="albums.allow_edit"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="album-share-modal-close2" data-i18n="common.close"></button>
+                <button class="btn btn-primary" id="album-share-modal-add" data-i18n="albums.share_button"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>

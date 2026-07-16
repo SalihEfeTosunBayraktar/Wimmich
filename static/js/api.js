@@ -113,6 +113,13 @@ const API = {
     removeFromAlbum(albumId, assetIds) {
         return this.request(`/api/albums/${albumId}/assets`, { method: 'DELETE', body: { asset_ids: assetIds } });
     },
+    getAlbumShareTargets() { return this.request('/api/albums/share-targets'); },
+    shareAlbumWithAccount(albumId, userId, canEdit) {
+        return this.request(`/api/albums/${albumId}/users`, { method: 'POST', body: { user_id: userId, can_edit: canEdit } });
+    },
+    unshareAlbumAccount(albumId, userId) {
+        return this.request(`/api/albums/${albumId}/users/${userId}`, { method: 'DELETE' });
+    },
 
     // Search
     search(q, type = 'smart', opts = {}) {
