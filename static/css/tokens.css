@@ -1,0 +1,79 @@
+/* ═══════════════════════════════════════════════════════════
+   Wimmich - Design System & Styles
+   Premium dark theme with glassmorphism
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── CSS Variables / Design Tokens ─────────────────────── */
+:root {
+    /* Colors */
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-tertiary: #1a1a28;
+    --bg-surface: rgba(26, 26, 40, 0.8);
+    --bg-glass: rgba(26, 26, 40, 0.6);
+    --bg-hover: rgba(99, 102, 241, 0.1);
+    --bg-active: rgba(99, 102, 241, 0.15);
+
+    --text-primary: #f0f0f5;
+    --text-secondary: #9a9ab0;
+    --text-muted: #6b6b80;
+    --text-inverse: #0a0a0f;
+
+    --accent-primary: #6366f1;
+    --accent-secondary: #8b5cf6;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+    --accent-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.12);
+    --border-focus: rgba(99, 102, 241, 0.5);
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+    /* Glass */
+    --glass-bg: rgba(26, 26, 40, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(20px);
+
+    /* Layout */
+    --sidebar-width: 260px;
+    --topbar-height: 64px;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Font */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── Storage bar state colors (set via class, not inline hex) ── */
+.storage-bar--ok { background: var(--accent-gradient); }
+.storage-bar--warning { background: var(--warning); }
+.storage-bar--critical { background: var(--danger); }
+

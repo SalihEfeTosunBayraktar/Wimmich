@@ -1,0 +1,31 @@
+# Wimmich Git Ignore Rules
+
+# Virtual Environment
+venv/
+.venv/
+
+# Environment Variables & Tokens
+.env
+.env.local
+.env.*.local
+
+# Data Directory (Contains user photos, videos, database, ml data, and cloudflared binary)
+data/
+
+# Scratch/Temporary script directories
+scratch/
+
+# Python cache & compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# OS/IDE metadata
+.vscode/
+.idea/
+Thumbs.db
+ehthumbs.db
+Desktop.ini

@@ -1,0 +1,160 @@
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        transform: translateX(-100%);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-toggle { display: flex; }
+
+    /* Mobile selection bar styles */
+    .selection-bar {
+        bottom: 12px !important;
+        width: 95% !important;
+        max-width: 480px !important;
+        padding: 8px 12px !important;
+        gap: 8px !important;
+        justify-content: space-between !important;
+    }
+    
+    .selection-bar button span {
+        display: none !important;
+    }
+    
+    .selection-count {
+        min-width: unset !important;
+        font-size: 13px !important;
+    }
+    
+    .selection-bar .btn {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+    }
+
+    /* Make photo select checkbox visible on mobile */
+    .photo-card .photo-select {
+        opacity: 0.8 !important;
+    }
+
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .viewer-sidebar {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 360px;
+        z-index: 1002;
+    }
+
+    .album-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+
+    /* Larger touch targets for icon buttons (was 36px, below the 44px minimum) */
+    .btn-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Viewer: tighten spacing so the control bar fits narrow screens */
+    .viewer-media {
+        padding: var(--space-md);
+    }
+    .viewer-controls {
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        max-width: calc(100vw - 24px);
+    }
+    .viewer-center-controls {
+        gap: 2px;
+    }
+    .viewer-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Modals: keep a safe gutter instead of touching the screen edges */
+    .modal-overlay {
+        padding: var(--space-md);
+    }
+    .modal {
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+    }
+
+    /* Topbar: give the title more room next to the hamburger toggle */
+    .topbar {
+        padding: 0 var(--space-md);
+    }
+
+    /* Duplicate-detection filters: fixed 200px inputs overflow narrow screens */
+    .dup-control-group input {
+        width: 100%;
+        max-width: 240px;
+    }
+
+    /* Gallery sort/filter/group mini-selects: wrap onto their own row and
+       share the width evenly instead of staying pinned beside the search
+       box once it's too narrow to fit both. */
+    .gallery-controls-mini {
+        width: 100%;
+    }
+    .gallery-mini-select {
+        flex: 1;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .photo-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+    }
+
+    .photo-card { border-radius: 0; }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Admin user rows: avatar/info/actions no longer fit one line on narrow screens */
+    .user-item, .admin-user-item {
+        flex-wrap: wrap;
+        row-gap: var(--space-sm);
+    }
+
+    /* Topbar buttons: icon only, text label dropped so they never force
+       the "Yükle" button (or the title next to it) off-screen. */
+    .topbar-actions button span {
+        display: none;
+    }
+    .topbar-actions .btn {
+        padding: 8px 10px;
+    }
+
+    /* Share rows: long URL + two buttons on one line overflow narrow
+       screens - stack the actions below the link/meta text instead. */
+    .share-item {
+        flex-wrap: wrap;
+        row-gap: var(--space-sm);
+    }
+    .share-info {
+        flex-basis: 100%;
+    }
+
+    /* Album detail header: title truncates first, but on very narrow
+       screens wrap the action buttons to their own row instead of
+       shrinking them past a usable tap size. */
+    .album-detail-header {
+        flex-wrap: wrap;
+        row-gap: var(--space-sm);
+    }
+    .album-detail-title {
+        flex-basis: 100%;
+        white-space: normal;
+    }
+}

@@ -1,0 +1,179 @@
+/* ─── Auth Screen ───────────────────────────────────────── */
+.auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg-primary);
+    background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(167, 139, 250, 0.04) 0%, transparent 50%);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 400px;
+    padding: var(--space-2xl);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    animation: fadeInUp 0.6s ease;
+}
+
+.auth-brand {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.auth-logo {
+    display: inline-flex;
+    margin-bottom: var(--space-md);
+    filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.3));
+}
+
+.auth-subtitle {
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+    font-size: 0.9rem;
+}
+
+.auth-form { display: none; }
+.auth-form.active { display: block; animation: fadeIn 0.3s ease; }
+
+.auth-switch {
+    text-align: center;
+    margin-top: var(--space-lg);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ─── Forms ─────────────────────────────────────────────── */
+.form-group {
+    margin-bottom: var(--space-md);
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea,
+select {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--border-focus);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* The dropdown popup itself is native chrome the rest of this file can't
+   reach - only color/background-color on <option> actually get respected,
+   so without this it renders with the browser's default light theme. */
+select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+input::placeholder, textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+}
+
+.auth-lang-switch {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-md);
+}
+.auth-lang-select {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+/* First-run language picker: shown once, before any other translated text
+   has a language to render in yet, so this overlay's own strings are the
+   one place default-English is guaranteed correct regardless of what the
+   user ends up picking. */
+.i18n-first-run-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.92);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.i18n-first-run-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    max-width: 360px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+.i18n-first-run-card h2 {
+    margin-bottom: var(--space-sm);
+}
+.i18n-first-run-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-lg);
+}
+.i18n-first-run-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+.i18n-first-run-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.i18n-first-run-btn:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+

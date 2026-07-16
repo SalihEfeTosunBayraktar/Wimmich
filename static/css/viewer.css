@@ -1,0 +1,204 @@
+/* ─── Viewer ────────────────────────────────────────────── */
+.viewer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.viewer-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.viewer-media {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl);
+    min-width: 0;
+}
+
+.viewer-media img, .viewer-media video {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+}
+
+.viewer-sidebar {
+    width: 360px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    flex-shrink: 0;
+    animation: slideInRight 0.3s ease;
+}
+
+.viewer-sidebar-content {
+    padding: var(--space-lg);
+}
+
+.viewer-info-section {
+    margin-bottom: var(--space-lg);
+}
+
+.viewer-info-section h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-sm);
+}
+
+.viewer-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.viewer-info-row .label { color: var(--text-secondary); }
+.viewer-info-row .value { color: var(--text-primary); font-weight: 500; }
+
+.viewer-info-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+}
+
+.viewer-info-section-header h4 { margin-bottom: 0; }
+
+.viewer-info-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+}
+
+/* Grid mosaic instead of a horizontal-scroll strip (matches the month-
+   grouping mosaic's "+N" overflow-cell pattern) - a scrollbar-in-a-sidebar
+   read as janky, a fixed grid that folds extras into a "+N" cell fits the
+   narrow panel cleanly and is a pattern already established elsewhere. */
+.viewer-similar-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+.viewer-similar-cell {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--bg-tertiary);
+}
+.viewer-similar-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-fast);
+}
+.viewer-similar-cell:hover img { transform: scale(1.08); }
+
+.viewer-similar-more img { filter: blur(2px) brightness(0.6); }
+.viewer-similar-more-count {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.viewer-controls {
+    position: fixed;
+    bottom: var(--space-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    z-index: 1001;
+}
+
+.viewer-center-controls {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.viewer-btn {
+    color: rgba(255, 255, 255, 0.7);
+    width: 40px;
+    height: 40px;
+}
+.viewer-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+.viewer-btn.active svg {
+    fill: var(--danger);
+    stroke: var(--danger);
+}
+
+/* Deliberately no position:fixed here - .viewer-controls has transform:
+   translateX(-50%), which makes IT the containing block for any fixed-
+   position descendant instead of the viewport. That silently pulled this
+   button up against .viewer-next inside the toolbar's own small box
+   instead of the intended top-right corner, so it just flows in the
+   toolbar like every other button instead. */
+.viewer-close-btn {
+}
+
+/* Floating "N similar photos" badge, anchored just above the close button
+   - .viewer-controls (position:fixed) is this element's containing block,
+   so it stays locked to the toolbar's own position instead of the corner
+   of the viewport. Blurred so a tiny 44px crop of the match reads as a
+   texture/preview rather than a sharp, possibly-confusing thumbnail. */
+.viewer-similar-badge {
+    position: absolute;
+    top: -54px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    background: var(--bg-tertiary);
+}
+.viewer-similar-badge:hover { border-color: var(--accent-primary); }
+.viewer-similar-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(3px);
+    transform: scale(1.15); /* hides the blur's soft edge past the circle's crop */
+}
+.viewer-similar-badge-count {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+

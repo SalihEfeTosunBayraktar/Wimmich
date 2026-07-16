@@ -1,0 +1,138 @@
+/* ─── Search ────────────────────────────────────────────── */
+.search-container {
+    margin-bottom: var(--space-lg);
+}
+
+.search-bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex: 1 1 320px;
+    max-width: 600px;
+}
+
+.search-input-wrapper svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding-left: 42px;
+    padding-right: 14px;
+    height: 48px;
+    font-size: 1rem;
+    border-radius: var(--radius-lg);
+    background: var(--bg-tertiary);
+    box-sizing: border-box;
+}
+
+/* Sort/filter/group as compact selects next to the search box instead of
+   a separate full-width control row below it. */
+.gallery-controls-mini {
+    display: flex;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+}
+
+.gallery-mini-select {
+    height: 36px;
+    max-width: 130px;
+    padding: 0 8px;
+    font-size: 0.8rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.search-results-info {
+    margin: var(--space-md) 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Category shortcuts shown when the search box is focused but empty -
+   a stacked list (like a browser/search-engine suggestion dropdown),
+   not side-by-side chips. Floats over the page (absolute) instead of
+   pushing the photo grid down when it opens; semi-transparent + blurred
+   so the photos underneath still show through instead of a solid panel. */
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 100%;
+    background: rgba(26, 26, 40, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    z-index: 10;
+}
+
+.search-suggestion-row {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px var(--space-md);
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.search-suggestion-row:hover {
+    background: var(--bg-secondary);
+}
+
+/* ─── Sharing ───────────────────────────────────────────── */
+.share-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.share-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.share-item:hover {
+    border-color: var(--border-hover);
+}
+
+.share-info {
+    flex: 1;
+}
+
+.share-link {
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+    word-break: break-all;
+}
+
+.share-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+

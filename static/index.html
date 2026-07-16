@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wimmich - Photo & Video Management</title>
+    <meta name="description" content="Wimmich - Self-hosted photo and video management server for Windows">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+    <!-- App CSS -->
+    <!-- Split CSS files: tokens.css must load first (custom properties),
+         responsive.css must load last (media queries win cascade ties). -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/reset.css">
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/photo-grid.css">
+    <link rel="stylesheet" href="/static/css/cards.css">
+    <link rel="stylesheet" href="/static/css/people-map.css">
+    <link rel="stylesheet" href="/static/css/viewer.css">
+    <link rel="stylesheet" href="/static/css/modals.css">
+    <link rel="stylesheet" href="/static/css/toasts-empty.css">
+    <link rel="stylesheet" href="/static/css/stats-memories.css">
+    <link rel="stylesheet" href="/static/css/search-sharing.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="/static/css/trash-duplicates.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/favicon-32.png">
+    <link rel="icon" type="image/png" href="/static/favicon-16.png">
+    <link rel="apple-touch-icon" href="/static/favicon-180.png">
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-brand">
+                <div class="auth-logo">
+                    <img src="/static/logo.png" alt="Wimmich" style="height:170px;width:auto">
+                </div>
+                <p class="auth-subtitle" data-i18n="auth.subtitle"></p>
+            </div>
+
+            <div class="auth-lang-switch">
+                <select id="auth-lang-select" class="auth-lang-select"></select>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email" data-i18n="auth.email"></label>
+                    <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password" data-i18n="auth.password"></label>
+                    <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer">
+                    <input type="checkbox" id="login-remember" style="width:auto;margin:0">
+                    <label for="login-remember" data-i18n="auth.remember_me" style="margin:0;font-weight:normal;user-select:none;cursor:pointer"></label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+                    <span data-i18n="auth.login"></span>
+                </button>
+                <p class="auth-switch">
+                    <span data-i18n="auth.no_account"></span> <a href="#" id="show-register" data-i18n="auth.register"></a>
+                </p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="register-name" data-i18n="auth.full_name"></label>
+                    <input type="text" id="register-name" placeholder="Jane Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email" data-i18n="auth.email"></label>
+                    <input type="email" id="register-email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password" data-i18n="auth.password"></label>
+                    <input type="password" id="register-password" placeholder="••••••••" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="register-btn">
+                    <span data-i18n="auth.register"></span>
+                </button>
+                <p class="auth-switch">
+                    <span data-i18n="auth.has_account"></span> <a href="#" id="show-login" data-i18n="auth.login"></a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/static/logo.png" alt="Wimmich" style="height:40px;width:auto">
+                    <div class="sidebar-brand-group">
+                        <span class="sidebar-brand">Wimmich</span>
+                        <span class="sidebar-credit">Created by @Saliheftb</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#gallery" class="nav-item active" data-page="gallery" id="nav-gallery">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span data-i18n="nav.gallery"></span>
+                </a>
+                <a href="#albums" class="nav-item" data-page="albums" id="nav-albums">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                    <span data-i18n="nav.albums"></span>
+                </a>
+                <a href="#favorites" class="nav-item" data-page="favorites" id="nav-favorites">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span data-i18n="nav.favorites"></span>
+                </a>
+                <a href="#people" class="nav-item" data-page="people" id="nav-people">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span data-i18n="nav.people"></span>
+                </a>
+                <a href="#map" class="nav-item" data-page="map" id="nav-map">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span data-i18n="nav.map"></span>
+                </a>
+                <a href="#sharing" class="nav-item" data-page="sharing" id="nav-sharing">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    <span data-i18n="nav.sharing"></span>
+                </a>
+
+                <div class="nav-divider"></div>
+
+                <a href="#memories" class="nav-item" data-page="memories" id="nav-memories">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span data-i18n="nav.memories"></span>
+                </a>
+                <a href="#archive" class="nav-item" data-page="archive" id="nav-archive">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                    <span data-i18n="nav.archive"></span>
+                </a>
+                <a href="#trash" class="nav-item" data-page="trash" id="nav-trash">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <span data-i18n="nav.trash"></span>
+                </a>
+                <a href="#duplicates" class="nav-item" data-page="duplicates" id="nav-duplicates">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span data-i18n="nav.duplicates"></span>
+                </a>
+                <a href="#admin" class="nav-item" data-page="admin" id="nav-admin">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="nav.admin"></span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer" style="flex-direction:column; align-items:stretch; gap:12px;">
+                <!-- Language Switcher -->
+                <div class="sidebar-lang" style="display:flex; align-items:center; justify-content:space-between; padding:0 4px;">
+                    <span data-i18n="common.language" style="font-size:11px; color:var(--text-secondary);"></span>
+                    <select id="sidebar-lang-select" class="gallery-mini-select" style="max-width:110px;"></select>
+                </div>
+
+                <!-- Storage Info Bar -->
+                <div class="sidebar-storage" id="sidebar-storage" style="padding: 0 4px 12px 4px; border-bottom: 1px solid var(--border-color);">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:6px;">
+                        <span data-i18n="sidebar.personal_storage"></span>
+                        <span id="storage-percent">0%</span>
+                    </div>
+                    <div style="width:100%; height:6px; background:var(--bg-tertiary); border-radius:3px; overflow:hidden;">
+                        <div id="storage-bar" class="storage-bar--ok" style="width:0%; height:100%; border-radius:3px; transition:width 0.3s ease;"></div>
+                    </div>
+                    <div id="storage-text" style="font-size:11px; color:var(--text-secondary); opacity:0.7; margin-top:6px;">0 B / <span data-i18n="sidebar.unlimited"></span></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div class="sidebar-user" id="sidebar-user" style="flex:1;">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div class="user-info">
+                        <span class="user-name" id="user-name" data-i18n="sidebar.user_fallback"></span>
+                        <span class="user-email" id="user-email">user@email.com</span>
+                    </div>
+                </div>
+                <button class="btn-icon" id="logout-btn" data-i18n-title="sidebar.logout">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+                </div>
+                <div class="app-version" id="app-version" title=""></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <button class="btn-icon sidebar-toggle" id="sidebar-toggle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <h2 class="topbar-title" id="topbar-title" data-i18n="nav.gallery"></h2>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary hidden" id="select-all-btn">☑ <span data-i18n="topbar.select_all"></span></button>
+                    <button class="btn btn-primary btn-upload" id="upload-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span data-i18n="topbar.upload"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content" id="page-content">
+                <!-- Dynamic content loads here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay hidden" id="upload-modal">
+        <div class="modal upload-modal">
+            <div class="modal-header">
+                <h3 data-i18n="upload.title"></h3>
+                <button class="btn-icon modal-close" id="upload-modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="upload-dropzone" id="upload-dropzone">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p data-i18n="upload.drag_here"></p>
+                <p class="text-muted" data-i18n="upload.or"></p>
+                <label class="btn btn-secondary" for="file-input" data-i18n="upload.choose_files"></label>
+                <input type="file" id="file-input" multiple accept="image/*,video/*" hidden>
+            </div>
+            <div class="upload-progress hidden" id="upload-progress">
+                <div class="upload-progress-header">
+                    <span class="text-muted" data-i18n="upload.limit_hint"></span>
+                    <label class="btn btn-secondary btn-sm" for="file-input" data-i18n="upload.add_more"></label>
+                </div>
+                <div class="upload-list" id="upload-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer Modal -->
+    <div class="viewer-overlay hidden" id="viewer-overlay">
+        <div class="viewer-container">
+            <div class="viewer-media" id="viewer-media"></div>
+            <div class="viewer-sidebar hidden" id="viewer-sidebar">
+                <div class="viewer-sidebar-content" id="viewer-sidebar-content"></div>
+            </div>
+        </div>
+        <div class="viewer-controls">
+            <button class="btn-icon viewer-btn" id="viewer-prev" data-i18n-title="viewer.prev">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="viewer-center-controls">
+                <button class="btn-icon viewer-btn" id="viewer-favorite" data-i18n-title="viewer.favorite">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+                <button class="btn-icon viewer-btn" id="viewer-info" data-i18n-title="viewer.info">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
+                <button class="btn-icon viewer-btn" id="viewer-download" data-i18n-title="viewer.download">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button class="btn-icon viewer-btn" id="viewer-archive" data-i18n-title="viewer.archive">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                </button>
+                <button class="btn-icon viewer-btn" id="viewer-delete" data-i18n-title="viewer.delete">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+            <button class="btn-icon viewer-btn" id="viewer-next" data-i18n-title="viewer.next">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="btn-icon viewer-btn viewer-close-btn" id="viewer-close" data-i18n-title="viewer.close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="viewer-similar-badge hidden" id="viewer-similar-badge" data-i18n-title="viewer.similar_photos">
+                <img id="viewer-similar-badge-img" src="" alt="">
+                <span class="viewer-similar-badge-count" id="viewer-similar-badge-count"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Album Create Modal -->
+    <div class="modal-overlay hidden" id="album-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="album-modal-title" data-i18n="albums.new_album"></h3>
+                <button class="btn-icon modal-close" id="album-modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="album-name" data-i18n="albums.album_name"></label>
+                    <input type="text" id="album-name" data-i18n-placeholder="albums.album_name_placeholder" required>
+                </div>
+                <div class="form-group">
+                    <label for="album-desc" data-i18n="albums.description"></label>
+                    <textarea id="album-desc" data-i18n-placeholder="albums.description_placeholder" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="album-modal-cancel" data-i18n="common.cancel"></button>
+                <button class="btn btn-primary" id="album-modal-save" data-i18n="albums.create"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Existing Album Modal -->
+    <div class="modal-overlay hidden" id="add-to-album-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 data-i18n="albums.add_to_album"></h3>
+                <button class="btn-icon modal-close" id="add-to-album-modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <button class="btn btn-secondary" id="add-to-album-new-btn" style="width:100%;margin-bottom:12px" data-i18n="albums.create_new_album"></button>
+                <div id="add-to-album-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay hidden" id="share-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 data-i18n="sharing.create_link"></h3>
+                <button class="btn-icon modal-close" id="share-modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="share-password" data-i18n="sharing.password_optional"></label>
+                    <input type="password" id="share-password" data-i18n-placeholder="sharing.password_protection">
+                </div>
+                <div class="form-group">
+                    <label for="share-expire" data-i18n="sharing.expires_in"></label>
+                    <select id="share-expire">
+                        <option value="" data-i18n="sharing.never"></option>
+                        <option value="1" data-i18n="sharing.one_day"></option>
+                        <option value="7" data-i18n="sharing.seven_days"></option>
+                        <option value="30" data-i18n="sharing.thirty_days"></option>
+                        <option value="90" data-i18n="sharing.ninety_days"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="share-download" checked>
+                        <span data-i18n="sharing.allow_download"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="share-modal-cancel" data-i18n="common.cancel"></button>
+                <button class="btn btn-primary" id="share-modal-create" data-i18n="albums.create"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- App Scripts -->
+    <!-- Load order matters: these are classic scripts (no type="module"), so
+         later files rely on globals (state, pages, helpers) defined earlier. -->
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/constants.js"></script>
+    <script src="/static/js/state.js"></script>
+    <script src="/static/js/helpers.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/api-admin.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/router.js"></script>
+    <script src="/static/js/sidebar.js"></script>
+    <script src="/static/js/upload.js"></script>
+    <script src="/static/js/timeline.js"></script>
+    <script src="/static/js/gallery.js"></script>
+    <script src="/static/js/selection.js"></script>
+    <script src="/static/js/viewer.js"></script>
+    <script src="/static/js/viewer-exif-edit.js"></script>
+    <script src="/static/js/favorites.js"></script>
+    <script src="/static/js/archive.js"></script>
+    <script src="/static/js/albums.js"></script>
+    <script src="/static/js/people.js"></script>
+    <script src="/static/js/people-naming-queue.js"></script>
+    <script src="/static/js/map.js"></script>
+    <script src="/static/js/sharing.js"></script>
+    <script src="/static/js/memories.js"></script>
+    <script src="/static/js/trash.js"></script>
+    <script src="/static/js/duplicates-render.js"></script>
+    <script src="/static/js/duplicates-actions.js"></script>
+    <script src="/static/js/duplicates-slideshow.js"></script>
+    <script src="/static/js/admin-jobs.js"></script>
+    <script src="/static/js/admin-tunnel.js"></script>
+    <script src="/static/js/admin-users.js"></script>
+    <script src="/static/js/admin-render.js"></script>
+    <script src="/static/js/import-browser.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

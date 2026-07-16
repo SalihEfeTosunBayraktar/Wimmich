@@ -1,0 +1,210 @@
+/* ─── Trash ─────────────────────────────────────────────── */
+.trash-info {
+    padding: var(--space-md);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+    color: var(--warning);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+/* ─── Duplicate detection page ──────────────────────────── */
+.dup-controls-bar {
+    background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px;
+    padding: 16px; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px;
+    align-items: center; justify-content: space-between;
+}
+.dup-mode-tabs {
+    flex-basis: 100%; display: flex; gap: 8px; border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+.dup-mode-tab {
+    background: none; border: none; color: var(--text-secondary); cursor: pointer;
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    transition: all 0.15s;
+}
+.dup-mode-tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.dup-mode-tab.active { background: var(--accent-primary); color: #fff; }
+.dup-mode-tab-hint { font-size: 10.5px; font-weight: 400; opacity: 0.8; }
+.dup-controls-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.dup-control-group { display: flex; flex-direction: column; gap: 4px; }
+.dup-control-group label { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.dup-control-group select, .dup-control-group input {
+    background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary);
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; outline: none;
+}
+.dup-control-group input { width: 200px; }
+.dup-controls-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.dup-auto-clean-all-btn {
+    background: linear-gradient(135deg, var(--danger), #b91c1c); color: #fff; border: none;
+    padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    transition: all 0.2s;
+}
+.dup-group-container {
+    background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px;
+    padding: 16px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.dup-group-header {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    border-bottom: 1px solid var(--border-color); padding-bottom: 12px;
+}
+.dup-group-title { font-weight: 700; color: var(--text-primary); font-size: 15px; }
+.dup-group-meta { font-size: 12px; color: var(--text-muted); margin-left: 12px; opacity: 0.8; }
+.dup-group-header-actions { display: flex; align-items: center; gap: 8px; }
+.btn-group-auto-clean {
+    background: var(--accent-primary); border: 1px solid var(--accent-primary); color: #fff;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-group-auto-clean:hover { opacity: 0.9; }
+.btn-group-skip {
+    background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-group-skip:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-group-delete-all {
+    background: var(--danger); border: 1px solid var(--danger); color: #fff;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-group-delete-all:hover { opacity: 0.9; }
+.dup-group-assets { display: flex; flex-wrap: wrap; gap: 16px; }
+.dup-asset-card {
+    position: relative;
+    background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px;
+    overflow: hidden; display: flex; flex-direction: column; flex: 1; min-width: 260px; max-width: 350px;
+    box-shadow: var(--shadow-sm);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Delete feedback: red layer + X flash briefly over the card before it's
+   actually removed from the DOM, instead of the whole page silently
+   reloading - so a click reviewing many groups in a row visibly registers. */
+.dup-asset-card.dup-deleting::after {
+    content: "✕";
+    position: absolute;
+    inset: 0;
+    background: rgba(239, 68, 68, 0.6);
+    color: #fff;
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    animation: fadeIn 0.15s ease;
+}
+.dup-asset-card.dup-removed {
+    opacity: 0;
+    transform: scale(0.85);
+}
+.dup-group-container.dup-removed {
+    opacity: 0;
+    transform: scale(0.97);
+}
+/* ─── Duplicate cleanup slideshow ───────────────────────── */
+.dup-slideshow-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.97);
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease;
+    padding: var(--space-lg);
+}
+.dup-slideshow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+}
+.dup-slideshow-progress { font-size: 1rem; font-weight: 600; }
+.dup-slideshow-timerbar {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-lg);
+    flex-shrink: 0;
+}
+.dup-slideshow-timerbar-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--accent-primary);
+}
+.dup-slideshow-stage {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    overflow-y: auto;
+}
+.dup-slideshow-card {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 3px solid transparent;
+    background: var(--bg-tertiary);
+}
+.dup-slideshow-card img { width: 100%; height: 100%; object-fit: cover; }
+.dup-slideshow-card--keep { border-color: var(--success); }
+.dup-slideshow-card--delete { border-color: var(--danger); opacity: 0.65; }
+.dup-slideshow-card-tag {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+}
+.dup-slideshow-card-tag--keep { background: rgba(34, 197, 94, 0.85); }
+.dup-slideshow-card-tag--delete { background: rgba(239, 68, 68, 0.85); }
+.dup-slideshow-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    flex-shrink: 0;
+}
+.dup-slideshow-actions .btn { padding: 12px 28px; font-size: 1rem; }
+
+.dup-asset-thumb {
+    height: 180px; position: relative; background: #000; display: flex; align-items: center;
+    justify-content: center; cursor: pointer;
+}
+.dup-asset-thumb img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.dup-asset-type-badge {
+    position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff;
+    font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: 600;
+}
+.dup-asset-body { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+.dup-asset-info { display: flex; flex-direction: column; gap: 6px; }
+.dup-asset-name { font-weight: 600; font-size: 13px; color: var(--text-primary); word-break: break-all; line-height: 1.3; }
+.dup-asset-path {
+    font-size: 10px; color: var(--text-secondary); opacity: 0.8; word-break: break-all; font-family: monospace;
+    background: var(--bg-secondary); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color);
+}
+.dup-asset-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.btn-trash-dup {
+    width: 100%; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--danger);
+    border-radius: 6px; padding: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-trash-dup:hover { background: rgba(239, 68, 68, 0.2); }
+

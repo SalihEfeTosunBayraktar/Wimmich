@@ -1,0 +1,188 @@
+/* ─── People Grid ───────────────────────────────────────── */
+.people-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-md);
+}
+
+.unknown-pool-section {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.unknown-pool-title {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.person-card {
+    text-align: center;
+    cursor: pointer;
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.person-card:hover {
+    background: var(--bg-hover);
+}
+
+.person-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin: 0 auto var(--space-sm);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+}
+
+.person-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.person-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.person-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ─── Map ───────────────────────────────────────────────── */
+.map-container {
+    width: 100%;
+    height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.map-container .leaflet-container {
+    height: 100%;
+    width: 100%;
+    background: var(--bg-tertiary);
+}
+
+.map-popup-thumb {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.map-photo-marker img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: var(--radius-full);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.map-cluster-bubble {
+    position: relative;
+    border-radius: var(--radius-full);
+    border: 3px solid #fff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+.map-cluster-bubble img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.map-cluster-count {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+/* ─── Naming Queue ("who is this?") ─────────────────────── */
+.naming-queue {
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.naming-queue-title {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.naming-queue-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.naming-queue-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-md);
+}
+
+.naming-queue-item {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+}
+
+.naming-queue-avatar {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.naming-queue-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.naming-queue-body { flex: 1; min-width: 0; }
+
+.naming-queue-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.naming-queue-question {
+    font-size: 0.85rem;
+    margin-bottom: var(--space-xs);
+}
+
+.naming-queue-actions { display: flex; gap: 6px; }
+
+.naming-queue-input {
+    width: 100%;
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+}
+

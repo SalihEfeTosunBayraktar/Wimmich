@@ -1,0 +1,49 @@
+# Wimmich - Windows-Based Photo/Video Management Server
+# Core
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+aiofiles>=24.1.0
+
+# Database
+sqlalchemy>=2.0.35
+aiosqlite>=0.20.0
+
+# Auth
+pyjwt>=2.9.0
+bcrypt>=4.2.0
+passlib[bcrypt]>=1.7.4
+
+# Image Processing
+Pillow>=11.0.0
+opencv-python-headless>=4.10.0,<5.0.0  # 5.x removed the legacy CascadeClassifier/Haar Cascade API we depend on
+rawpy>=0.27.0  # camera RAW (.dng/.cr2/.nef/...) - Pillow can't decode RAW at all; extracts the embedded preview instead
+
+# EXIF
+exifread>=3.0.0
+
+# Reverse geocoding (GPS -> city/country), fully offline, no API keys/network
+reverse_geocoder>=1.5.1
+pycountry>=24.6.1
+
+# ML - Optional (install separately for AI features)
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121  (or the CPU wheel if no GPU)
+# pip install open_clip_torch
+#   Provides multilingual CLIP search (config.ML_CLIP_MODEL): LAION's
+#   ViT-H/14 image tower jointly trained with a frozen XLM-Roberta-Large
+#   text tower on LAION-5B - Turkish (or any other language) queries need
+#   the multilingual text tower to match the image embedding space, and
+#   ViT-H/14 is a substantially stronger image encoder than ViT-B/32 or
+#   ViT-L/14 (~4.8GB checkpoint, wants a real GPU).
+# pip install facenet-pytorch requests --no-deps
+#   Face detection + recognition (MTCNN + InceptionResnetV1/vggface2), GPU-
+#   accelerated via the same torch install as CLIP above - dlib's pip wheel
+#   (the previous face-recognition dependency) has no CUDA support, so face
+#   detection ran on CPU regardless of the machine's GPU. --no-deps because
+#   facenet-pytorch pins old torch/numpy/Pillow versions that conflict with
+#   what's already installed for CLIP; its actual API usage here doesn't
+#   need those exact pins. requests is its one real runtime dependency.
+# pip install scikit-learn
+
+# Utils
+python-dotenv>=1.0.1
