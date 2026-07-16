@@ -7,9 +7,11 @@ from pathlib import Path
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from models import Asset, Job
 from services.job_core import check_job_cancelled
 from services import backup_service
+from utils.path_utils import resolve_data_path
 
 
 async def handle_job_backup(db: AsyncSession, job: Job):
@@ -61,12 +63,19 @@ async def handle_job_backup(db: AsyncSession, job: Job):
     try:
         for i, asset in enumerate(assets):
             await check_job_cancelled(db, job.id)
-            if Path(asset.file_path).exists():
+            # resolve_data_path so a backup taken after the data folder was
+            # moved/copied still finds files under their current location
+            # instead of silently skipping every asset as "missing" - see
+            # asset_media_router.py's identical use for the same reason.
+            resolved_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
+            if resolved_path and resolved_path.exists():
                 arcname = f"{asset.user_id}/{asset.id}_{asset.original_file_name}"
-                await asyncio.to_thread(backup_service.add_file_to_archive, zf, asset.file_path, arcname)
+                await asyncio.to_thread(backup_service.add_file_to_archive, zf, str(resolved_path), arcname)
             asset.backed_up_at = datetime.now(timezone.utc)
             job.progress = 10 + int((i + 1) / total * 90)
             await db.commit()
+            # See clip_handler.py's identical expunge.
+            db.expunge(asset)
     finally:
         # Closing finalizes the zip's central directory - do this even on
         # cancellation so whatever was already added is still a valid,

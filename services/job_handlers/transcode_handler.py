@@ -53,3 +53,5 @@ async def handle_job_transcode(db: AsyncSession, job: Job):
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()
+        # See clip_handler.py's identical expunge.
+        db.expunge(asset)

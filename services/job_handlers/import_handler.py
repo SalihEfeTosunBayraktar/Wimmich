@@ -119,12 +119,15 @@ async def handle_job_import(db: AsyncSession, job: Job):
                 processed += 1
                 continue
 
+            # Column-only select - a plain existence check has no business
+            # loading a full Asset ORM object into the session's identity
+            # map for the rest of this (potentially huge) import job's run.
             existing = await db.execute(
-                select(Asset).where(
+                select(Asset.id).where(
                     and_(Asset.user_id == user_id, Asset.external_path == file_path)
                 ).limit(1)
             )
-            if existing.scalar_one_or_none():
+            if existing.first():
                 skipped += 1
                 processed += 1
                 continue
@@ -136,6 +139,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
             return_exceptions=True,
         )
 
+        new_assets = []
         for file_path, result in zip(to_process, results):
             processed += 1
             if isinstance(result, Exception):
@@ -156,6 +160,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
 
                 db.add(asset)
                 await db.flush()
+                new_assets.append(asset)
 
                 # CLIP/FACE only make sense for images - queuing them for
                 # videos too just produced a "cannot identify image file"
@@ -182,6 +187,11 @@ async def handle_job_import(db: AsyncSession, job: Job):
 
         job.progress = int(processed / total * 100) if total > 0 else 100
         await db.commit()
+        # See clip_handler.py's identical expunge - this loop can create
+        # thousands of assets over a big import; without this the session's
+        # identity map holds every one of them for the whole job's run.
+        for asset in new_assets:
+            db.expunge(asset)
 
     job.result_json = json.dumps({
         "total_found": total,

@@ -26,11 +26,13 @@ async def handle_job_scan(db: AsyncSession, job: Job):
 
     for i, file_path in enumerate(files):
         await check_job_cancelled(db, job.id)
-        # Check if already indexed
+        # Check if already indexed - column-only select, a plain existence
+        # check has no business loading a full Asset ORM object into the
+        # session's identity map for the rest of this job's run.
         result = await db.execute(
-            select(Asset).where(Asset.external_path == file_path).limit(1)
+            select(Asset.id).where(Asset.external_path == file_path).limit(1)
         )
-        if result.scalar_one_or_none():
+        if result.first():
             continue
 
         if os.path.getsize(file_path) == 0:
@@ -86,6 +88,11 @@ async def handle_job_scan(db: AsyncSession, job: Job):
                     pass
 
             await db.commit()
+            # See clip_handler.py's identical expunge - a big external
+            # library scan can create thousands of assets in this one
+            # session; without this every one of them stays attached for
+            # the job's whole run.
+            db.expunge(asset)
 
         except Exception as e:
             print(f"[JOB] Scan error for {file_path}: {e}")
