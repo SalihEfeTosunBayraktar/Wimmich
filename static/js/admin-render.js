@@ -83,6 +83,9 @@ registerTranslations({
         'admin_render.confirm_apply_update': 'Pull the latest code, reinstall dependencies, and restart the server now?',
         'admin_render.applying_update_msg': 'Updating - this can take a moment, the server will restart automatically...',
         'admin_render.git_pull_only_hint': 'Works on any install - a git clone pulls the latest commit, a zip download fetches and applies a fresh archive.',
+        'admin_render.tab_general': 'General',
+        'admin_render.tab_storage_system': 'Storage & System',
+        'admin_render.jobs_status_card_heading': 'Jobs',
     },
     tr: {
         'admin_render.stat_photos': 'Fotoğraf',
@@ -165,6 +168,9 @@ registerTranslations({
         'admin_render.confirm_apply_update': 'En son kod çekilsin, bağımlılıklar yeniden kurulsun ve sunucu yeniden başlatılsın mı?',
         'admin_render.applying_update_msg': 'Güncelleniyor — bu biraz sürebilir, sunucu otomatik olarak yeniden başlayacak...',
         'admin_render.git_pull_only_hint': 'Her kurulumda çalışır - git clone kurulumu en son commit\'i çeker, zip ile indirilen kurulum ise güncel bir arşiv indirip uygular.',
+        'admin_render.tab_general': 'Genel',
+        'admin_render.tab_storage_system': 'Depolama & Sistem',
+        'admin_render.jobs_status_card_heading': 'İşler',
     },
     fr: {
         'admin_render.stat_photos': 'Photos',
@@ -247,6 +253,9 @@ registerTranslations({
         'admin_render.confirm_apply_update': 'Récupérer le dernier code, réinstaller les dépendances et redémarrer le serveur maintenant ?',
         'admin_render.applying_update_msg': 'Mise à jour en cours - cela peut prendre un moment, le serveur redémarrera automatiquement...',
         'admin_render.git_pull_only_hint': "Fonctionne avec toute installation - un git clone récupère le dernier commit, un téléchargement zip récupère et applique une archive à jour.",
+        'admin_render.tab_general': 'Général',
+        'admin_render.tab_storage_system': 'Stockage & Système',
+        'admin_render.jobs_status_card_heading': 'Tâches',
     },
     de: {
         'admin_render.stat_photos': 'Fotos',
@@ -329,6 +338,9 @@ registerTranslations({
         'admin_render.confirm_apply_update': 'Neuesten Code abrufen, Abhängigkeiten neu installieren und Server jetzt neu starten?',
         'admin_render.applying_update_msg': 'Wird aktualisiert - dies kann einen Moment dauern, der Server startet automatisch neu...',
         'admin_render.git_pull_only_hint': 'Funktioniert bei jeder Installation - ein git clone zieht den neuesten Commit, ein Zip-Download lädt ein aktuelles Archiv herunter und wendet es an.',
+        'admin_render.tab_general': 'Allgemein',
+        'admin_render.tab_storage_system': 'Speicher & System',
+        'admin_render.jobs_status_card_heading': 'Aufgaben',
     },
 });
 
@@ -355,78 +367,144 @@ async function renderAdmin() {
                 <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_users')}</div><div class="stat-card-value">${stats.users}</div></div>
             </div>
 
-            <div class="admin-row">
-                <div class="admin-section">
-                    <h3>📁 ${t('admin_render.storage_settings_heading')}</h3>
-                    <div id="storage-panel" class="admin-panel-box">
-                        <div>
-                            <label class="admin-field-label">${t('admin_render.main_storage_dir_label')}</label>
-                            <div style="display:flex;gap:8px;align-items:center">
-                                <input type="text" id="storage-path-input" value="${escHtml(storageConfig.data_dir)}" placeholder="${t('admin_render.storage_path_placeholder')}" style="flex:1">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="admin-field-label">${t('admin_render.tunnel_token_label')}</label>
-                            <div style="display:flex;gap:8px;align-items:center">
-                                <input type="password" id="storage-token-input" value="${escHtml(storageConfig.tunnel_token || '')}" placeholder="${t('admin_render.tunnel_token_placeholder')}" style="flex:1">
-                            </div>
-                            <p class="text-muted admin-field-hint">${t('admin_render.tunnel_token_hint')}</p>
-                        </div>
-                        <div>
-                            <label class="admin-field-label">${t('admin_render.custom_domain_label')}</label>
-                            <div style="display:flex;gap:8px;align-items:center">
-                                <input type="text" id="storage-domain-input" value="${escHtml(storageConfig.tunnel_custom_domain || '')}" placeholder="${t('admin_render.custom_domain_placeholder')}" style="flex:1">
-                            </div>
-                            <p class="text-muted admin-field-hint">${t('admin_render.custom_domain_hint')}</p>
-                        </div>
-                        <div>
-                            <label class="admin-field-label">${t('admin_render.storage_limit_label')}</label>
-                            <input type="number" id="storage-limit-input" value="${storageConfig.total_storage_limit_mb || 0}" min="0" style="width:100%">
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <input type="checkbox" id="storage-autostart-input" ${storageConfig.auto_start_tunnel ? 'checked' : ''} style="width:auto;margin:0">
-                            <label for="storage-autostart-input" class="admin-checkbox-label">${t('admin_render.tunnel_autostart_label')}</label>
-                        </div>
-                        <div><button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button></div>
-                        <p class="text-muted admin-field-hint admin-field-hint--bordered">
-                            ${t('admin_render.db_location_hint', { path: `<code>${escHtml(storageConfig.db_dir)}</code>` })}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="admin-section">
-                    <h3>🌐 ${t('admin_render.remote_access_heading')}</h3>
-                    <div id="tunnel-panel" class="admin-panel-box">${renderTunnelPanel(tunnelStatus)}</div>
-                </div>
-            </div>
-
-            <div class="admin-section">
-                <h3>💾 ${t('admin_render.backup_heading')}</h3>
-                <div class="admin-panel-box">
-                    <div>
-                        <label class="admin-field-label">${t('admin_render.backup_dir_label')}</label>
-                        <input type="text" id="backup-dir-input" value="${escHtml(backupSettings.backup_dir || '')}" placeholder="${t('admin_render.backup_dir_placeholder')}" style="width:100%">
-                        <p class="text-muted admin-field-hint">${t('admin_render.backup_dir_hint')}</p>
-                    </div>
-                    <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
-                        <div>
-                            <label class="admin-field-label">${t('admin_render.backup_interval_label')}</label>
-                            <input type="number" id="backup-interval-input" value="${backupSettings.interval_hours || 24}" min="1" style="width:120px">
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <input type="checkbox" id="backup-enabled-input" ${backupSettings.enabled ? 'checked' : ''} style="width:auto;margin:0">
-                            <label for="backup-enabled-input" class="admin-checkbox-label">${t('admin_render.backup_enabled_label')}</label>
-                        </div>
-                    </div>
+            <div class="admin-status-matrix">
+                <div class="admin-status-card">
+                    <h4>🤖 ${t('admin_render.ml_status_heading')}</h4>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <button class="btn btn-primary" onclick="saveBackupConfig()">${t('admin_render.save_settings_btn')}</button>
-                        <button class="btn btn-secondary" onclick="runAdminJob('BACKUP')" title="${t('admin_render.backup_now_title')}">💾 ${t('admin_render.backup_now_btn')}</button>
+                        <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                        <span class="badge ${stats.ml.face_detection_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_face_detection', { status: stats.ml.face_detection_available ? t('admin_render.status_active_opencv') : t('admin_render.status_unavailable') })}</span>
+                        <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                        <span class="badge ${stats.ffmpeg_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ffmpeg', { status: stats.ffmpeg_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                        <span class="badge ${stats.ml.geocoding_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_geocoding', { status: stats.ml.geocoding_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
                     </div>
-                    <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>
+                    ${!stats.ml.person_clustering_available ? `
+                        <p class="text-muted admin-field-hint">${t('admin_render.person_clustering_hint')}</p>
+                    ` : ''}
+                </div>
+
+                <div class="admin-status-card">
+                    <h4>⚙️ ${t('admin_render.jobs_status_card_heading')}</h4>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
+                        <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
+                        <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
+                    </div>
+                </div>
+
+                <div class="admin-status-card">
+                    <h4>🌐 ${t('admin_render.remote_access_heading')}</h4>
+                    <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
+                </div>
+
+                <div class="admin-status-card">
+                    <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
+                    <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
+                    <button class="btn btn-danger btn-sm" onclick="shutdownServer()">🛑 ${t('admin_render.shutdown_server_btn')}</button>
                 </div>
             </div>
 
-            <div class="admin-row">
+            <div class="admin-tabs">
+                <button class="admin-tab-btn ${activeAdminTab === 'genel' ? 'active' : ''}" data-tab="genel" onclick="switchAdminTab('genel')">👥 ${t('admin_render.tab_general')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'depolama' ? 'active' : ''}" data-tab="depolama" onclick="switchAdminTab('depolama')">📁 ${t('admin_render.tab_storage_system')}</button>
+            </div>
+
+            <div id="admin-tab-genel" class="admin-tab-panel" ${activeAdminTab === 'genel' ? '' : 'hidden'}>
+                <div class="admin-section">
+                    <h3>👥 ${t('admin_render.stat_users')}</h3>
+                    <div class="user-list">${renderUserList(users.users)}</div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>⚙️ ${t('admin_render.background_jobs_heading')}</h3>
+                    <div class="admin-panel-box">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">🧠 ${t('admin_render.job_clip_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">👤 ${t('admin_render.job_face_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">🖼 ${t('admin_render.job_thumbnail_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">📍 ${t('admin_render.job_geocode_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">🎬 ${t('admin_render.job_transcode_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
+                            <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
+                        </div>
+                        <div id="job-list-container" style="max-height:260px;overflow-y:auto;border-top:1px solid var(--border-color);padding-top:12px">
+                            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">
+                                <span>${t('admin_render.recent_jobs_label')}</span>
+                                <span style="font-size:10px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
+                            </div>
+                            <div id="job-list-content">${t('common.loading')}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-tab-depolama" class="admin-tab-panel" ${activeAdminTab === 'depolama' ? '' : 'hidden'}>
+                <div class="admin-row">
+                    <div class="admin-section">
+                        <h3>📁 ${t('admin_render.storage_settings_heading')}</h3>
+                        <div id="storage-panel" class="admin-panel-box">
+                            <div>
+                                <label class="admin-field-label">${t('admin_render.main_storage_dir_label')}</label>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <input type="text" id="storage-path-input" value="${escHtml(storageConfig.data_dir)}" placeholder="${t('admin_render.storage_path_placeholder')}" style="flex:1">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="admin-field-label">${t('admin_render.tunnel_token_label')}</label>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <input type="password" id="storage-token-input" value="${escHtml(storageConfig.tunnel_token || '')}" placeholder="${t('admin_render.tunnel_token_placeholder')}" style="flex:1">
+                                </div>
+                                <p class="text-muted admin-field-hint">${t('admin_render.tunnel_token_hint')}</p>
+                            </div>
+                            <div>
+                                <label class="admin-field-label">${t('admin_render.custom_domain_label')}</label>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <input type="text" id="storage-domain-input" value="${escHtml(storageConfig.tunnel_custom_domain || '')}" placeholder="${t('admin_render.custom_domain_placeholder')}" style="flex:1">
+                                </div>
+                                <p class="text-muted admin-field-hint">${t('admin_render.custom_domain_hint')}</p>
+                            </div>
+                            <div>
+                                <label class="admin-field-label">${t('admin_render.storage_limit_label')}</label>
+                                <input type="number" id="storage-limit-input" value="${storageConfig.total_storage_limit_mb || 0}" min="0" style="width:100%">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <input type="checkbox" id="storage-autostart-input" ${storageConfig.auto_start_tunnel ? 'checked' : ''} style="width:auto;margin:0">
+                                <label for="storage-autostart-input" class="admin-checkbox-label">${t('admin_render.tunnel_autostart_label')}</label>
+                            </div>
+                            <div><button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button></div>
+                            <p class="text-muted admin-field-hint admin-field-hint--bordered">
+                                ${t('admin_render.db_location_hint', { path: `<code>${escHtml(storageConfig.db_dir)}</code>` })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>💾 ${t('admin_render.backup_heading')}</h3>
+                        <div class="admin-panel-box">
+                            <div>
+                                <label class="admin-field-label">${t('admin_render.backup_dir_label')}</label>
+                                <input type="text" id="backup-dir-input" value="${escHtml(backupSettings.backup_dir || '')}" placeholder="${t('admin_render.backup_dir_placeholder')}" style="width:100%">
+                                <p class="text-muted admin-field-hint">${t('admin_render.backup_dir_hint')}</p>
+                            </div>
+                            <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+                                <div>
+                                    <label class="admin-field-label">${t('admin_render.backup_interval_label')}</label>
+                                    <input type="number" id="backup-interval-input" value="${backupSettings.interval_hours || 24}" min="1" style="width:120px">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <input type="checkbox" id="backup-enabled-input" ${backupSettings.enabled ? 'checked' : ''} style="width:auto;margin:0">
+                                    <label for="backup-enabled-input" class="admin-checkbox-label">${t('admin_render.backup_enabled_label')}</label>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <button class="btn btn-primary" onclick="saveBackupConfig()">${t('admin_render.save_settings_btn')}</button>
+                                <button class="btn btn-secondary" onclick="runAdminJob('BACKUP')" title="${t('admin_render.backup_now_title')}">💾 ${t('admin_render.backup_now_btn')}</button>
+                            </div>
+                            <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="admin-section">
                     <h3>📂 ${t('admin_render.folder_import_heading')}</h3>
                     <p class="admin-section-desc">${t('admin_render.folder_import_desc')}</p>
@@ -448,67 +526,12 @@ async function renderAdmin() {
                 </div>
 
                 <div class="admin-section">
-                    <h3>🤖 ${t('admin_render.ml_status_heading')}</h3>
+                    <h3>⬆️ ${t('admin_render.updates_heading')}</h3>
                     <div class="admin-panel-box">
-                        <div style="display:flex;gap:12px;flex-wrap:wrap">
-                            <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                            <span class="badge ${stats.ml.face_detection_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_face_detection', { status: stats.ml.face_detection_available ? t('admin_render.status_active_opencv') : t('admin_render.status_unavailable') })}</span>
-                            <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                            <span class="badge ${stats.ffmpeg_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ffmpeg', { status: stats.ffmpeg_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                            <span class="badge ${stats.ml.geocoding_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_geocoding', { status: stats.ml.geocoding_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                        </div>
-                        ${!stats.ml.person_clustering_available ? `
-                            <p class="text-muted admin-field-hint">${t('admin_render.person_clustering_hint')}</p>
-                        ` : ''}
+                        <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
+                        <div id="update-status-container" style="margin-bottom:12px"></div>
+                        <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">🔍 ${t('admin_render.check_update_btn')}</button>
                     </div>
-                </div>
-            </div>
-
-            <div class="admin-section">
-                <h3>👥 ${t('admin_render.stat_users')}</h3>
-                <div class="user-list">${renderUserList(users.users)}</div>
-            </div>
-
-            <div class="admin-section">
-                <h3>⚙️ ${t('admin_render.background_jobs_heading')}</h3>
-                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-                    <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
-                    <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
-                    <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">🧠 ${t('admin_render.job_clip_btn')}</button>
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">👤 ${t('admin_render.job_face_btn')}</button>
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">🖼 ${t('admin_render.job_thumbnail_btn')}</button>
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">📍 ${t('admin_render.job_geocode_btn')}</button>
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">🎬 ${t('admin_render.job_transcode_btn')}</button>
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
-                    <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
-                    <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
-                </div>
-                <div id="job-list-container" class="admin-panel-box" style="max-height:300px;overflow-y:auto">
-                    <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">
-                        <span>${t('admin_render.recent_jobs_label')}</span>
-                        <span style="font-size:10px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
-                    </div>
-                    <div id="job-list-content">${t('common.loading')}</div>
-                </div>
-            </div>
-
-            <div class="admin-section">
-                <h3>⬆️ ${t('admin_render.updates_heading')}</h3>
-                <div class="admin-panel-box">
-                    <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
-                    <div id="update-status-container" style="margin-bottom:12px"></div>
-                    <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">🔍 ${t('admin_render.check_update_btn')}</button>
-                </div>
-            </div>
-
-            <div class="admin-section">
-                <h3>🔌 ${t('admin_render.server_control_heading')}</h3>
-                <div class="admin-panel-box">
-                    <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
-                    <button class="btn btn-danger btn-sm" onclick="shutdownServer()">🛑 ${t('admin_render.shutdown_server_btn')}</button>
                 </div>
             </div>
         `;
@@ -522,6 +545,18 @@ async function renderAdmin() {
         }
 
     } catch (e) { toast(e.message, 'error'); }
+}
+
+let activeAdminTab = 'genel';
+
+function switchAdminTab(tabName) {
+    activeAdminTab = tabName;
+    document.querySelectorAll('.admin-tab-panel').forEach(el => {
+        el.hidden = el.id !== `admin-tab-${tabName}`;
+    });
+    document.querySelectorAll('.admin-tab-btn').forEach(el => {
+        el.classList.toggle('active', el.dataset.tab === tabName);
+    });
 }
 
 function renderBackupStatusLine(backupSettings) {

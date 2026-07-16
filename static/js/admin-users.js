@@ -115,7 +115,7 @@ registerTranslations({
 function renderUserList(users) {
     return users.map(u => `
         <div class="user-item admin-user-item">
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div class="user-item-header">
                 <div class="user-avatar">${u.name.charAt(0).toUpperCase()}</div>
                 <div class="user-item-info">
                     <div class="user-item-name">
@@ -127,10 +127,11 @@ function renderUserList(users) {
                             </span>
                         ` : ''}
                     </div>
-                    <div class="user-item-email">${u.email} · ${t('admin_users.item_count', { count: u.asset_count })} · ${formatSize(u.total_size)} / ${u.storage_quota_mb > 0 ? u.storage_quota_mb + ' MB' : t('admin_users.unlimited')} ${t('admin_users.quota_suffix')}</div>
+                    <div class="user-item-email">${u.email}</div>
                 </div>
             </div>
-            <div style="display:flex; gap:8px; align-items:center;">
+            <div class="user-item-email">${t('admin_users.item_count', { count: u.asset_count })} · ${formatSize(u.total_size)} / ${u.storage_quota_mb > 0 ? u.storage_quota_mb + ' MB' : t('admin_users.unlimited')} ${t('admin_users.quota_suffix')}</div>
+            <div class="user-item-actions">
                 ${!u.is_admin ? `
                     <button class="btn btn-secondary btn-sm" onclick="toggleUserApproval('${u.id}', ${u.is_approved})">
                         ${u.is_approved ? t('admin_users.revoke_approval') : t('admin_users.approve')}
