@@ -205,17 +205,31 @@ async def get_visual_duplicate_groups(
             or_(Asset.city.ilike(f"%{location}%"), Asset.country.ilike(f"%{location}%"))
         )
 
-    result = await db.execute(select(Asset).where(and_(*conditions)))
-    assets = list(result.scalars().all())
-    assets_by_id = {a.id: a for a in assets}
+    # Column-only select for the clustering pass - the DBSCAN pass below
+    # only ever reads (id, embedding_path); every image in the library with
+    # an embedding doesn't need to be materialized as a full Asset ORM
+    # object just for that; only the (typically much smaller) set that
+    # actually ends up in a cluster gets fetched as full rows below.
+    result = await db.execute(select(Asset.id, Asset.clip_embedding_path).where(and_(*conditions)))
+    items = [(aid, path) for aid, path in result.all()]
 
-    items = [(a.id, a.clip_embedding_path) for a in assets]
     clusters = await asyncio.to_thread(_cluster_by_visual_similarity, items, VISUAL_DUP_THRESHOLD)
+
+    clustered_ids = {aid for asset_ids, _ in clusters for aid in asset_ids}
+    assets_by_id = {}
+    if clustered_ids:
+        full_result = await db.execute(select(Asset).where(Asset.id.in_(clustered_ids)))
+        assets_by_id = {a.id: a for a in full_result.scalars().all()}
 
     groups = []
     for asset_ids, avg_sim in clusters:
         key = _visual_group_key(asset_ids)
-        cluster_assets = [assets_by_id[aid] for aid in asset_ids]
+        cluster_assets = [assets_by_id[aid] for aid in asset_ids if aid in assets_by_id]
+        if not cluster_assets:
+            # An asset in this cluster was deleted between the two queries
+            # above - vanishingly rare, but cluster_assets[0] below would
+            # otherwise crash the whole request over one stale group.
+            continue
         dates = [a.taken_at or a.created_at for a in cluster_assets if a.taken_at or a.created_at]
         groups.append({
             "checksum": key,

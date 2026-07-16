@@ -87,9 +87,13 @@ async def search_smart(
     if not CLIP_AVAILABLE:
         return [(a, 1.0) for a in metadata_assets]
 
-    # Get all assets with CLIP embeddings
+    # Column-only select for the scoring pass - every search request (this
+    # runs on every debounced keystroke from the UI) doesn't need to
+    # materialize a full Asset ORM object, with every column, for
+    # potentially thousands of embeddings just to read two fields off each
+    # and throw the rest away.
     stmt = (
-        select(Asset)
+        select(Asset.id, Asset.clip_embedding_path)
         .where(
             and_(
                 Asset.user_id == user_id,
@@ -99,21 +103,24 @@ async def search_smart(
         )
     )
     result = await db.execute(stmt)
-    assets = list(result.scalars().all())
+    embedding_data = [(aid, path) for aid, path in result.all()]
 
     # Metadata matches always lead (exact match beats a fuzzy visual guess),
     # then CLIP results fill the rest of the limit, skipping duplicates.
     results = [(a, 1.0) for a in metadata_assets]
 
-    if assets:
-        embedding_data = [(a.id, a.clip_embedding_path) for a in assets]
+    if embedding_data:
         import asyncio
         scored = await asyncio.to_thread(search_by_text, query, embedding_data, limit)
-        asset_map = {a.id: a for a in assets}
-        for asset_id, score in scored:
-            if asset_id in metadata_ids:
-                continue
-            if asset_id in asset_map and score > 0.15:  # Minimum relevance threshold
-                results.append((asset_map[asset_id], score))
+        top_scores = {aid: score for aid, score in scored if aid not in metadata_ids and score > 0.15}
+        if top_scores:
+            # Only the actual top-K results get fetched as full Asset rows.
+            top_result = await db.execute(select(Asset).where(Asset.id.in_(top_scores.keys())))
+            asset_map = {a.id: a for a in top_result.scalars().all()}
+            # scored is already sorted best-first (see search_by_text) -
+            # iterate it, not the DB fetch above, to keep that ranking.
+            for asset_id, score in scored:
+                if asset_id in top_scores and asset_id in asset_map:
+                    results.append((asset_map[asset_id], score))
 
     return results[:limit] if len(results) > limit else results

@@ -2,6 +2,7 @@
 fixed-chronological Timeline). Reuses the same {groups:[{display_date, assets}]}
 response shape as get_timeline_data so the frontend can share rendering code.
 """
+from datetime import datetime
 from typing import Optional
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -89,20 +90,31 @@ async def _get_year_month_grid(
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
     _apply_filter(conditions, filter_by)
 
-    all_assets = list((await db.execute(
-        select(Asset).where(and_(*conditions)).order_by(SORT_COLUMNS.get(sort_by, SORT_COLUMNS["date_desc"]))
-    )).scalars().all())
-
-    years_present = sorted({(a.taken_at or a.created_at).year for a in all_assets}, reverse=True)
+    # Only the list of years that actually have photos is needed up front -
+    # every asset in the library doesn't need to be loaded (as full ORM
+    # rows, sorted, no less) just to read one field off each and throw the
+    # rest away. SQLite's strftime does the year extraction in the query.
+    date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
+    years_result = await db.execute(
+        select(func.strftime("%Y", date_expr)).where(and_(*conditions)).distinct()
+    )
+    years_present = sorted({int(y) for (y,) in years_result.all() if y}, reverse=True)
     if not years_present or year_page > len(years_present):
         return {"groups": [], "total": len(years_present), "page": year_page, "per_page": 1, "total_pages": len(years_present)}
 
     year = years_present[year_page - 1]
+    year_start = datetime(year, 1, 1)
+    year_end = datetime(year + 1, 1, 1)
+    year_conditions = conditions + [date_expr >= year_start, date_expr < year_end]
+
+    year_assets = list((await db.execute(
+        select(Asset).where(and_(*year_conditions)).order_by(SORT_COLUMNS.get(sort_by, SORT_COLUMNS["date_desc"]))
+    )).scalars().all())
+
     months = [{"month": m, "display_date": config.LOCALE_MONTH_NAMES.get(m, ""), "assets": []} for m in range(1, 13)]
-    for asset in all_assets:
+    for asset in year_assets:
         dt = asset.taken_at or asset.created_at
-        if dt.year == year:
-            months[dt.month - 1]["assets"].append(asset_to_dict(asset))
+        months[dt.month - 1]["assets"].append(asset_to_dict(asset))
 
     return {
         "groups": [{"year": year, "months": months}],
