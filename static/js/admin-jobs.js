@@ -229,3 +229,47 @@ async function shutdownServer() {
         // error worth surfacing.
     }
 }
+
+async function checkForUpdate() {
+    const container = $('update-status-container');
+    container.innerHTML = `<p class="text-muted">${t('admin_render.checking_updates_msg')}</p>`;
+    try {
+        const data = await API.checkForUpdate();
+        if (data.error) {
+            // Backend-generated message, deliberately left untranslated -
+            // same convention as every other e.message/data.message surface.
+            container.innerHTML = `<p class="text-muted">${escHtml(data.error)}</p>`;
+            return;
+        }
+        if (!data.available) {
+            container.innerHTML = `<p class="text-muted">✅ ${t('admin_render.up_to_date_msg', { commit: data.current_commit || '?' })}</p>`;
+            return;
+        }
+        const changelogHtml = (data.changelog || [])
+            .map(line => `<div style="font-size:12px;color:var(--text-secondary)">${escHtml(line)}</div>`)
+            .join('');
+        container.innerHTML = `
+            <p>⬆️ ${t('admin_render.update_available_msg', {
+                count: data.commits_behind,
+                current: data.current_commit,
+                latest: data.latest_commit,
+            })}</p>
+            <div style="max-height:200px;overflow-y:auto;margin:8px 0;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-md)">${changelogHtml}</div>
+            <button class="btn btn-primary btn-sm" onclick="applyUpdate()">⬆️ ${t('admin_render.apply_update_btn')}</button>
+        `;
+    } catch (e) {
+        container.innerHTML = `<p class="text-muted">${escHtml(e.message)}</p>`;
+    }
+}
+
+async function applyUpdate() {
+    if (!confirm(t('admin_render.confirm_apply_update'))) return;
+    toast(t('admin_render.applying_update_msg'), 'success');
+    try {
+        await API.applyUpdate();
+    } catch (e) {
+        // Same reasoning as shutdownServer() - a successful update ends
+        // with the process exiting, so the fetch failing is expected here
+        // too, not necessarily a real error.
+    }
+}

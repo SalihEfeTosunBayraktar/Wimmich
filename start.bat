@@ -40,13 +40,26 @@ if not exist "venv" goto :noenv
 
 call venv\Scripts\activate.bat
 
+REM :run_server / RESTART_EXIT_CODE loop for the admin panel's "Update Now"
+REM button - after pulling + reinstalling, main.py exits with code 42 to
+REM ask to be relaunched instead of just ending here. Plain top-level goto,
+REM same reasoning as the if/else comment above - no parens, so nothing
+REM here can trip that same parser trap.
+:run_server
 echo.
 echo Starting server...
 echo.
 python main.py
-
+set "WIMMICH_EXIT_CODE=%errorlevel%"
+if "%WIMMICH_EXIT_CODE%"=="42" goto :restart_server
 pause
 goto :eof
+
+:restart_server
+echo.
+echo Update applied - restarting...
+echo.
+goto :run_server
 
 :noenv
 echo   No virtual environment found yet - this looks like a first run.

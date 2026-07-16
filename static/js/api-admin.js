@@ -16,6 +16,8 @@ Object.assign(API, {
     cancelJob(jobId) { return this.request(`/api/admin/jobs/${jobId}/cancel`, { method: 'POST' }); },
     cancelAllJobs() { return this.request('/api/admin/jobs/cancel-all', { method: 'POST' }); },
     shutdownServer() { return this.request('/api/admin/shutdown', { method: 'POST' }); },
+    checkForUpdate() { return this.request('/api/admin/update/check'); },
+    applyUpdate() { return this.request('/api/admin/update/apply', { method: 'POST' }); },
 
     // Tunnel
     getTunnelStatus() { return this.request('/api/tunnel/status'); },

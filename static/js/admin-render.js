@@ -74,6 +74,15 @@ registerTranslations({
         'admin_render.shutdown_server_hint': 'Cleanly stops background jobs and the tunnel, frees GPU/CPU memory, then exits - the safe alternative to closing this window while a job is running.',
         'admin_render.confirm_shutdown': 'Shut down the server now? Any running background job will be stopped first.',
         'admin_render.shutting_down_message': 'Shutting down - freeing memory and stopping the server...',
+        'admin_render.updates_heading': 'Updates',
+        'admin_render.check_update_btn': 'Check for Updates',
+        'admin_render.checking_updates_msg': 'Checking for updates...',
+        'admin_render.up_to_date_msg': "You're up to date ({commit})",
+        'admin_render.update_available_msg': 'Update available - {count} new commit(s) ({current} → {latest})',
+        'admin_render.apply_update_btn': 'Update Now',
+        'admin_render.confirm_apply_update': 'Pull the latest code, reinstall dependencies, and restart the server now?',
+        'admin_render.applying_update_msg': 'Updating - this can take a moment, the server will restart automatically...',
+        'admin_render.git_pull_only_hint': 'Only works on an install set up with git clone - pulls from the GitHub repo it was cloned from.',
     },
     tr: {
         'admin_render.stat_photos': 'Fotoğraf',
@@ -147,6 +156,15 @@ registerTranslations({
         'admin_render.shutdown_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, GPU/CPU belleğini boşaltır, sonra kapatır — bir iş çalışırken bu pencereyi kapatmaya güvenli bir alternatif.',
         'admin_render.confirm_shutdown': 'Sunucu şimdi kapatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
         'admin_render.shutting_down_message': 'Kapatılıyor — bellek boşaltılıyor ve sunucu durduruluyor...',
+        'admin_render.updates_heading': 'Güncellemeler',
+        'admin_render.check_update_btn': 'Güncellemeleri Kontrol Et',
+        'admin_render.checking_updates_msg': 'Güncellemeler kontrol ediliyor...',
+        'admin_render.up_to_date_msg': 'Güncelsiniz ({commit})',
+        'admin_render.update_available_msg': 'Güncelleme mevcut — {count} yeni commit ({current} → {latest})',
+        'admin_render.apply_update_btn': 'Şimdi Güncelle',
+        'admin_render.confirm_apply_update': 'En son kod çekilsin, bağımlılıklar yeniden kurulsun ve sunucu yeniden başlatılsın mı?',
+        'admin_render.applying_update_msg': 'Güncelleniyor — bu biraz sürebilir, sunucu otomatik olarak yeniden başlayacak...',
+        'admin_render.git_pull_only_hint': 'Sadece git clone ile kurulmuş bir kopyada çalışır — klonlandığı GitHub deposundan çeker.',
     },
     fr: {
         'admin_render.stat_photos': 'Photos',
@@ -220,6 +238,15 @@ registerTranslations({
         'admin_render.shutdown_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, libère la mémoire GPU/CPU, puis quitte - l'alternative sûre à la fermeture de cette fenêtre pendant qu'une tâche est en cours.",
         'admin_render.confirm_shutdown': "Arrêter le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
         'admin_render.shutting_down_message': 'Arrêt en cours - libération de la mémoire et arrêt du serveur...',
+        'admin_render.updates_heading': 'Mises à jour',
+        'admin_render.check_update_btn': 'Vérifier les mises à jour',
+        'admin_render.checking_updates_msg': 'Vérification des mises à jour...',
+        'admin_render.up_to_date_msg': 'Vous êtes à jour ({commit})',
+        'admin_render.update_available_msg': 'Mise à jour disponible - {count} nouveau(x) commit(s) ({current} → {latest})',
+        'admin_render.apply_update_btn': 'Mettre à jour maintenant',
+        'admin_render.confirm_apply_update': 'Récupérer le dernier code, réinstaller les dépendances et redémarrer le serveur maintenant ?',
+        'admin_render.applying_update_msg': 'Mise à jour en cours - cela peut prendre un moment, le serveur redémarrera automatiquement...',
+        'admin_render.git_pull_only_hint': "Fonctionne uniquement sur une installation faite avec git clone - récupère depuis le dépôt GitHub d'origine.",
     },
     de: {
         'admin_render.stat_photos': 'Fotos',
@@ -293,6 +320,15 @@ registerTranslations({
         'admin_render.shutdown_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber, gibt GPU-/CPU-Speicher frei und beendet dann - die sichere Alternative zum Schließen dieses Fensters, während eine Aufgabe läuft.',
         'admin_render.confirm_shutdown': 'Server jetzt herunterfahren? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
         'admin_render.shutting_down_message': 'Wird heruntergefahren - Speicher wird freigegeben und der Server gestoppt...',
+        'admin_render.updates_heading': 'Updates',
+        'admin_render.check_update_btn': 'Nach Updates suchen',
+        'admin_render.checking_updates_msg': 'Suche nach Updates...',
+        'admin_render.up_to_date_msg': 'Sie sind auf dem neuesten Stand ({commit})',
+        'admin_render.update_available_msg': 'Update verfügbar - {count} neue(r) Commit(s) ({current} → {latest})',
+        'admin_render.apply_update_btn': 'Jetzt aktualisieren',
+        'admin_render.confirm_apply_update': 'Neuesten Code abrufen, Abhängigkeiten neu installieren und Server jetzt neu starten?',
+        'admin_render.applying_update_msg': 'Wird aktualisiert - dies kann einen Moment dauern, der Server startet automatisch neu...',
+        'admin_render.git_pull_only_hint': 'Funktioniert nur bei einer mit git clone eingerichteten Installation - ruft vom ursprünglichen GitHub-Repository ab.',
     },
 });
 
@@ -456,6 +492,15 @@ async function renderAdmin() {
                         <span style="font-size:10px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
                     </div>
                     <div id="job-list-content">${t('common.loading')}</div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3>⬆️ ${t('admin_render.updates_heading')}</h3>
+                <div class="admin-panel-box">
+                    <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
+                    <div id="update-status-container" style="margin-bottom:12px"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">🔍 ${t('admin_render.check_update_btn')}</button>
                 </div>
             </div>
 

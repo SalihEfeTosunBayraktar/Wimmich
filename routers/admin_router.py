@@ -117,29 +117,40 @@ async def shutdown_server(
     reclaims several GB of abruptly-orphaned CUDA memory in one go instead
     of it being released in an orderly way first.
     """
-    import asyncio
-    import gc
-    import os
+    from services.shutdown_service import graceful_cleanup, schedule_exit
 
-    from services.job_service import job_worker
-    from services.tunnel_service import stop_tunnel
+    await graceful_cleanup()
+    schedule_exit(0)
+    return {"message": "Sunucu kapatılıyor"}
 
-    await job_worker.stop()
-    await stop_tunnel()
+
+@router.get("/update/check")
+async def check_for_update(
+    admin: User = Depends(get_admin_user),
+):
+    """Check the GitHub remote for commits not yet applied locally -
+    read-only, doesn't change anything."""
+    from services.update_service import check_for_updates
+
+    return await check_for_updates()
+
+
+@router.post("/update/apply")
+async def apply_update(
+    admin: User = Depends(get_admin_user),
+):
+    """Pull the latest code + reinstall base dependencies, then restart the
+    process - start.bat's loop relaunches it automatically on the special
+    exit code below, same graceful cleanup as /shutdown otherwise."""
+    from fastapi import HTTPException
+    from services.update_service import apply_update as apply_update_service
+    from services.shutdown_service import graceful_cleanup, schedule_exit, RESTART_EXIT_CODE
 
     try:
-        import torch
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-    except ImportError:
-        pass
-    gc.collect()
+        result = await apply_update_service()
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    async def _exit_after_response():
-        # Give the HTTP response time to actually reach the browser before
-        # the process disappears out from under the connection.
-        await asyncio.sleep(0.5)
-        os._exit(0)
-
-    asyncio.create_task(_exit_after_response())
-    return {"message": "Sunucu kapatılıyor"}
+    await graceful_cleanup()
+    schedule_exit(RESTART_EXIT_CODE)
+    return result
