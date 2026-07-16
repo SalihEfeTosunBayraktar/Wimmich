@@ -20,10 +20,17 @@ if exist "banner.ans" type "banner.ans"
 REM Stop any previous Wimmich server/tunnel still running, so double-clicking
 REM this file never ends up with orphaned python.exe processes piling up -
 REM each one holds its own copy of the ML models in memory/VRAM.
+REM
+REM Scoped to THIS install's own venv/data folder, not just "any python.exe
+REM running main.py" or "any cloudflared.exe" - those match every Wimmich
+REM install on the machine, so the old blanket match killed a second
+REM install's server/tunnel too even when it was running on a different
+REM port. Each install has its own venv and its own data\cloudflared.exe,
+REM so matching on the full executable path tells them apart.
 
 echo Stopping any previous Wimmich instances...
-powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*main.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
-taskkill /F /IM cloudflared.exe >nul 2>&1
+powershell -NoProfile -Command "$py = '%~dp0venv\Scripts\python.exe'; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*main.py*' -and $_.ExecutablePath -eq $py } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+powershell -NoProfile -Command "$cf = '%~dp0data\cloudflared.exe'; Get-CimInstance Win32_Process -Filter \"Name='cloudflared.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.ExecutablePath -eq $cf } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 
 REM No venv yet means this is a first run - point at the two explicit
 REM installers instead of silently picking one. install_full.bat pulls in
