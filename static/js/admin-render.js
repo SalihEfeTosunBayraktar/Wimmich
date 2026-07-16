@@ -429,9 +429,9 @@ async function renderAdmin() {
 
             <div id="admin-tab-depolama" class="admin-tab-panel" ${activeAdminTab === 'depolama' ? '' : 'hidden'}>
                 <div class="admin-row">
-                    <div class="admin-section">
-                        <h3>📁 ${t('admin_render.storage_settings_heading')}</h3>
-                        <div id="storage-panel" class="admin-panel-box">
+                    <div class="admin-status-card">
+                        <h4>📁 ${t('admin_render.storage_settings_heading')}</h4>
+                        <div id="storage-panel" style="display:flex;flex-direction:column;gap:12px">
                             <div>
                                 <label class="admin-field-label">${t('admin_render.main_storage_dir_label')}</label>
                                 <div style="display:flex;gap:8px;align-items:center">
@@ -467,9 +467,9 @@ async function renderAdmin() {
                         </div>
                     </div>
 
-                    <div class="admin-section">
-                        <h3>💾 ${t('admin_render.backup_heading')}</h3>
-                        <div class="admin-panel-box">
+                    <div class="admin-status-card">
+                        <h4>💾 ${t('admin_render.backup_heading')}</h4>
+                        <div style="display:flex;flex-direction:column;gap:12px">
                             <div>
                                 <label class="admin-field-label">${t('admin_render.backup_dir_label')}</label>
                                 <input type="text" id="backup-dir-input" value="${escHtml(backupSettings.backup_dir || '')}" placeholder="${t('admin_render.backup_dir_placeholder')}" style="width:100%">
@@ -492,33 +492,31 @@ async function renderAdmin() {
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>
                         </div>
                     </div>
-                </div>
 
-                <div class="admin-section">
-                    <h3>📂 ${t('admin_render.folder_import_heading')}</h3>
-                    <p class="admin-section-desc">${t('admin_render.folder_import_desc')}</p>
-                    <div id="import-panel" class="admin-panel-box">
-                        <div id="file-browser">
-                            <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-                                <input type="text" id="browse-path" placeholder="${t('admin_render.browse_path_placeholder')}" style="flex:1">
-                                <button class="btn btn-secondary btn-sm" onclick="browsePath($('browse-path').value)">${t('admin_render.go_btn')}</button>
-                                <button class="btn btn-primary btn-sm" onclick="scanImportPath()">${t('admin_render.scan_btn')}</button>
+                    <div class="admin-status-card">
+                        <h4>📂 ${t('admin_render.folder_import_heading')}</h4>
+                        <p class="admin-section-desc" style="margin:0">${t('admin_render.folder_import_desc')}</p>
+                        <div id="import-panel" style="display:flex;flex-direction:column;gap:12px">
+                            <div id="file-browser">
+                                <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+                                    <input type="text" id="browse-path" placeholder="${t('admin_render.browse_path_placeholder')}" style="flex:1">
+                                    <button class="btn btn-secondary btn-sm" onclick="browsePath($('browse-path').value)">${t('admin_render.go_btn')}</button>
+                                    <button class="btn btn-primary btn-sm" onclick="scanImportPath()">${t('admin_render.scan_btn')}</button>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-bottom:12px">
+                                    <label class="checkbox-label"><input type="checkbox" id="import-copy" checked> ${t('admin_render.import_copy_label')}</label>
+                                    <label class="checkbox-label" style="margin-left:16px"><input type="checkbox" id="import-recursive" checked> ${t('admin_render.import_recursive_label')}</label>
+                                </div>
+                                <div id="browse-results" style="max-height:220px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px"></div>
+                                <div id="scan-results" style="margin-top:12px"></div>
                             </div>
-                            <div style="display:flex;gap:8px;margin-bottom:12px">
-                                <label class="checkbox-label"><input type="checkbox" id="import-copy" checked> ${t('admin_render.import_copy_label')}</label>
-                                <label class="checkbox-label" style="margin-left:16px"><input type="checkbox" id="import-recursive" checked> ${t('admin_render.import_recursive_label')}</label>
-                            </div>
-                            <div id="browse-results" style="max-height:350px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px"></div>
-                            <div id="scan-results" style="margin-top:12px"></div>
                         </div>
                     </div>
-                </div>
 
-                <div class="admin-section">
-                    <h3>⬆️ ${t('admin_render.updates_heading')}</h3>
-                    <div class="admin-panel-box">
+                    <div class="admin-status-card">
+                        <h4>⬆️ ${t('admin_render.updates_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
-                        <div id="update-status-container" style="margin-bottom:12px"></div>
+                        <div id="update-status-container"></div>
                         <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">🔍 ${t('admin_render.check_update_btn')}</button>
                     </div>
                 </div>
