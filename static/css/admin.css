@@ -112,6 +112,14 @@
     color: var(--text-secondary);
     margin: 0;
 }
+/* Jobs tile needs a bit more width for its button row than the other
+   tiles, but still a contained square-ish box, not a full-width bar. */
+.admin-status-card--jobs {
+    grid-column: span 2;
+}
+@media (max-width: 600px) {
+    .admin-status-card--jobs { grid-column: span 1; }
+}
 
 /* ─── Admin tabs (Genel / Depolama & Sistem) ─────────────── */
 .admin-tabs {

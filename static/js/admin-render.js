@@ -382,12 +382,24 @@ async function renderAdmin() {
                     ` : ''}
                 </div>
 
-                <div class="admin-status-card">
+                <div class="admin-status-card admin-status-card--jobs">
                     <h4>⚙️ ${t('admin_render.jobs_status_card_heading')}</h4>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
-                        <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
-                        <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">🧠 ${t('admin_render.job_clip_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">👤 ${t('admin_render.job_face_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">🖼 ${t('admin_render.job_thumbnail_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">📍 ${t('admin_render.job_geocode_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">🎬 ${t('admin_render.job_transcode_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
+                    </div>
+                    <div id="job-list-container" style="max-height:160px;overflow-y:auto;border-top:1px solid var(--border-color);padding-top:8px">
+                        <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">
+                            <span>${t('admin_render.recent_jobs_label')}</span>
+                            <span style="font-size:9px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
+                        </div>
+                        <div id="job-list-content">${t('common.loading')}</div>
                     </div>
                 </div>
 
@@ -412,29 +424,6 @@ async function renderAdmin() {
                 <div class="admin-section">
                     <h3>👥 ${t('admin_render.stat_users')}</h3>
                     <div class="user-list">${renderUserList(users.users)}</div>
-                </div>
-
-                <div class="admin-section">
-                    <h3>⚙️ ${t('admin_render.background_jobs_heading')}</h3>
-                    <div class="admin-panel-box">
-                        <div style="display:flex;gap:8px;flex-wrap:wrap">
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">🧠 ${t('admin_render.job_clip_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">👤 ${t('admin_render.job_face_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">🖼 ${t('admin_render.job_thumbnail_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">📍 ${t('admin_render.job_geocode_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">🎬 ${t('admin_render.job_transcode_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
-                            <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
-                        </div>
-                        <div id="job-list-container" style="max-height:260px;overflow-y:auto;border-top:1px solid var(--border-color);padding-top:12px">
-                            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">
-                                <span>${t('admin_render.recent_jobs_label')}</span>
-                                <span style="font-size:10px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
-                            </div>
-                            <div id="job-list-content">${t('common.loading')}</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 

@@ -37,7 +37,7 @@ async function pollAdminJobs() {
         if (!content) return;
 
         if (!data.jobs || !data.jobs.length) {
-            content.innerHTML = `<p class="text-muted" style="font-size:13px;margin:0;padding:24px 0;text-align:center">${t('admin.no_jobs')}</p>`;
+            content.innerHTML = `<p class="text-muted" style="font-size:12px;margin:0;padding:8px 0;text-align:center">${t('admin.no_jobs')}</p>`;
             return;
         }
 
