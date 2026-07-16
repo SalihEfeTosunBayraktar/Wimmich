@@ -104,7 +104,7 @@ pip install scikit-learn
 ## Installation
 
 ```
-git clone <repo-url>
+git clone https://github.com/SalihEfeTosunBayraktar/Wimmich.git
 cd Wimmich
 ```
 
