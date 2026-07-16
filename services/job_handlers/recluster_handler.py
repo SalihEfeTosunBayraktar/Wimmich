@@ -15,7 +15,7 @@ from services.face_service import FACE_AVAILABLE
 async def handle_job_recluster(db: AsyncSession, job: Job):
     if not FACE_AVAILABLE:
         raise RuntimeError(
-            "Kişi eşleştirme için face_recognition kütüphanesi gerekli - "
+            "Kişi eşleştirme için facenet-pytorch kütüphanesi gerekli - "
             "yeniden kümeleme yapılamadı."
         )
 

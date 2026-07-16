@@ -84,6 +84,6 @@ async def handle_job_face(db: AsyncSession, job: Job):
     # The OpenCV Haar Cascade fallback only locates faces - its crude embedding
     # (a resized grayscale patch) isn't discriminative enough to reliably tell
     # different people apart, so only cluster into named Person groups when
-    # the real face_recognition library is available.
+    # the real facenet-pytorch library is available.
     if user_id and FACE_AVAILABLE:
         await cluster_user_faces(db, user_id)

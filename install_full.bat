@@ -74,8 +74,17 @@ if errorlevel 1 goto :torch_failed
 echo   Installing CLIP (semantic search)...
 pip install open_clip_torch
 
+REM --no-deps only on facenet-pytorch itself (it pins old torch/numpy/Pillow
+REM versions that conflict with what CLIP above needs) - requests is
+REM installed as a normal, separate command so ITS OWN dependencies
+REM (urllib3, certifi, charset_normalizer) actually get installed too.
+REM Putting requests on the same --no-deps line as facenet-pytorch (as
+REM this used to do) silently skipped those and broke the import with
+REM "No module named 'urllib3'" - face recognition would report as
+REM completely unavailable despite installing without any visible error.
 echo   Installing face recognition...
-pip install facenet-pytorch requests --no-deps
+pip install facenet-pytorch --no-deps
+pip install requests
 pip install scikit-learn
 
 echo.

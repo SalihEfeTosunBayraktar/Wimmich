@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
             pass
         print(f"  Face recognition available [{face_device}]")
     else:
-        print("  Face recognition not available (install face-recognition)")
+        print("  Face recognition not available (install facenet-pytorch)")
 
     # Check FFmpeg
     from utils.video_utils import is_ffmpeg_available

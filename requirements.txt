@@ -12,7 +12,6 @@ aiosqlite>=0.20.0
 # Auth
 pyjwt>=2.9.0
 bcrypt>=4.2.0
-passlib[bcrypt]>=1.7.4
 
 # Image Processing
 Pillow>=11.0.0
@@ -26,8 +25,9 @@ exifread>=3.0.0
 reverse_geocoder>=1.5.1
 pycountry>=24.6.1
 
-# ML - Optional (install separately for AI features)
-# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121  (or the CPU wheel if no GPU)
+# ML - Optional (install separately for AI features, see install_full.bat -
+# it tries a chain of recent CUDA build tags since a single pinned one goes
+# stale as PyTorch drops support for it under newer Python versions)
 # pip install open_clip_torch
 #   Provides multilingual CLIP search (config.ML_CLIP_MODEL): LAION's
 #   ViT-H/14 image tower jointly trained with a frozen XLM-Roberta-Large
