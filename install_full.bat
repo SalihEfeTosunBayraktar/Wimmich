@@ -41,9 +41,17 @@ set /p GPU_CHOICE="  Do you have an Cuda Supported GPU (CUDA)? [Y/n]: "
 if /i "%GPU_CHOICE%"=="n" goto :install_cpu_torch
 
 echo   Installing CUDA-accelerated PyTorch (cu121)...
-echo   If this fails, your GPU/driver may need a different CUDA version -
-echo   see https://pytorch.org/get-started/locally/ for the right command.
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+if not errorlevel 1 goto :after_torch
+
+REM cu121 is a specific, aging CUDA build tag - it stops offering wheels
+REM for newer Python versions well before PyTorch itself does. Falling
+REM back to the default PyPI build instead of hard-failing here, since
+REM that index tracks whatever's current and usually still ships CUDA
+REM support for Windows.
+echo   That didn't work for this Python version - falling back to the
+echo   default PyPI build instead (still CUDA-capable on Windows)...
+pip install torch torchvision
 goto :after_torch
 
 :install_cpu_torch
