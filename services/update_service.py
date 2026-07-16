@@ -43,11 +43,13 @@ async def check_for_updates() -> dict:
     if fetch_result.returncode != 0:
         return {"available": False, "error": f"Güncellemeler kontrol edilemedi: {fetch_result.stderr.strip()}"}
 
-    branch_result = await asyncio.to_thread(_run_git, ["rev-parse", "--abbrev-ref", "HEAD"])
-    branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "main"
-
+    # Always origin/main specifically, not "whatever the local branch is
+    # named" - this only ever needs to compare against this project's own
+    # known default branch on GitHub, and assuming the two names match
+    # breaks on any install whose local branch isn't literally "main" (e.g.
+    # a plain `git init` defaults to "master" on some git installs/versions).
     local = await asyncio.to_thread(_run_git, ["rev-parse", "HEAD"])
-    remote = await asyncio.to_thread(_run_git, ["rev-parse", f"origin/{branch}"])
+    remote = await asyncio.to_thread(_run_git, ["rev-parse", "origin/main"])
     if local.returncode != 0 or remote.returncode != 0:
         return {"available": False, "error": "Yerel/uzak commit bilgisi okunamadı."}
 
@@ -86,10 +88,14 @@ async def apply_update() -> dict:
             "commit edin veya geri alın (git status ile kontrol edin)."
         )
 
+    # Explicit origin/main, not a bare `git pull` - a plain `git init` install
+    # has no upstream tracking branch configured, so a bare pull would just
+    # fail with "no tracking information" (or pull the wrong thing if the
+    # local branch happens to be named something other than "main").
     # --ff-only: refuse to create a merge commit rather than silently produce
     # one on a diverged history - the status check above already rules out
     # the common case, this is a safety net against anything unexpected.
-    pull_result = await asyncio.to_thread(_run_git, ["pull", "--ff-only"], 60)
+    pull_result = await asyncio.to_thread(_run_git, ["pull", "--ff-only", "origin", "main"], 60)
     if pull_result.returncode != 0:
         raise RuntimeError(f"git pull başarısız: {pull_result.stderr.strip()}")
 
