@@ -22,6 +22,12 @@ registerTranslations({
         'admin_users.user_deleted': 'User deleted successfully',
         'admin_users.user_approved': 'User approved',
         'admin_users.user_approval_revoked': "User's approval revoked",
+        'admin_users.make_admin': 'Make Admin',
+        'admin_users.remove_admin': 'Remove Admin',
+        'admin_users.confirm_make_admin': 'Grant this user full admin access to the server?',
+        'admin_users.confirm_remove_admin': "Remove this user's admin access?",
+        'admin_users.admin_granted': 'Admin access granted',
+        'admin_users.admin_revoked': 'Admin access removed',
     },
     tr: {
         'admin_users.badge_admin': 'Admin',
@@ -43,6 +49,12 @@ registerTranslations({
         'admin_users.user_deleted': 'Kullanıcı başarıyla silindi',
         'admin_users.user_approved': 'Kullanıcı onaylandı',
         'admin_users.user_approval_revoked': 'Kullanıcı onayı kaldırıldı',
+        'admin_users.make_admin': 'Yönetici Yap',
+        'admin_users.remove_admin': 'Yöneticiliği Kaldır',
+        'admin_users.confirm_make_admin': 'Bu kullanıcıya sunucuda tam yöneticilik yetkisi verilsin mi?',
+        'admin_users.confirm_remove_admin': 'Bu kullanıcının yöneticilik yetkisi kaldırılsın mı?',
+        'admin_users.admin_granted': 'Yöneticilik yetkisi verildi',
+        'admin_users.admin_revoked': 'Yöneticilik yetkisi kaldırıldı',
     },
     fr: {
         'admin_users.badge_admin': 'Admin',
@@ -64,6 +76,12 @@ registerTranslations({
         'admin_users.user_deleted': 'Utilisateur supprimé avec succès',
         'admin_users.user_approved': 'Utilisateur approuvé',
         'admin_users.user_approval_revoked': "Approbation de l'utilisateur retirée",
+        'admin_users.make_admin': 'Nommer administrateur',
+        'admin_users.remove_admin': "Retirer les droits d'administrateur",
+        'admin_users.confirm_make_admin': "Accorder à cet utilisateur les pleins droits d'administrateur sur le serveur ?",
+        'admin_users.confirm_remove_admin': "Retirer les droits d'administrateur de cet utilisateur ?",
+        'admin_users.admin_granted': "Droits d'administrateur accordés",
+        'admin_users.admin_revoked': "Droits d'administrateur retirés",
     },
     de: {
         'admin_users.badge_admin': 'Admin',
@@ -85,6 +103,12 @@ registerTranslations({
         'admin_users.user_deleted': 'Benutzer erfolgreich gelöscht',
         'admin_users.user_approved': 'Benutzer genehmigt',
         'admin_users.user_approval_revoked': 'Genehmigung des Benutzers entzogen',
+        'admin_users.make_admin': 'Zum Admin machen',
+        'admin_users.remove_admin': 'Admin-Rechte entziehen',
+        'admin_users.confirm_make_admin': 'Diesem Benutzer vollen Admin-Zugriff auf den Server gewähren?',
+        'admin_users.confirm_remove_admin': 'Admin-Zugriff dieses Benutzers entziehen?',
+        'admin_users.admin_granted': 'Admin-Zugriff gewährt',
+        'admin_users.admin_revoked': 'Admin-Zugriff entzogen',
     },
 });
 
@@ -113,6 +137,11 @@ function renderUserList(users) {
                     </button>
                 ` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="editUserQuota('${u.id}', ${u.storage_quota_mb})">⚙️ ${t('admin_users.quota_label')}</button>
+                ${u.id !== state.user.id ? `
+                    <button class="btn btn-secondary btn-sm" onclick="toggleUserAdmin('${u.id}', ${u.is_admin})">
+                        👑 ${u.is_admin ? t('admin_users.remove_admin') : t('admin_users.make_admin')}
+                    </button>
+                ` : ''}
                 ${!u.is_admin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">${t('common.delete')}</button>` : ''}
             </div>
         </div>
@@ -185,6 +214,18 @@ async function toggleUserApproval(userId, currentStatus) {
     try {
         await API.approveUser(userId, !currentStatus);
         toast(!currentStatus ? t('admin_users.user_approved') : t('admin_users.user_approval_revoked'), 'success');
+        renderAdmin();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+async function toggleUserAdmin(userId, currentStatus) {
+    const confirmMsg = currentStatus ? t('admin_users.confirm_remove_admin') : t('admin_users.confirm_make_admin');
+    if (!confirm(confirmMsg)) return;
+    try {
+        await API.updateUserAdmin(userId, !currentStatus);
+        toast(!currentStatus ? t('admin_users.admin_granted') : t('admin_users.admin_revoked'), 'success');
         renderAdmin();
     } catch (e) {
         toast(e.message, 'error');

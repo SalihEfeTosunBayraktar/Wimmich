@@ -27,6 +27,10 @@ class ApproveUserRequest(BaseModel):
     is_approved: bool
 
 
+class UpdateAdminRequest(BaseModel):
+    is_admin: bool
+
+
 @router.post("/users")
 async def create_user(
     req: CreateUserRequest,
@@ -114,3 +118,27 @@ async def approve_user(
     user.is_approved = req.is_approved
     await db.commit()
     return {"message": "Kullanıcı onay durumu güncellendi", "is_approved": user.is_approved}
+
+
+@router.put("/users/{user_id}/admin")
+async def update_user_admin(
+    user_id: str,
+    req: UpdateAdminRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Grant or revoke admin rights (admin only). Blocks changing your own
+    status - the same self-lockout risk as the approve endpoint above, but
+    worse here: removing your own last admin would leave the server with
+    no admin account at all until someone edits the database by hand."""
+    if user_id == admin.id:
+        raise HTTPException(status_code=400, detail="Kendi yöneticilik durumunuzu değiştiremezsiniz.")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+    user.is_admin = req.is_admin
+    await db.commit()
+    return {"message": "Kullanıcı yöneticilik durumu güncellendi", "is_admin": user.is_admin}
