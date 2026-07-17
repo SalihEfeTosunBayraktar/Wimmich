@@ -14,6 +14,22 @@ engine = create_async_engine(
 )
 
 
+def _turkish_fold(value):
+    """Case-fold for search/ilike matching, overriding SQLite's built-in
+    lower() - that one only folds ASCII a-z and leaves accented letters
+    (Ö, Ü, Ç, Ş, Ğ) and both Turkish "I"s untouched, while Python's
+    str.lower() folds those but turns "İ" into "i" + a combining dot
+    instead of plain "i" (confirmed directly: 'İ'.lower() != 'i'), which
+    still fails a plain substring search for "izmir". Normalizing both
+    Turkish "I" variants to plain ASCII "i" first (not linguistically
+    correct Turkish casing, just good enough for "does this look like a
+    match") before the regular Unicode lower() fixes both problems -
+    verified against ilike("%izmir%") matching both "İzmir" and "Izmir"."""
+    if value is None:
+        return None
+    return value.replace("İ", "i").replace("I", "i").lower()
+
+
 @event.listens_for(engine.sync_engine, "connect")
 def _set_sqlite_pragmas(dbapi_connection, connection_record):
     """WAL lets readers (web requests) proceed while a writer (job) commits;
@@ -23,6 +39,12 @@ def _set_sqlite_pragmas(dbapi_connection, connection_record):
     cursor.execute("PRAGMA busy_timeout=30000")
     cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.close()
+
+    # Every ilike()/func.lower() call in the app (search, duplicate location
+    # filter, the person-name merge check) goes through SQL LOWER() under
+    # the hood - overriding it here fixes all of them at once instead of
+    # patching each call site separately.
+    dbapi_connection.create_function("lower", 1, _turkish_fold, deterministic=True)
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
