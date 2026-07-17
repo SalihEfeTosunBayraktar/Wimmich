@@ -18,6 +18,43 @@ except ImportError:
     HAS_RAWPY = False
 
 
+def _strip_png_exif_chunk(source_path: str) -> Optional[bytes]:
+    """Returns the file's bytes with any PNG eXIf chunk removed, or None if
+    there was nothing to strip (not a PNG at all, or no eXIf chunk present)
+    - see _open_any_image. Some PNGs (notably iOS/Android screenshots)
+    embed an eXIf chunk that Pillow's PNG plugin can choke on badly enough
+    to fail format detection entirely ("cannot identify image file"), even
+    though the rest of the file (IHDR/IDAT/etc.) is perfectly valid -
+    reproduced directly against a real failing file from this app's own
+    library. eXIf is a purely informational ancillary chunk; dropping it
+    loses nothing PIL would have surfaced anyway (PIL doesn't read PNG
+    eXIf for orientation the way it does JPEG EXIF)."""
+    try:
+        with open(source_path, "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+
+    out = bytearray(data[:8])
+    pos = 8
+    found_exif = False
+    while pos + 8 <= len(data):
+        length = int.from_bytes(data[pos:pos + 4], "big")
+        ctype = data[pos + 4:pos + 8]
+        chunk_total = 8 + length + 4
+        if pos + chunk_total > len(data):
+            break  # truncated chunk - not something this can repair
+        if ctype == b"eXIf":
+            found_exif = True
+        else:
+            out += data[pos:pos + chunk_total]
+        pos += chunk_total
+
+    return bytes(out) if found_exif else None
+
+
 def _open_any_image(source_path: str):
     """PIL can't decode camera RAW formats at all ("cannot identify image
     file"). Phone/camera RAW files almost always embed a full-resolution
@@ -25,7 +62,13 @@ def _open_any_image(source_path: str):
     demosaic needed) - use that instead of leaving RAW photos as
     thumbnail-less/unviewable."""
     if Path(source_path).suffix.lower() not in RAW_EXTENSIONS or not HAS_RAWPY:
-        return Image.open(source_path)
+        try:
+            return Image.open(source_path)
+        except Exception:
+            repaired = _strip_png_exif_chunk(source_path)
+            if repaired is None:
+                raise
+            return Image.open(io.BytesIO(repaired))
 
     with rawpy.imread(source_path) as raw:
         thumb = raw.extract_thumb()

@@ -69,9 +69,14 @@ def compute_clip_embedding(image_path: str) -> Optional[np.ndarray]:
     try:
         _load_clip()
         import torch
-        from PIL import Image
+        from utils.image_utils import _open_any_image
 
-        img = Image.open(image_path).convert("RGB")
+        # Plain PIL can't decode camera RAW (.dng etc.) at all ("cannot
+        # identify image file") - _open_any_image already handles that
+        # (extracts the embedded JPEG preview via rawpy) for thumbnails/EXIF,
+        # CLIP indexing just never used it, so RAW photos silently never got
+        # a CLIP embedding (unsearchable, no visual-duplicate detection).
+        img = _open_any_image(image_path).convert("RGB")
         tensor = _preprocess(img).unsqueeze(0).to(_device)
         with torch.no_grad():
             features = _model.encode_image(tensor)
