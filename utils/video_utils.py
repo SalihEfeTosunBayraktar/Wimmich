@@ -97,98 +97,50 @@ def get_video_info(file_path: str) -> Dict[str, Any]:
     return info
 
 
-def create_video_thumbnail(
-    video_path: str,
-    output_path: str,
-    max_size: int = 600,
-    time_offset: str = "00:00:01",
-) -> bool:
-    """
-    Extract a frame from video and save as thumbnail.
-    """
-    try:
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-
-        cmd = [
-            config.FFMPEG_PATH,
-            "-y",
-            "-i", str(video_path),
-            "-ss", time_offset,
-            "-vframes", "1",
-            "-vf", f"scale={max_size}:-1",
-            "-q:v", "3",
-            str(output_path),
-        ]
-        result = subprocess.run(cmd, capture_output=True, timeout=30)
-        return result.returncode == 0 and Path(output_path).exists()
-
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return False
-
-
-def transcode_video(
-    input_path: str,
-    output_path: str,
-    max_height: int = 720,
-    crf: int = 28,
+def _run_ffmpeg_killable(
+    cmd: list,
     cancel_event: Optional[threading.Event] = None,
-    timeout: float = 3600,  # 1hr ceiling, same as before - just enforced via polling now
+    timeout: float = 30,
+    log_prefix: str = "FFMPEG",
 ) -> bool:
-    """
-    Transcode video to H.264 MP4.
-
-    Runs ffmpeg via Popen and polls it instead of a single blocking
-    subprocess.run(..., timeout=...) - that older approach blocked this
-    entire worker thread until ffmpeg exited on its own with no way to
-    react to cancel_event, so cancelling a job mid-transcode never
+    """Runs an ffmpeg command via Popen and polls it instead of a single
+    blocking subprocess.run(..., timeout=...) - the older approach blocked
+    the calling worker thread until ffmpeg exited on its own with no way
+    to react to cancel_event, so cancelling a job mid-encode never
     actually stopped ffmpeg (it kept burning CPU/RAM until done) and the
-    job worker itself stayed stuck on this same call, unable to start the
+    job worker itself stayed stuck on that same call, unable to start the
     next queued job, until that same completion. Polling lets a cancelled
-    job kill ffmpeg within a couple seconds instead.
+    job kill ffmpeg within about a second instead. Also logs stderr on a
+    non-zero exit - a bare True/False return gave no way to tell why a
+    failure happened.
     """
     try:
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-
-        cmd = [
-            config.FFMPEG_PATH,
-            "-y",
-            "-i", str(input_path),
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-crf", str(crf),
-            "-vf", f"scale=-2:min({max_height}\\,ih)",
-            "-c:a", "aac",
-            "-b:a", "128k",
-            "-movflags", "+faststart",
-            str(output_path),
-        ]
         proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-
-        start = time.monotonic()
-        while True:
-            try:
-                proc.wait(timeout=0.5)
-                break
-            except subprocess.TimeoutExpired:
-                pass
-
-            if cancel_event is not None and cancel_event.is_set():
-                _terminate(proc)
-                return False
-            if time.monotonic() - start > timeout:
-                print(f"[FFMPEG] Transcode timed out after {timeout}s: {input_path}")
-                _terminate(proc)
-                return False
-
-        if proc.returncode != 0:
-            stderr = (proc.stderr.read() or b"").decode(errors="replace")[-800:] if proc.stderr else ""
-            print(f"[FFMPEG] Transcode failed (exit {proc.returncode}) for {input_path}: {stderr.strip()}")
-            return False
-
-        return Path(output_path).exists()
-
     except FileNotFoundError:
         return False
+
+    start = time.monotonic()
+    while True:
+        try:
+            proc.wait(timeout=0.5)
+            break
+        except subprocess.TimeoutExpired:
+            pass
+
+        if cancel_event is not None and cancel_event.is_set():
+            _terminate(proc)
+            return False
+        if time.monotonic() - start > timeout:
+            print(f"[{log_prefix}] Timed out after {timeout}s")
+            _terminate(proc)
+            return False
+
+    if proc.returncode != 0:
+        stderr = (proc.stderr.read() or b"").decode(errors="replace")[-800:] if proc.stderr else ""
+        print(f"[{log_prefix}] Failed (exit {proc.returncode}): {stderr.strip()}")
+        return False
+
+    return True
 
 
 def _terminate(proc: subprocess.Popen) -> None:
@@ -209,6 +161,60 @@ def _terminate(proc: subprocess.Popen) -> None:
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
+
+
+def create_video_thumbnail(
+    video_path: str,
+    output_path: str,
+    max_size: int = 600,
+    time_offset: str = "00:00:01",
+    cancel_event: Optional[threading.Event] = None,
+) -> bool:
+    """Extract a frame from video and save as thumbnail."""
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        config.FFMPEG_PATH,
+        "-y",
+        "-i", str(video_path),
+        "-ss", time_offset,
+        "-vframes", "1",
+        "-vf", f"scale={max_size}:-1",
+        "-q:v", "3",
+        str(output_path),
+    ]
+    if not _run_ffmpeg_killable(cmd, cancel_event=cancel_event, timeout=30, log_prefix="FFMPEG-thumb"):
+        return False
+    return Path(output_path).exists()
+
+
+def transcode_video(
+    input_path: str,
+    output_path: str,
+    max_height: int = 720,
+    crf: int = 28,
+    cancel_event: Optional[threading.Event] = None,
+    timeout: float = 3600,  # 1hr ceiling
+) -> bool:
+    """Transcode video to H.264 MP4."""
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        config.FFMPEG_PATH,
+        "-y",
+        "-i", str(input_path),
+        "-c:v", "libx264",
+        "-preset", "medium",
+        "-crf", str(crf),
+        "-vf", f"scale=-2:min({max_height}\\,ih)",
+        "-c:a", "aac",
+        "-b:a", "128k",
+        "-movflags", "+faststart",
+        str(output_path),
+    ]
+    if not _run_ffmpeg_killable(cmd, cancel_event=cancel_event, timeout=timeout, log_prefix="FFMPEG-transcode"):
+        return False
+    return Path(output_path).exists()
 
 
 def is_ffmpeg_available() -> bool:

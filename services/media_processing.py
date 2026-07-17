@@ -43,7 +43,7 @@ def _process_image(result: dict, file_path: str, unique_name: str, user_id: str)
     return result
 
 
-def _process_video(result: dict, file_path: str, unique_name: str, user_id: str) -> dict:
+def _process_video(result: dict, file_path: str, unique_name: str, user_id: str, cancel_event=None) -> dict:
     """Process video: extract metadata, create thumbnail."""
     if not is_ffmpeg_available():
         return result
@@ -64,8 +64,10 @@ def _process_video(result: dict, file_path: str, unique_name: str, user_id: str)
     stem = Path(unique_name).stem
 
     for size_name, size_px in config.THUMB_SIZES.items():
+        if cancel_event is not None and cancel_event.is_set():
+            break
         thumb_path = thumb_base / f"{stem}_{size_name}.jpg"
-        if create_video_thumbnail(file_path, str(thumb_path), max_size=size_px):
+        if create_video_thumbnail(file_path, str(thumb_path), max_size=size_px, cancel_event=cancel_event):
             result[f"thumb_{size_name}_path"] = str(thumb_path)
 
     return result

@@ -1,13 +1,21 @@
 """Background job worker core: polling loop, dispatch, cancellation."""
 import asyncio
+import threading
 import traceback
 from datetime import datetime, timezone
+from typing import Any, Coroutine
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from database import AsyncSessionLocal
 from models import Job
+
+# How often a running job re-checks its own cancelled flag while a single
+# long-running unit of work (e.g. one ffmpeg call) is in flight - see
+# run_cancellable(). Independent of JOB_POLL_INTERVAL_SECONDS, which is
+# about the worker looking for the NEXT job to start, not this.
+JOB_CANCEL_POLL_SECONDS = 2
 
 
 class JobCancelledException(Exception):
@@ -25,6 +33,30 @@ async def check_job_cancelled(db: AsyncSession, job_id: str):
     status = res.scalar_one_or_none()
     if status == "CANCELLED":
         raise JobCancelledException("İşlem kullanıcı tarafından iptal edildi.")
+
+
+async def run_cancellable(db: AsyncSession, job_id: str, cancel_event: threading.Event, coro: Coroutine) -> Any:
+    """Runs `coro` (typically an asyncio.to_thread(...) call wrapping a
+    subprocess-based unit of work) while polling the job's cancelled flag
+    every JOB_CANCEL_POLL_SECONDS, instead of only checking once before the
+    whole thing starts - a plain `await check_job_cancelled(...)` before a
+    call that can run for minutes/hours means cancelling mid-call does
+    nothing until it finishes on its own. The moment cancellation is seen,
+    cancel_event is set so the thread can kill its own subprocess, then
+    this waits for that thread to actually finish before re-raising
+    JobCancelledException - without that wait, the caller could return
+    (and the job get marked CANCELLED) while the underlying process was
+    still mid-teardown."""
+    task = asyncio.ensure_future(coro)
+    while not task.done():
+        try:
+            await check_job_cancelled(db, job_id)
+        except JobCancelledException:
+            cancel_event.set()
+            await task
+            raise
+        await asyncio.wait([task], timeout=JOB_CANCEL_POLL_SECONDS)
+    return task.result()
 
 
 class JobWorker:

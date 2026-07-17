@@ -1,11 +1,12 @@
 """THUMBNAIL job handler - (re)generate thumbnails for assets."""
 import asyncio
+import threading
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Job
-from services.job_core import check_job_cancelled
+from services.job_core import check_job_cancelled, run_cancellable, JobCancelledException
 from utils.path_utils import resolve_data_path
 
 
@@ -67,11 +68,27 @@ async def handle_job_thumbnail(db: AsyncSession, job: Job):
             if asset.file_type == "IMAGE":
                 updates = await asyncio.to_thread(_process_image, {}, asset.file_path, asset.file_name, asset.user_id)
             else:
-                updates = await asyncio.to_thread(_process_video, {}, asset.file_path, asset.file_name, asset.user_id)
+                # Video thumbnails shell out to ffmpeg per size (small/medium/
+                # large) - run_cancellable lets a cancel actually kill an
+                # in-flight ffmpeg call instead of only taking effect once it
+                # finishes on its own. See transcode_handler.py's identical use.
+                cancel_event = threading.Event()
+                updates = await run_cancellable(
+                    db, job.id, cancel_event,
+                    asyncio.to_thread(
+                        _process_video, {}, asset.file_path, asset.file_name, asset.user_id,
+                        cancel_event=cancel_event,
+                    ),
+                )
 
             for key in ["thumb_small_path", "thumb_medium_path", "thumb_large_path"]:
                 if updates.get(key):
                     setattr(asset, key, updates[key])
+        except JobCancelledException:
+            # Let this propagate as a real cancellation instead of being
+            # swallowed below and misreported as a per-asset failure -
+            # run_cancellable already killed any in-flight ffmpeg call.
+            raise
         except Exception as e:
             print(f"[JOB] Thumbnail generation failed for asset {asset.id}: {e}")
 
