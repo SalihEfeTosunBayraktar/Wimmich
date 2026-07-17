@@ -134,7 +134,7 @@ function renderUserList(users) {
                     <div class="user-item-email">${u.email}</div>
                 </div>
             </div>
-            <div class="user-item-email">${t('admin_users.item_count', { count: u.asset_count })} · ${formatSize(u.total_size)} / ${u.storage_quota_mb > 0 ? u.storage_quota_mb + ' MB' : t('admin_users.unlimited')} ${t('admin_users.quota_suffix')}</div>
+            <div class="user-item-email">${t('admin_users.item_count', { count: u.asset_count })} · ${formatSize(u.total_size)} / ${u.storage_quota_mb > 0 ? formatSize(u.storage_quota_mb * 1024 * 1024) : t('admin_users.unlimited')} ${t('admin_users.quota_suffix')}</div>
             <div class="user-item-actions">
                 ${!u.is_admin ? `
                     <button class="btn btn-secondary btn-sm" onclick="toggleUserApproval('${u.id}', ${u.is_approved})">

@@ -107,7 +107,7 @@ function updateSidebarStorage() {
         const percent = Math.min(100, Math.round((totalSize / quotaBytes) * 100));
         percentEl.textContent = percent + '%';
         barEl.style.width = percent + '%';
-        textEl.textContent = `${formatSize(totalSize)} / ${quotaMb} MB`;
+        textEl.textContent = `${formatSize(totalSize)} / ${formatSize(quotaBytes)}`;
 
         barEl.classList.toggle('storage-bar--critical', percent > 90);
         barEl.classList.toggle('storage-bar--warning', percent > 70 && percent <= 90);
