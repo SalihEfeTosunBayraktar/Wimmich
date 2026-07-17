@@ -42,6 +42,7 @@ registerTranslations({
         'gallery.item_count': '{count} items',
         'gallery.no_photos': 'No photos',
         'gallery.back_to_years': '← Back to Years',
+        'gallery.collapse_btn': 'Collapse',
     },
     tr: {
         'gallery.sort_date_desc': 'Tarih (Yeni → Eski)',
@@ -80,6 +81,7 @@ registerTranslations({
         'gallery.item_count': '{count} öğe',
         'gallery.no_photos': 'Fotoğraf yok',
         'gallery.back_to_years': '← Yıllara Dön',
+        'gallery.collapse_btn': 'Küçült',
     },
     fr: {
         'gallery.sort_date_desc': 'Date (Récent → Ancien)',
@@ -118,6 +120,7 @@ registerTranslations({
         'gallery.item_count': '{count} éléments',
         'gallery.no_photos': 'Aucune photo',
         'gallery.back_to_years': '← Retour aux années',
+        'gallery.collapse_btn': 'Réduire',
     },
     de: {
         'gallery.sort_date_desc': 'Datum (Neu → Alt)',
@@ -156,6 +159,7 @@ registerTranslations({
         'gallery.item_count': '{count} Elemente',
         'gallery.no_photos': 'Keine Fotos',
         'gallery.back_to_years': '← Zurück zu den Jahren',
+        'gallery.collapse_btn': 'Einklappen',
     },
 });
 
@@ -220,36 +224,59 @@ function _renderYearFrame(yearGroup) {
             <span class="date-group-count">${t('gallery.item_count', { count: yearGroup.total_count })}</span>
         </div>
         <div class="photo-grid photo-grid--dense">${yearGroup.assets.map(a => renderPhotoCard(a)).join('')}</div>
-        ${overflow > 0 ? `<button type="button" class="year-overflow-badge">+${overflow}</button>` : ''}
+        ${overflow > 0 ? `
+            <button type="button" class="year-overflow-badge"
+                data-year="${yearGroup.display_date}" data-keep-count="${yearGroup.assets.length}"
+                data-expand-text="+${overflow}" data-fetched="false" data-expanded="false"
+            >+${overflow}</button>
+        ` : ''}
     `;
     if (overflow > 0) {
-        groupEl.querySelector('.year-overflow-badge').onclick = () =>
-            _expandYearOverflow(groupEl, yearGroup.display_date, yearGroup.assets.length);
+        groupEl.querySelector('.year-overflow-badge').onclick = (e) => _toggleYearOverflow(groupEl, e.currentTarget);
     }
     return groupEl;
 }
 
-// Fetches the year's full asset list on demand (not pre-cached - nothing
-// beyond the capped mosaic is downloaded until this is actually clicked)
-// and appends just the part not already shown. Slicing off the prefix
-// instead of asking the backend for "everything after N" keeps the
-// endpoint reusable as a plain "give me this whole year" fetch elsewhere
-// - it's safe here because both requests share the same sort/filter, so
-// the first alreadyShownCount entries are guaranteed identical.
-async function _expandYearOverflow(groupEl, year, alreadyShownCount) {
-    const badge = groupEl.querySelector('.year-overflow-badge');
+// Expand fetches the year's full asset list on demand (not pre-cached -
+// nothing beyond the capped mosaic is downloaded until this is actually
+// clicked) and appends just the part not already shown; collapse just
+// hides those same cards again instead of removing them, so toggling
+// back open doesn't need a second fetch. Slicing off the prefix instead
+// of asking the backend for "everything after N" keeps the endpoint
+// reusable as a plain "give me this whole year" fetch elsewhere - it's
+// safe here because both requests share the same sort/filter, so the
+// first keepCount entries are guaranteed identical.
+async function _toggleYearOverflow(groupEl, badge) {
+    if (badge.dataset.fetched === 'true') {
+        const keepCount = parseInt(badge.dataset.keepCount, 10);
+        const cards = Array.from(groupEl.querySelector('.photo-grid').querySelectorAll('.photo-card'));
+        const collapsing = badge.dataset.expanded === 'true';
+        cards.slice(keepCount).forEach(c => c.classList.toggle('hidden', collapsing));
+        badge.dataset.expanded = collapsing ? 'false' : 'true';
+        badge.textContent = collapsing ? badge.dataset.expandText : t('gallery.collapse_btn');
+        badge.classList.toggle('year-overflow-badge--collapse', !collapsing);
+        state.viewerList = Array.from($('gallery-grid-container').querySelectorAll('.photo-card:not(.hidden)')).map(c => c.dataset.id);
+        return;
+    }
+
+    const year = badge.dataset.year;
+    const keepCount = parseInt(badge.dataset.keepCount, 10);
     const originalText = badge.textContent;
     badge.disabled = true;
     badge.textContent = t('common.loading');
     try {
         const g = state.gallery;
         const data = await API.getYearAssets(year, g.sortBy, g.filterBy);
-        const remainder = data.assets.slice(alreadyShownCount);
+        const remainder = data.assets.slice(keepCount);
         const grid = groupEl.querySelector('.photo-grid');
         grid.insertAdjacentHTML('beforeend', remainder.map(a => renderPhotoCard(a)).join(''));
         bindPhotoCards(grid);
         state.viewerList = Array.from($('gallery-grid-container').querySelectorAll('.photo-card')).map(c => c.dataset.id);
-        badge.remove();
+        badge.dataset.fetched = 'true';
+        badge.dataset.expanded = 'true';
+        badge.disabled = false;
+        badge.textContent = t('gallery.collapse_btn');
+        badge.classList.add('year-overflow-badge--collapse');
     } catch (e) {
         toast(e.message, 'error');
         badge.disabled = false;

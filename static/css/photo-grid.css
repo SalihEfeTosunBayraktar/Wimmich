@@ -48,12 +48,13 @@
     gap: 2px;
 }
 
-/* The "+N" overflow control below a capped year grid (see
-   gallery.js's _renderYearFrame/_expandYearOverflow) - a full-width
-   button rather than month-cell-more's small absolute-positioned corner
-   badge, since this sits below an already-full-width dense grid instead
-   of inside one small square cell. Fetches that year's full list on
-   click - nothing beyond the capped mosaic is downloaded until then. */
+/* The "+N" overflow control below a capped year grid (see gallery.js's
+   _renderYearFrame/_toggleYearOverflow) - a full-width button rather than
+   month-cell-more's small absolute-positioned corner badge, since this
+   sits below an already-full-width dense grid instead of inside one
+   small square cell. Fetches that year's full list on first click only -
+   toggling collapsed/expanded after that just shows/hides the same cards,
+   no repeat fetch. */
 .year-overflow-badge {
     display: block;
     width: 100%;
@@ -70,6 +71,7 @@
 }
 .year-overflow-badge:hover { background: var(--bg-hover); color: var(--text-primary); }
 .year-overflow-badge:disabled { cursor: default; opacity: 0.7; }
+.year-overflow-badge--collapse { color: var(--accent-primary); border-color: var(--accent-primary); }
 
 .photo-grid--dense .photo-select,
 .photo-grid--dense .photo-cover-btn,
