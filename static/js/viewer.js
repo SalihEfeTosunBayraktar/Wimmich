@@ -267,9 +267,14 @@ function _initViewerSwipe() {
 }
 
 function navigateViewer(dir) {
-    state.viewerIndex += dir;
-    if (state.viewerIndex < 0) state.viewerIndex = state.viewerList.length - 1;
-    if (state.viewerIndex >= state.viewerList.length) state.viewerIndex = 0;
+    // Clamp instead of wrapping around - viewerList is often only whatever
+    // the current page has loaded so far (the main gallery loads in pages
+    // of 60 via infinite scroll), not the whole library, so wrapping past
+    // the last loaded item jumped back to the first one instead of doing
+    // nothing, which looked like it had looped partway through the library.
+    const next = state.viewerIndex + dir;
+    if (next < 0 || next >= state.viewerList.length) return;
+    state.viewerIndex = next;
     openViewer(state.viewerList[state.viewerIndex]);
 }
 
