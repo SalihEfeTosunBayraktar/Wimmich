@@ -28,8 +28,7 @@ REM install's server/tunnel too even when it was running on a different
 REM port. Each install has its own venv and its own data\cloudflared.exe,
 REM so matching on the full executable path tells them apart.
 
-echo Stopping any previous Wimmich instances...
-powershell -NoProfile -Command "$py = '%~dp0venv\Scripts\python.exe'; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*main.py*' -and $_.ExecutablePath -eq $py } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+powershell -NoProfile -Command "Write-Host 'Stopping any previous Wimmich instances...' -ForegroundColor Cyan; $py = '%~dp0venv\Scripts\python.exe'; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*main.py*' -and $_.ExecutablePath -eq $py } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 powershell -NoProfile -Command "$cf = '%~dp0data\cloudflared.exe'; Get-CimInstance Win32_Process -Filter \"Name='cloudflared.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.ExecutablePath -eq $cf } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 
 REM No venv yet means this is a first run - point at the two explicit
@@ -54,7 +53,7 @@ REM same reasoning as the if/else comment above - no parens, so nothing
 REM here can trip that same parser trap.
 :run_server
 echo.
-echo Starting server...
+powershell -NoProfile -Command "Write-Host 'Starting server...' -ForegroundColor Cyan"
 echo.
 python main.py
 set "WIMMICH_EXIT_CODE=%errorlevel%"
@@ -64,7 +63,7 @@ goto :eof
 
 :restart_server
 echo.
-echo Update applied - restarting...
+powershell -NoProfile -Command "Write-Host 'Update applied - restarting...' -ForegroundColor Cyan"
 echo.
 goto :run_server
 
