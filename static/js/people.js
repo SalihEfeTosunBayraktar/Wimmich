@@ -139,7 +139,7 @@ registerTranslations({
 function _renderPersonCard(p, { hidden = false } = {}) {
     return `
         <div class="person-card" onclick="openPerson('${p.id}')">
-            <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? '👁️' : '🙈'}</button>
+            <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? '🙈' : '👁️'}</button>
             <div class="person-avatar">
                 ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : '<span style="font-size:2rem">👤</span>'}
             </div>

@@ -61,10 +61,27 @@ def _load_face_models():
 
 def _load_downscaled_rgb(image_path: str):
     """PIL Image, RGB, downscaled to FACE_DETECT_MAX_DIM - detecting on
-    30+ MP originals is needlessly slow and previously ate tens of GB of RAM."""
+    30+ MP originals is needlessly slow and previously ate tens of GB of RAM.
+    Uses _open_any_image (not plain Image.open) so RAW files (.dng, etc.)
+    get their embedded preview extracted instead of failing with "cannot
+    identify image file" - same fix already applied in clip_service.py's
+    compute_clip_embedding(), this path was missed the first time around."""
     from PIL import Image
+    from utils.image_utils import _open_any_image
 
-    img = Image.open(image_path).convert("RGB")
+    img = _open_any_image(image_path)
+    # Plain .convert("RGB") on a palette image with tRNS transparency drops
+    # the alpha silently and triggers a PIL UserWarning - go through RGBA
+    # first (as create_thumbnail() already does) so paletted screenshots/
+    # PNGs convert cleanly instead of just suppressing the warning.
+    if img.mode in ("RGBA", "P", "LA"):
+        background = Image.new("RGB", img.size, (0, 0, 0))
+        if img.mode == "P":
+            img = img.convert("RGBA")
+        background.paste(img, mask=img.split()[-1] if "A" in img.mode else None)
+        img = background
+    elif img.mode != "RGB":
+        img = img.convert("RGB")
     img.thumbnail((config.FACE_DETECT_MAX_DIM, config.FACE_DETECT_MAX_DIM), Image.Resampling.LANCZOS)
     return img
 
@@ -85,7 +102,18 @@ def detect_faces(image_path: str) -> List[Dict]:
             img = _load_downscaled_rgb(image_path)
             img_w, img_h = img.size
 
-            boxes, probs = _mtcnn.detect(img)
+            try:
+                boxes, probs = _mtcnn.detect(img)
+            except RuntimeError as e:
+                # Known facenet-pytorch quirk (not a real failure): when zero
+                # candidate boxes survive one of MTCNN's internal P/R/O-Net
+                # cascade stages, it tries to torch.cat() an empty list
+                # instead of returning None like it does for every other
+                # no-detection case - confirmed this only ever fires with
+                # this exact message. Equivalent to "no faces found".
+                if "non-empty list of Tensors" in str(e):
+                    return []
+                raise
             if boxes is None:
                 return []
 

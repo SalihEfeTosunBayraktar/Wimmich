@@ -154,14 +154,23 @@ async def update_person(
         # Naming a group with a name that already belongs to another person
         # should merge into them (it's the same person, not a second one
         # with the same name) rather than just relabeling this group.
+        #
+        # Compared in Python, not via SQL LOWER() - SQLite's built-in LOWER()
+        # only folds ASCII a-z and leaves everything else (Ö, Ü, Ç, Ş, İ, Ğ,
+        # ...) untouched, while Python's str.lower() is Unicode-aware and
+        # does fold them. Mixing the two ("Özge" via SQL LOWER() staying
+        # "Özge tosunbayraktar" vs Python's "özge tosunbayraktar") meant this
+        # match silently never fired for any name with an accented capital -
+        # confirmed directly: sqlite3's lower('Özge') keeps the capital "Ö"
+        # (0xd6) while 'Özge'.lower() gives lowercase "ö" (0xf6). Every
+        # Turkish name typed with its natural capitalization hit this, so
+        # the "same" name kept creating a second, unmerged Person instead.
         existing = await db.execute(
-            select(Person).where(and_(
-                Person.user_id == user.id,
-                Person.id != person_id,
-                func.lower(Person.name) == new_name.lower(),
-            ))
+            select(Person).where(and_(Person.user_id == user.id, Person.id != person_id, Person.name.isnot(None)))
         )
-        existing_person = existing.scalar_one_or_none()
+        existing_person = next(
+            (p for p in existing.scalars().all() if p.name.lower() == new_name.lower()), None
+        )
         if existing_person:
             return await face_management_service.merge_people(db, user, person_id, existing_person.id)
         person.name = new_name
