@@ -181,9 +181,15 @@ async def recluster_user_faces(db: AsyncSession, user_id: str) -> dict:
     re-clustered with the current threshold; named people are kept, and freed
     faces can re-match against them. Lets the user recover from a bad
     auto-clustering pass without losing naming work.
+
+    Hidden groups (is_hidden=True - dismissed via "Tanımıyorum" or manually
+    hidden) are left untouched rather than dissolved: dissolving one frees
+    its faces to be re-clustered into a brand new Person row, which starts
+    out visible again with no memory of ever having been hidden - silently
+    undoing the hide.
     """
     unnamed_stmt = select(Person.id).where(
-        and_(Person.user_id == user_id, Person.name.is_(None))
+        and_(Person.user_id == user_id, Person.name.is_(None), Person.is_hidden == False)
     )
     unnamed_ids = [pid for (pid,) in (await db.execute(unnamed_stmt)).all()]
 
