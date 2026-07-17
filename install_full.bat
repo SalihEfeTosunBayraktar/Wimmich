@@ -101,6 +101,16 @@ pip install facenet-pytorch --no-deps
 pip install requests
 pip install scikit-learn
 
+REM Fetched here, not left to its usual lazy on-demand download (see
+REM services/clip_service.py's _load_clip), for the same reason as the
+REM FFmpeg step above: without this, the first CLIP/FACE scan a user ever
+REM runs stalls for however long it takes to pull this ~4-5GB multilingual
+REM checkpoint, with no warning that it's coming - all the "this is a big
+REM download" expectation-setting happens here, during install, instead.
+echo.
+echo   Downloading CLIP model weights (multilingual semantic search, ~4-5GB)...
+python -c "from services.clip_service import _load_clip; _load_clip()"
+
 echo.
 echo   ====================================
 echo    Done! Run start.bat to launch Wimmich.
