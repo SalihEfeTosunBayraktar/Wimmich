@@ -48,6 +48,27 @@
     gap: 2px;
 }
 
+/* The "+N" overflow control below a capped year grid (see
+   gallery.js's YEAR_VIEW_MAX/_appendYearCapped) - a full-width button
+   rather than month-cell-more's small absolute-positioned corner badge,
+   since this sits below an already-full-width dense grid instead of
+   inside one small square cell. */
+.year-overflow-badge {
+    display: block;
+    width: 100%;
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+.year-overflow-badge:hover { background: var(--bg-hover); color: var(--text-primary); }
+
 .photo-grid--dense .photo-select,
 .photo-grid--dense .photo-cover-btn,
 .photo-grid--dense .photo-badges,

@@ -210,6 +210,68 @@ function _galleryGridDensityClass(groupBy) {
     return groupBy === 'year' ? ' photo-grid--dense' : '';
 }
 
+// A year with hundreds/thousands of photos rendered as one unbroken grid
+// was heavy to load and scroll through - cap how many get rendered
+// directly per year and roll the rest into the same "+N" badge/overflow
+// pattern _renderYearMonthFrame already uses for month cells, instead of
+// just dumping everything in.
+const YEAR_VIEW_MAX = 30 * 10;
+// display_date (the year label) -> Asset[] fetched but not yet rendered,
+// shown on demand when that year's overflow badge is clicked.
+const _yearOverflowAssets = new Map();
+
+function _appendYearCapped(groupEl, assets) {
+    const grid = groupEl.querySelector('.photo-grid');
+    const key = groupEl.dataset.key;
+    const renderedSoFar = parseInt(groupEl.dataset.renderedCount || '0', 10);
+    const remaining = Math.max(0, YEAR_VIEW_MAX - renderedSoFar);
+    const toRender = assets.slice(0, remaining);
+    const overflowAssets = assets.slice(remaining);
+
+    if (toRender.length) {
+        grid.insertAdjacentHTML('beforeend', toRender.map(a => renderPhotoCard(a)).join(''));
+        // No bindPhotoCards() here - loadGalleryPage() (the only caller
+        // during a normal page load) already does one full bindPhotoCards(
+        // container) pass after this returns; calling it again here would
+        // double-attach the addEventListener-based mousedown drag-select
+        // handler to these same cards.
+    }
+    groupEl.dataset.renderedCount = String(renderedSoFar + toRender.length);
+
+    if (overflowAssets.length) {
+        _yearOverflowAssets.set(key, (_yearOverflowAssets.get(key) || []).concat(overflowAssets));
+    }
+    _updateYearOverflowBadge(groupEl, key);
+}
+
+function _updateYearOverflowBadge(groupEl, key) {
+    const overflow = (_yearOverflowAssets.get(key) || []).length;
+    let badge = groupEl.querySelector('.year-overflow-badge');
+    if (overflow > 0) {
+        if (!badge) {
+            badge = document.createElement('button');
+            badge.type = 'button';
+            badge.className = 'year-overflow-badge';
+            groupEl.querySelector('.photo-grid').insertAdjacentElement('afterend', badge);
+            badge.onclick = () => _expandYearOverflow(groupEl, key);
+        }
+        badge.textContent = `+${overflow}`;
+    } else if (badge) {
+        badge.remove();
+    }
+}
+
+function _expandYearOverflow(groupEl, key) {
+    const assets = _yearOverflowAssets.get(key) || [];
+    _yearOverflowAssets.delete(key);
+    const grid = groupEl.querySelector('.photo-grid');
+    grid.insertAdjacentHTML('beforeend', assets.map(a => renderPhotoCard(a)).join(''));
+    bindPhotoCards(grid);
+    groupEl.dataset.renderedCount = String(parseInt(groupEl.dataset.renderedCount || '0', 10) + assets.length);
+    state.viewerList = Array.from($('gallery-grid-container').querySelectorAll('.photo-card')).map(c => c.dataset.id);
+    _updateYearOverflowBadge(groupEl, key);
+}
+
 async function renderGallery() {
     const g = state.gallery;
     g.page = 1;
@@ -357,7 +419,14 @@ async function loadGalleryPage() {
         const data = await API.getGallery(g.page, 60, g.sortBy, g.groupBy, g.filterBy);
         const container = $('gallery-grid-container');
 
-        if (g.page === 1) container.innerHTML = '';
+        if (g.page === 1) {
+            container.innerHTML = '';
+            // A fresh load (not a continued infinite-scroll page) - clear
+            // out any overflow assets cached from a previous render/mode,
+            // or a stale entry would leak into this one (wrong badge count,
+            // duplicate assets if it's later expanded).
+            _yearOverflowAssets.clear();
+        }
         if (!data.groups.length && g.page === 1) {
             container.innerHTML = renderEmptyState(t('gallery.no_photos_for_filter'), t('gallery.try_different_filters'));
             g.loading = false;
@@ -379,8 +448,12 @@ async function loadGalleryPage() {
                 // starting a new block.
                 const lastGroupEl = container.lastElementChild;
                 if (group.display_date !== null && lastGroupEl?.dataset.key === group.display_date) {
-                    const grid = lastGroupEl.querySelector('.photo-grid');
-                    grid.insertAdjacentHTML('beforeend', group.assets.map(a => renderPhotoCard(a)).join(''));
+                    if (g.groupBy === 'year') {
+                        _appendYearCapped(lastGroupEl, group.assets);
+                    } else {
+                        const grid = lastGroupEl.querySelector('.photo-grid');
+                        grid.insertAdjacentHTML('beforeend', group.assets.map(a => renderPhotoCard(a)).join(''));
+                    }
                     const countEl = lastGroupEl.querySelector('.date-group-count');
                     const runningTotal = (parseInt(countEl.textContent, 10) || 0) + group.assets.length;
                     countEl.textContent = t('gallery.item_count', { count: runningTotal });
@@ -390,15 +463,17 @@ async function loadGalleryPage() {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'date-group';
                 if (group.display_date !== null) groupEl.dataset.key = group.display_date;
+                if (g.groupBy === 'year') groupEl.dataset.renderedCount = '0';
                 groupEl.innerHTML = `
                     ${group.display_date ? `
                     <div class="date-group-header">
                         <span class="date-group-title">${group.display_date}</span>
                         <span class="date-group-count">${t('gallery.item_count', { count: group.assets.length })}</span>
                     </div>` : ''}
-                    <div class="photo-grid${_galleryGridDensityClass(g.groupBy)}">${group.assets.map(a => renderPhotoCard(a)).join('')}</div>
+                    <div class="photo-grid${_galleryGridDensityClass(g.groupBy)}">${g.groupBy === 'year' ? '' : group.assets.map(a => renderPhotoCard(a)).join('')}</div>
                 `;
                 container.appendChild(groupEl);
+                if (g.groupBy === 'year') _appendYearCapped(groupEl, group.assets);
             });
         }
 
