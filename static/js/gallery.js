@@ -42,7 +42,6 @@ registerTranslations({
         'gallery.item_count': '{count} items',
         'gallery.no_photos': 'No photos',
         'gallery.back_to_years': '← Back to Years',
-        'gallery.load_more_btn': 'Load More',
     },
     tr: {
         'gallery.sort_date_desc': 'Tarih (Yeni → Eski)',
@@ -81,7 +80,6 @@ registerTranslations({
         'gallery.item_count': '{count} öğe',
         'gallery.no_photos': 'Fotoğraf yok',
         'gallery.back_to_years': '← Yıllara Dön',
-        'gallery.load_more_btn': 'Daha Fazla Yükle',
     },
     fr: {
         'gallery.sort_date_desc': 'Date (Récent → Ancien)',
@@ -120,7 +118,6 @@ registerTranslations({
         'gallery.item_count': '{count} éléments',
         'gallery.no_photos': 'Aucune photo',
         'gallery.back_to_years': '← Retour aux années',
-        'gallery.load_more_btn': 'Charger plus',
     },
     de: {
         'gallery.sort_date_desc': 'Datum (Neu → Alt)',
@@ -159,7 +156,6 @@ registerTranslations({
         'gallery.item_count': '{count} Elemente',
         'gallery.no_photos': 'Keine Fotos',
         'gallery.back_to_years': '← Zurück zu den Jahren',
-        'gallery.load_more_btn': 'Mehr laden',
     },
 });
 
@@ -207,73 +203,58 @@ function _galleryOptionsHtml(options, current) {
     return options.map(([v, label]) => `<option value="${v}" ${v === current ? 'selected' : ''}>${label}</option>`).join('');
 }
 
-// Year grouping is a dense glance-across-everything mosaic; Month has its
-// own dedicated year-frame renderer below (_renderYearMonthFrame) instead
-// of going through this flat path at all; Day/none/type stay normal-size.
-function _galleryGridDensityClass(groupBy) {
-    return groupBy === 'year' ? ' photo-grid--dense' : '';
-}
-
-// A year with hundreds/thousands of photos rendered as one unbroken grid
-// was heavy to load and scroll through - cap how many get rendered
-// directly per year and roll the rest into the same "+N" badge/overflow
-// pattern _renderYearMonthFrame already uses for month cells, instead of
-// just dumping everything in.
-const YEAR_VIEW_MAX = 30 * 7;
-// display_date (the year label) -> Asset[] fetched but not yet rendered,
-// shown on demand when that year's overflow badge is clicked.
-const _yearOverflowAssets = new Map();
-
-function _appendYearCapped(groupEl, assets) {
-    const grid = groupEl.querySelector('.photo-grid');
-    const key = groupEl.dataset.key;
-    const renderedSoFar = parseInt(groupEl.dataset.renderedCount || '0', 10);
-    const remaining = Math.max(0, YEAR_VIEW_MAX - renderedSoFar);
-    const toRender = assets.slice(0, remaining);
-    const overflowAssets = assets.slice(remaining);
-
-    if (toRender.length) {
-        grid.insertAdjacentHTML('beforeend', toRender.map(a => renderPhotoCard(a)).join(''));
-        // No bindPhotoCards() here - loadGalleryPage() (the only caller
-        // during a normal page load) already does one full bindPhotoCards(
-        // container) pass after this returns; calling it again here would
-        // double-attach the addEventListener-based mousedown drag-select
-        // handler to these same cards.
-    }
-    groupEl.dataset.renderedCount = String(renderedSoFar + toRender.length);
-
-    if (overflowAssets.length) {
-        _yearOverflowAssets.set(key, (_yearOverflowAssets.get(key) || []).concat(overflowAssets));
-    }
-    _updateYearOverflowBadge(groupEl, key);
-}
-
-function _updateYearOverflowBadge(groupEl, key) {
-    const overflow = (_yearOverflowAssets.get(key) || []).length;
-    let badge = groupEl.querySelector('.year-overflow-badge');
+// "Yıla Göre" is paginated by YEAR on the backend now (see
+// _get_year_grid), same as Month mode - each page is already one whole
+// year, already capped server-side (YEAR_VIEW_CAP, kept in sync with the
+// backend's constant of the same shape) with the true count sent
+// alongside, so there's no client-side capping or cross-page merging
+// left to do here at all.
+function _renderYearFrame(yearGroup) {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'date-group';
+    groupEl.dataset.key = yearGroup.display_date;
+    const overflow = yearGroup.total_count - yearGroup.assets.length;
+    groupEl.innerHTML = `
+        <div class="date-group-header">
+            <span class="date-group-title">${yearGroup.display_date}</span>
+            <span class="date-group-count">${t('gallery.item_count', { count: yearGroup.total_count })}</span>
+        </div>
+        <div class="photo-grid photo-grid--dense">${yearGroup.assets.map(a => renderPhotoCard(a)).join('')}</div>
+        ${overflow > 0 ? `<button type="button" class="year-overflow-badge">+${overflow}</button>` : ''}
+    `;
     if (overflow > 0) {
-        if (!badge) {
-            badge = document.createElement('button');
-            badge.type = 'button';
-            badge.className = 'year-overflow-badge';
-            groupEl.querySelector('.photo-grid').insertAdjacentElement('afterend', badge);
-            badge.onclick = () => _expandYearOverflow(groupEl, key);
-        }
-        badge.textContent = `+${overflow}`;
-    } else if (badge) {
-        badge.remove();
+        groupEl.querySelector('.year-overflow-badge').onclick = () =>
+            _expandYearOverflow(groupEl, yearGroup.display_date, yearGroup.assets.length);
     }
+    return groupEl;
 }
 
-function _expandYearOverflow(groupEl, key) {
-    const assets = _yearOverflowAssets.get(key) || [];
-    _yearOverflowAssets.delete(key);
-    const grid = groupEl.querySelector('.photo-grid');
-    grid.insertAdjacentHTML('beforeend', assets.map(a => renderPhotoCard(a)).join(''));
-    bindPhotoCards(grid);
-    groupEl.dataset.renderedCount = String(parseInt(groupEl.dataset.renderedCount || '0', 10) + assets.length);
-    state.viewerList = Array.from($('gallery-grid-container').querySelectorAll('.photo-card')).map(c => c.dataset.id);
-    _updateYearOverflowBadge(groupEl, key);
+// Fetches the year's full asset list on demand (not pre-cached - nothing
+// beyond the capped mosaic is downloaded until this is actually clicked)
+// and appends just the part not already shown. Slicing off the prefix
+// instead of asking the backend for "everything after N" keeps the
+// endpoint reusable as a plain "give me this whole year" fetch elsewhere
+// - it's safe here because both requests share the same sort/filter, so
+// the first alreadyShownCount entries are guaranteed identical.
+async function _expandYearOverflow(groupEl, year, alreadyShownCount) {
+    const badge = groupEl.querySelector('.year-overflow-badge');
+    const originalText = badge.textContent;
+    badge.disabled = true;
+    badge.textContent = t('common.loading');
+    try {
+        const g = state.gallery;
+        const data = await API.getYearAssets(year, g.sortBy, g.filterBy);
+        const remainder = data.assets.slice(alreadyShownCount);
+        const grid = groupEl.querySelector('.photo-grid');
+        grid.insertAdjacentHTML('beforeend', remainder.map(a => renderPhotoCard(a)).join(''));
+        bindPhotoCards(grid);
+        state.viewerList = Array.from($('gallery-grid-container').querySelectorAll('.photo-card')).map(c => c.dataset.id);
+        badge.remove();
+    } catch (e) {
+        toast(e.message, 'error');
+        badge.disabled = false;
+        badge.textContent = originalText;
+    }
 }
 
 async function renderGallery() {
@@ -423,14 +404,7 @@ async function loadGalleryPage() {
         const data = await API.getGallery(g.page, 60, g.sortBy, g.groupBy, g.filterBy);
         const container = $('gallery-grid-container');
 
-        if (g.page === 1) {
-            container.innerHTML = '';
-            // A fresh load (not a continued infinite-scroll page) - clear
-            // out any overflow assets cached from a previous render/mode,
-            // or a stale entry would leak into this one (wrong badge count,
-            // duplicate assets if it's later expanded).
-            _yearOverflowAssets.clear();
-        }
+        if (g.page === 1) container.innerHTML = '';
         if (!data.groups.length && g.page === 1) {
             container.innerHTML = renderEmptyState(t('gallery.no_photos_for_filter'), t('gallery.try_different_filters'));
             g.loading = false;
@@ -438,26 +412,26 @@ async function loadGalleryPage() {
         }
 
         if (g.groupBy === 'month') {
-            // Month mode is paginated by year, not asset count (see
-            // _get_year_month_grid) - each page is already a whole,
-            // distinct year, so there's no cross-page merge to handle.
+            // Paginated by year, not asset count (see _get_year_month_grid)
+            // - each page is already a whole, distinct year, so there's no
+            // cross-page merge to handle.
             data.groups.forEach(yearGroup => container.appendChild(_renderYearMonthFrame(yearGroup)));
+        } else if (g.groupBy === 'year') {
+            // Also paginated by year now (see _get_year_grid), same reasoning
+            // - no cross-page merge here either.
+            data.groups.forEach(yearGroup => container.appendChild(_renderYearFrame(yearGroup)));
         } else {
             data.groups.forEach(group => {
                 // Grouping happens per fetched page (60 assets), so a
-                // year/day that spans a page boundary previously showed up
+                // day that spans a page boundary previously showed up
                 // as two separate headers with the same label instead of
                 // one - merge into the last existing group when this page's
                 // first bucket continues the same one instead of always
                 // starting a new block.
                 const lastGroupEl = container.lastElementChild;
                 if (group.display_date !== null && lastGroupEl?.dataset.key === group.display_date) {
-                    if (g.groupBy === 'year') {
-                        _appendYearCapped(lastGroupEl, group.assets);
-                    } else {
-                        const grid = lastGroupEl.querySelector('.photo-grid');
-                        grid.insertAdjacentHTML('beforeend', group.assets.map(a => renderPhotoCard(a)).join(''));
-                    }
+                    const grid = lastGroupEl.querySelector('.photo-grid');
+                    grid.insertAdjacentHTML('beforeend', group.assets.map(a => renderPhotoCard(a)).join(''));
                     const countEl = lastGroupEl.querySelector('.date-group-count');
                     const runningTotal = (parseInt(countEl.textContent, 10) || 0) + group.assets.length;
                     countEl.textContent = t('gallery.item_count', { count: runningTotal });
@@ -467,17 +441,15 @@ async function loadGalleryPage() {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'date-group';
                 if (group.display_date !== null) groupEl.dataset.key = group.display_date;
-                if (g.groupBy === 'year') groupEl.dataset.renderedCount = '0';
                 groupEl.innerHTML = `
                     ${group.display_date ? `
                     <div class="date-group-header">
                         <span class="date-group-title">${group.display_date}</span>
                         <span class="date-group-count">${t('gallery.item_count', { count: group.assets.length })}</span>
                     </div>` : ''}
-                    <div class="photo-grid${_galleryGridDensityClass(g.groupBy)}">${g.groupBy === 'year' ? '' : group.assets.map(a => renderPhotoCard(a)).join('')}</div>
+                    <div class="photo-grid">${group.assets.map(a => renderPhotoCard(a)).join('')}</div>
                 `;
                 container.appendChild(groupEl);
-                if (g.groupBy === 'year') _appendYearCapped(groupEl, group.assets);
             });
         }
 
@@ -488,49 +460,21 @@ async function loadGalleryPage() {
         const oldSentinel = $('gallery-scroll-sentinel');
         if (oldSentinel) oldSentinel.remove();
 
-        // Year mode's render cap only limits what gets drawn, not what
-        // gets fetched - auto-scroll would otherwise keep firing off page
-        // requests for a year that's already full and only feeding its
-        // overflow badge, fetching data the user may never even look at.
-        // Once the most recently touched year-group is at/over its cap,
-        // stop auto-loading and require an explicit click instead - a
-        // still-filling year (or any non-year mode) keeps auto-scrolling
-        // as before.
-        const lastTouchedEl = container.lastElementChild;
-        const yearGroupIsFull = g.groupBy === 'year' && lastTouchedEl &&
-            lastTouchedEl.dataset.renderedCount !== undefined &&
-            parseInt(lastTouchedEl.dataset.renderedCount, 10) >= YEAR_VIEW_MAX;
-
         if (data.total_pages > g.page) {
-            if (yearGroupIsFull) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.id = 'gallery-scroll-sentinel'; // same id so the cleanup above still finds/removes it next render
-                btn.className = 'gallery-load-more-btn';
-                btn.textContent = t('gallery.load_more_btn');
-                btn.onclick = async () => {
-                    btn.remove();
+            const sentinel = document.createElement('div');
+            sentinel.id = 'gallery-scroll-sentinel';
+            sentinel.style.height = '1px';
+            container.appendChild(sentinel);
+            const obs = new IntersectionObserver(async (entries) => {
+                if (entries[0].isIntersecting) {
+                    obs.disconnect();
+                    sentinel.remove();
                     g.page++;
                     g.loading = false;
                     await loadGalleryPage();
-                };
-                container.appendChild(btn);
-            } else {
-                const sentinel = document.createElement('div');
-                sentinel.id = 'gallery-scroll-sentinel';
-                sentinel.style.height = '1px';
-                container.appendChild(sentinel);
-                const obs = new IntersectionObserver(async (entries) => {
-                    if (entries[0].isIntersecting) {
-                        obs.disconnect();
-                        sentinel.remove();
-                        g.page++;
-                        g.loading = false;
-                        await loadGalleryPage();
-                    }
-                });
-                obs.observe(sentinel);
-            }
+                }
+            });
+            obs.observe(sentinel);
         }
     } catch (e) { toast(e.message, 'error'); }
     g.loading = false;
@@ -558,9 +502,9 @@ function _renderYearMonthFrame(yearGroup) {
 
     const grid = groupEl.querySelector('.month-year-grid');
     yearGroup.months.forEach(m => {
-        // The backend already caps m.assets at MONTH_CELL_CAP (kept in
-        // sync with _monthCellMax()) and sends the true count separately
-        // as total_count - a month with thousands of photos doesn't ship
+        // The backend already caps m.assets at MONTH_CELL_CAP (36, a 6x6
+        // mosaic) and sends the true count separately as total_count - a
+        // month with thousands of photos doesn't ship
         // them all just to render this fixed mosaic, so the overflow is
         // total_count minus however many actually came back, not a
         // client-side slice of an already-complete list.

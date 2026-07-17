@@ -198,6 +198,17 @@ async def get_gallery_month(
     """Every asset in one month - the "By Month" grid's "+N" drilldown."""
     return await gallery_service.get_month_assets(db, user, sort_by, filter_by, year, month)
 
+@router.get("/gallery/year")
+async def get_gallery_year(
+    year: int = Query(..., ge=1),
+    sort_by: str = Query("date_desc"),
+    filter_by: str = Query("all"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Every asset in one year - the "By Year" grid's "+N" drilldown."""
+    return await gallery_service.get_year_assets(db, user, sort_by, filter_by, year)
+
 @router.get("/smart-categories")
 async def get_smart_categories(
     user: User = Depends(get_current_user),

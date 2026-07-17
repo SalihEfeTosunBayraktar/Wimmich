@@ -70,6 +70,9 @@ const API = {
     getMonthAssets(year, month, sortBy = 'date_desc', filterBy = 'all') {
         return this.request(`/api/assets/gallery/month?year=${year}&month=${month}&sort_by=${sortBy}&filter_by=${filterBy}`);
     },
+    getYearAssets(year, sortBy = 'date_desc', filterBy = 'all') {
+        return this.request(`/api/assets/gallery/year?year=${year}&sort_by=${sortBy}&filter_by=${filterBy}`);
+    },
     getAsset(id) { return this.request(`/api/assets/${id}`); },
     getSimilarAssets(id) { return this.request(`/api/assets/${id}/similar`); },
     getAssetFile(id) { return `/api/assets/${id}/file`; },

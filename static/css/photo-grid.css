@@ -36,9 +36,10 @@
    of the normal-size cards used elsewhere - packed tight since the point
    is a glance across a whole year, not browsing individual photos. Fixed
    30 columns (not auto-fill) so it's a real modular grid: a full year is a
-   30x7 area (210 photos, see gallery.js's YEAR_VIEW_MAX) before the rest
-   rolls into an overflow badge - not auto-fill, which would just widen
-   or narrow individual cells instead of adding rows.
+   30x7 area (210 photos, capped server-side - see gallery_service.py's
+   YEAR_VIEW_CAP) before the rest rolls into an overflow badge - not
+   auto-fill, which would just widen or narrow individual cells instead of
+   adding rows.
    minmax(0, 1fr): a plain 1fr track lets a photo's own pixel size push a
    column wider than its fair share (hit this exact bug once already, on
    the month mosaic - see .month-cell-grid below). */
@@ -48,10 +49,11 @@
 }
 
 /* The "+N" overflow control below a capped year grid (see
-   gallery.js's YEAR_VIEW_MAX/_appendYearCapped) - a full-width button
-   rather than month-cell-more's small absolute-positioned corner badge,
-   since this sits below an already-full-width dense grid instead of
-   inside one small square cell. */
+   gallery.js's _renderYearFrame/_expandYearOverflow) - a full-width
+   button rather than month-cell-more's small absolute-positioned corner
+   badge, since this sits below an already-full-width dense grid instead
+   of inside one small square cell. Fetches that year's full list on
+   click - nothing beyond the capped mosaic is downloaded until then. */
 .year-overflow-badge {
     display: block;
     width: 100%;
@@ -67,27 +69,7 @@
     text-align: center;
 }
 .year-overflow-badge:hover { background: var(--bg-hover); color: var(--text-primary); }
-
-/* Shown instead of the invisible auto-scroll sentinel once every currently
-   loaded year is already at its render cap - see gallery.js's
-   yearGroupIsFull. Requires an explicit click to fetch further pages
-   instead of auto-firing, since further pages would otherwise likely just
-   feed overflow badges for data the user may never look at. */
-.gallery-load-more-btn {
-    display: block;
-    width: 100%;
-    margin-top: var(--space-md);
-    padding: var(--space-md);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-}
-.gallery-load-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.year-overflow-badge:disabled { cursor: default; opacity: 0.7; }
 
 .photo-grid--dense .photo-select,
 .photo-grid--dense .photo-cover-btn,
@@ -119,8 +101,8 @@
 }
 
 /* Fixed columns (not auto-fill like the year mosaic) so a full cell always
-   reads as a real square - 6x6 on every device (matches MONTH_CELL_COLS
-   in gallery.js; 9x9 loaded too many thumbnails at once). */
+   reads as a real square - 6x6 = MONTH_CELL_CAP in gallery_service.py's
+   _get_year_month_grid (9x9 loaded too many thumbnails at once). */
 .month-cell-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
     gap: 2px;

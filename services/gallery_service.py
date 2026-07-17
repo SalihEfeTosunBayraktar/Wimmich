@@ -23,10 +23,10 @@ SORT_COLUMNS = {
 
 SMART_CATEGORIES = ("screenshot", "document", "nature", "pet", "food", "car", "technology")
 
-# Keep in sync with gallery.js's MONTH_CELL_COLS**2 - the fixed mosaic size
-# each month cell renders, so there's no point serializing/sending more
-# than this many assets for a month up front (a busy month could otherwise
-# ship thousands of full asset records over the wire just to render 36
+# The fixed 6x6 mosaic size each month cell renders (see .month-cell-grid
+# in photo-grid.css) - no point serializing/sending more than this many
+# assets for a month up front (a busy month could otherwise ship
+# thousands of full asset records over the wire just to render 36
 # thumbnails). The "+N" drilldown fetches a month's full list separately
 # via get_month_assets(), only when the user actually asks for it.
 MONTH_CELL_CAP = 36
@@ -60,17 +60,6 @@ def _group_by_day(assets: list) -> list:
         if key not in groups:
             month_name = config.LOCALE_MONTH_NAMES.get(dt.month, "")
             groups[key] = {"display_date": f"{dt.day} {month_name} {dt.year}", "assets": []}
-        groups[key]["assets"].append(asset_to_dict(asset))
-    return list(groups.values())
-
-
-def _group_by_year(assets: list) -> list:
-    groups = {}
-    for asset in assets:
-        dt = asset.taken_at or asset.created_at
-        key = str(dt.year)
-        if key not in groups:
-            groups[key] = {"display_date": key, "assets": []}
         groups[key]["assets"].append(asset_to_dict(asset))
     return list(groups.values())
 
@@ -183,6 +172,84 @@ async def get_month_assets(
     return {"assets": [asset_to_dict(a) for a in assets]}
 
 
+# The fixed 30x7 mosaic size a whole year renders in "Yıla Göre" mode
+# (see .photo-grid--dense in photo-grid.css, fixed at 30 columns).
+YEAR_VIEW_CAP = 30 * 7
+
+
+async def _get_year_grid(
+    db: AsyncSession,
+    user: User,
+    sort_by: str,
+    filter_by: str,
+    year_page: int,
+) -> dict:
+    """"Yıla Göre" paginates by YEAR instead of asset count, same reasoning
+    as _get_year_month_grid: asset-count pagination couldn't tell "more of
+    the year that's already at its cap" apart from "the next year the user
+    actually wants to scroll into" without fetching and inspecting it
+    first, since a single page of 60 could straddle both. One page = one
+    already-capped year sidesteps that entirely - scrolling to the next
+    page always means the next year, never entangled with the current
+    year's overflow."""
+    conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
+    _apply_filter(conditions, filter_by)
+
+    date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
+    years_result = await db.execute(
+        select(func.strftime("%Y", date_expr)).where(and_(*conditions)).distinct()
+    )
+    years_present = sorted({int(y) for (y,) in years_result.all() if y}, reverse=True)
+    if not years_present or year_page > len(years_present):
+        return {"groups": [], "total": len(years_present), "page": year_page, "per_page": 1, "total_pages": len(years_present)}
+
+    year = years_present[year_page - 1]
+    year_start = datetime(year, 1, 1)
+    year_end = datetime(year + 1, 1, 1)
+    year_conditions = conditions + [date_expr >= year_start, date_expr < year_end]
+
+    total_count = (await db.execute(select(func.count(Asset.id)).where(and_(*year_conditions)))).scalar()
+
+    assets = list((await db.execute(
+        select(Asset).where(and_(*year_conditions))
+        .order_by(SORT_COLUMNS.get(sort_by, SORT_COLUMNS["date_desc"]))
+        .limit(YEAR_VIEW_CAP)
+    )).scalars().all())
+
+    return {
+        "groups": [{"display_date": str(year), "assets": [asset_to_dict(a) for a in assets], "total_count": total_count}],
+        "total": len(years_present),
+        "page": year_page,
+        "per_page": 1,
+        "total_pages": len(years_present),
+    }
+
+
+async def get_year_assets(
+    db: AsyncSession,
+    user: User,
+    sort_by: str,
+    filter_by: str,
+    year: int,
+) -> dict:
+    """Every asset in one specific year - the year view's "+N" drilldown,
+    fetched only when the user actually clicks it (see get_month_assets,
+    same reasoning)."""
+    conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
+    _apply_filter(conditions, filter_by)
+
+    date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
+    year_start = datetime(year, 1, 1)
+    year_end = datetime(year + 1, 1, 1)
+    conditions += [date_expr >= year_start, date_expr < year_end]
+
+    assets = list((await db.execute(
+        select(Asset).where(and_(*conditions)).order_by(SORT_COLUMNS.get(sort_by, SORT_COLUMNS["date_desc"]))
+    )).scalars().all())
+
+    return {"assets": [asset_to_dict(a) for a in assets]}
+
+
 async def get_gallery_data(
     db: AsyncSession,
     user: User,
@@ -194,6 +261,8 @@ async def get_gallery_data(
 ) -> dict:
     if group_by == "month":
         return await _get_year_month_grid(db, user, sort_by, filter_by, page)
+    if group_by == "year":
+        return await _get_year_grid(db, user, sort_by, filter_by, page)
 
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
     _apply_filter(conditions, filter_by)
@@ -211,7 +280,7 @@ async def get_gallery_data(
     )
     assets = list((await db.execute(stmt)).scalars().all())
 
-    groupers = {"day": _group_by_day, "year": _group_by_year, "type": _group_by_type}
+    groupers = {"day": _group_by_day, "type": _group_by_type}
     grouper = groupers.get(group_by)
     if grouper:
         groups = grouper(assets)
