@@ -47,18 +47,23 @@ async def list_people(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all recognized people, split into named people and an "unknown
+    """List all recognized people, split into named people, an "unknown
     pool" (unnamed groups, whether still pending a name or dismissed via
-    "Tanımıyorum" - both land in the same pool instead of being scattered)."""
+    "Tanımıyorum" - both land in the same pool instead of being scattered),
+    and a hidden group kept separate from both so a hidden person doesn't
+    quietly count as unnamed/dismissed for the naming queue either."""
     stmt = select(Person).where(Person.user_id == user.id).order_by(Person.face_count.desc())
     persons = list((await db.execute(stmt)).scalars().all())
 
-    named = [p for p in persons if p.name]
-    unknown = [p for p in persons if not p.name]
+    visible = [p for p in persons if not p.is_hidden]
+    hidden = [p for p in persons if p.is_hidden]
+    named = [p for p in visible if p.name]
+    unknown = [p for p in visible if not p.name]
 
     return {
         "people": [_person_to_dict(p) for p in named],
         "unknown_pool": [_person_to_dict(p) for p in unknown],
+        "hidden": [_person_to_dict(p) for p in hidden],
     }
 
 

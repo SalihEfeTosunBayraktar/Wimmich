@@ -18,6 +18,7 @@
 }
 
 .person-card {
+    position: relative;
     text-align: center;
     cursor: pointer;
     padding: var(--space-md);
@@ -28,6 +29,39 @@
 .person-card:hover {
     background: var(--bg-hover);
 }
+
+.person-hide-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 3;
+    font-size: 13px;
+}
+
+.person-card:hover .person-hide-btn { opacity: 1; }
+
+.hidden-people-section {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.hidden-people-title {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+    cursor: pointer;
+    user-select: none;
+}
+.hidden-people-section[open] .hidden-people-title { margin-bottom: var(--space-md); }
 
 .person-avatar {
     width: 80px;

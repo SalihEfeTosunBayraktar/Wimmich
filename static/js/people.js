@@ -29,6 +29,11 @@ registerTranslations({
         'people.move_face_modal_title': 'Move Face to Another Person',
         'people.move_face_confirm': 'Move',
         'people.name_updated_success': 'Name updated',
+        'people.hide_title': 'Hide this person',
+        'people.unhide_title': 'Unhide this person',
+        'people.hidden_success': 'Person hidden',
+        'people.unhidden_success': 'Person unhidden',
+        'people.hidden_people_title': 'Hidden People ({count})',
     },
     tr: {
         'people.photo_count': '{count} fotoğraf',
@@ -57,6 +62,11 @@ registerTranslations({
         'people.move_face_modal_title': 'Yüzü Başka Bir Kişiye Taşı',
         'people.move_face_confirm': 'Taşı',
         'people.name_updated_success': 'İsim güncellendi',
+        'people.hide_title': 'Bu kişiyi gizle',
+        'people.unhide_title': 'Bu kişiyi göster',
+        'people.hidden_success': 'Kişi gizlendi',
+        'people.unhidden_success': 'Kişi tekrar görünür yapıldı',
+        'people.hidden_people_title': 'Gizli Kişiler ({count})',
     },
     fr: {
         'people.photo_count': '{count} photos',
@@ -85,6 +95,11 @@ registerTranslations({
         'people.move_face_modal_title': 'Déplacer le visage vers une autre personne',
         'people.move_face_confirm': 'Déplacer',
         'people.name_updated_success': 'Nom mis à jour',
+        'people.hide_title': 'Masquer cette personne',
+        'people.unhide_title': 'Afficher cette personne',
+        'people.hidden_success': 'Personne masquée',
+        'people.unhidden_success': 'Personne affichée à nouveau',
+        'people.hidden_people_title': 'Personnes masquées ({count})',
     },
     de: {
         'people.photo_count': '{count} Fotos',
@@ -113,12 +128,18 @@ registerTranslations({
         'people.move_face_modal_title': 'Gesicht zu einer anderen Person verschieben',
         'people.move_face_confirm': 'Verschieben',
         'people.name_updated_success': 'Name aktualisiert',
+        'people.hide_title': 'Diese Person ausblenden',
+        'people.unhide_title': 'Diese Person wieder einblenden',
+        'people.hidden_success': 'Person ausgeblendet',
+        'people.unhidden_success': 'Person wieder eingeblendet',
+        'people.hidden_people_title': 'Ausgeblendete Personen ({count})',
     },
 });
 
-function _renderPersonCard(p) {
+function _renderPersonCard(p, { hidden = false } = {}) {
     return `
         <div class="person-card" onclick="openPerson('${p.id}')">
+            <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? '👁️' : '🙈'}</button>
             <div class="person-avatar">
                 ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : '<span style="font-size:2rem">👤</span>'}
             </div>
@@ -128,24 +149,39 @@ function _renderPersonCard(p) {
     `;
 }
 
+async function togglePersonHidden(id, hide) {
+    try {
+        await API.updatePerson(id, { is_hidden: hide });
+        toast(hide ? t('people.hidden_success') : t('people.unhidden_success'), 'success');
+        renderPeople();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
 async function renderPeople() {
     state.personSubTab = 'photos';
     try {
         const data = await API.getPeople();
         const pc = $('page-content');
         const unknownPool = data.unknown_pool || [];
-        if (!data.people.length && !unknownPool.length) {
+        const hiddenPeople = data.hidden || [];
+        if (!data.people.length && !unknownPool.length && !hiddenPeople.length) {
             pc.innerHTML = renderEmptyState(t('people.empty_title'), t('people.empty_desc'));
             return;
         }
         pc.innerHTML = `
             <div id="naming-queue-container"></div>
-            <div class="people-grid">${data.people.map(_renderPersonCard).join('')}</div>
+            <div class="people-grid">${data.people.map(p => _renderPersonCard(p)).join('')}</div>
             ${unknownPool.length ? `
                 <div class="unknown-pool-section">
                     <h3 class="unknown-pool-title">❓ ${t('people.unknown_pool_title', { count: unknownPool.length })}</h3>
-                    <div class="people-grid">${unknownPool.map(_renderPersonCard).join('')}</div>
+                    <div class="people-grid">${unknownPool.map(p => _renderPersonCard(p)).join('')}</div>
                 </div>
+            ` : ''}
+            ${hiddenPeople.length ? `
+                <details class="hidden-people-section">
+                    <summary class="hidden-people-title">🙈 ${t('people.hidden_people_title', { count: hiddenPeople.length })}</summary>
+                    <div class="people-grid">${hiddenPeople.map(p => _renderPersonCard(p, { hidden: true })).join('')}</div>
+                </details>
             ` : ''}
         `;
         renderNamingQueue();
