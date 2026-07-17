@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Job
+from models.common import utcnow
 from services.job_core import check_job_cancelled, run_cancellable, JobCancelledException
 from utils.path_utils import resolve_data_path
 
@@ -43,9 +44,13 @@ async def handle_job_thumbnail(db: AsyncSession, job: Job):
         # Trashed and 0-byte (failed-import) assets can never produce a
         # thumbnail - without this, they fail and get logged again on every
         # single bulk run forever, since "still missing a thumbnail" is
-        # permanently true for them.
+        # permanently true for them. Same reasoning for thumbnail_failed_at:
+        # a video with no decodable video stream will fail identically on
+        # every future attempt too - an asset_id-specific run (e.g. a
+        # manual "regenerate this one" retry) still bypasses this, so it's
+        # not a permanent dead end, just not retried automatically forever.
         assets_query = select(Asset).where(
-            and_(Asset.is_trashed == False, Asset.file_size > 0)
+            and_(Asset.is_trashed == False, Asset.file_size > 0, Asset.thumbnail_failed_at.is_(None))
         )
 
     result = await db.execute(assets_query)
@@ -91,6 +96,15 @@ async def handle_job_thumbnail(db: AsyncSession, job: Job):
             raise
         except Exception as e:
             print(f"[JOB] Thumbnail generation failed for asset {asset.id}: {e}")
+
+        # Give up on permanently-failing assets (e.g. a video with no
+        # decodable video stream) instead of retrying them on every future
+        # bulk run forever; clear the flag again if a previously-failing
+        # asset succeeds this time (e.g. after an ffmpeg upgrade).
+        if _has_valid_thumbnails(asset):
+            asset.thumbnail_failed_at = None
+        else:
+            asset.thumbnail_failed_at = utcnow()
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()

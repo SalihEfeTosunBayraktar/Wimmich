@@ -59,6 +59,12 @@ class Asset(Base):
     thumb_small_path = Column(String(1000), nullable=True)
     thumb_medium_path = Column(String(1000), nullable=True)
     thumb_large_path = Column(String(1000), nullable=True)
+    # Set when thumbnail generation was attempted and failed for every size
+    # (e.g. a video with no decodable video stream - ffmpeg can never
+    # extract a frame from it) - lets the bulk THUMBNAIL job stop retrying
+    # a permanently-doomed file every single run instead of burning up to
+    # 30s x 3 sizes on it forever. Cleared again on any successful attempt.
+    thumbnail_failed_at = Column(DateTime, nullable=True)
 
     # ML
     clip_embedding_path = Column(String(1000), nullable=True)

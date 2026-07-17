@@ -80,3 +80,10 @@ async def init_db():
             await conn.execute(text("ALTER TABLE albums ADD COLUMN smart_query VARCHAR(500)"))
         except Exception:
             pass
+
+        # Automatic column migration for giving up on permanently-failing
+        # thumbnail generation (e.g. a video with no decodable video stream)
+        try:
+            await conn.execute(text("ALTER TABLE assets ADD COLUMN thumbnail_failed_at DATETIME"))
+        except Exception:
+            pass
