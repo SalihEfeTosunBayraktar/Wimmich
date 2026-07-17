@@ -23,6 +23,14 @@ SORT_COLUMNS = {
 
 SMART_CATEGORIES = ("screenshot", "document", "nature", "pet", "food", "car", "technology")
 
+# Keep in sync with gallery.js's MONTH_CELL_COLS**2 - the fixed mosaic size
+# each month cell renders, so there's no point serializing/sending more
+# than this many assets for a month up front (a busy month could otherwise
+# ship thousands of full asset records over the wire just to render 36
+# thumbnails). The "+N" drilldown fetches a month's full list separately
+# via get_month_assets(), only when the user actually asks for it.
+MONTH_CELL_CAP = 36
+
 
 def _apply_filter(conditions: list, filter_by: str) -> None:
     if filter_by == "no_album":
@@ -107,14 +115,37 @@ async def _get_year_month_grid(
     year_end = datetime(year + 1, 1, 1)
     year_conditions = conditions + [date_expr >= year_start, date_expr < year_end]
 
+    # True per-month counts first (column-only) - needed for the "+N"
+    # overflow badge even for a month whose actual asset rows get capped
+    # below, so the badge still shows the real remainder rather than 0.
+    month_counts_result = await db.execute(
+        select(func.strftime("%m", date_expr)).where(and_(*year_conditions))
+    )
+    month_counts = {}
+    for (m,) in month_counts_result.all():
+        if m:
+            month_counts[int(m)] = month_counts.get(int(m), 0) + 1
+
     year_assets = list((await db.execute(
         select(Asset).where(and_(*year_conditions)).order_by(SORT_COLUMNS.get(sort_by, SORT_COLUMNS["date_desc"]))
     )).scalars().all())
 
-    months = [{"month": m, "display_date": config.LOCALE_MONTH_NAMES.get(m, ""), "assets": []} for m in range(1, 13)]
+    months = [
+        {"month": m, "display_date": config.LOCALE_MONTH_NAMES.get(m, ""), "assets": [], "total_count": month_counts.get(m, 0)}
+        for m in range(1, 13)
+    ]
     for asset in year_assets:
         dt = asset.taken_at or asset.created_at
-        months[dt.month - 1]["assets"].append(asset_to_dict(asset))
+        bucket = months[dt.month - 1]["assets"]
+        # year_assets is already sorted by sort_by - the first MONTH_CELL_CAP
+        # encountered per month (in that same global order) are exactly the
+        # "top N for this month" under the same ordering, so capping here
+        # during the single pass is equivalent to a per-month top-N query,
+        # without needing one. Only the mosaic cell's fixed 36 slots ever
+        # get serialized/sent - a month with thousands of photos doesn't
+        # balloon the response just to render 36 thumbnails.
+        if len(bucket) < MONTH_CELL_CAP:
+            bucket.append(asset_to_dict(asset))
 
     return {
         "groups": [{"year": year, "months": months}],
@@ -123,6 +154,33 @@ async def _get_year_month_grid(
         "per_page": 1,
         "total_pages": len(years_present),
     }
+
+
+async def get_month_assets(
+    db: AsyncSession,
+    user: User,
+    sort_by: str,
+    filter_by: str,
+    year: int,
+    month: int,
+) -> dict:
+    """Every asset in one specific (year, month) - the "+N" drilldown's full
+    view, fetched only when the user actually opens it instead of
+    front-loading every month's complete asset list into the year-grid
+    response just to render a fixed 36-thumbnail mosaic per month."""
+    conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
+    _apply_filter(conditions, filter_by)
+
+    date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
+    month_start = datetime(year, month, 1)
+    month_end = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+    conditions += [date_expr >= month_start, date_expr < month_end]
+
+    assets = list((await db.execute(
+        select(Asset).where(and_(*conditions)).order_by(SORT_COLUMNS.get(sort_by, SORT_COLUMNS["date_desc"]))
+    )).scalars().all())
+
+    return {"assets": [asset_to_dict(a) for a in assets]}
 
 
 async def get_gallery_data(

@@ -536,15 +536,11 @@ async function loadGalleryPage() {
     g.loading = false;
 }
 
-// Each month cell shows a fixed square mosaic (6x6 on every device - 9x9
-// was too many thumbnails to load comfortably) - anything past that is
+// Each month cell shows a fixed square mosaic (6x6 = 36, matching the
+// backend's MONTH_CELL_CAP in gallery_service.py - anything past that is
 // just a "+N" badge, not rendered, so a 300-photo month doesn't balloon
-// the DOM.
-const MONTH_CELL_COLS = 6;
-
-function _monthCellMax() {
-    return MONTH_CELL_COLS * MONTH_CELL_COLS;
-}
+// the DOM. The cap is enforced server-side now (see _get_year_month_grid),
+// so there's nothing to slice client-side anymore.
 
 // "Aya Göre": one full calendar year as a 4-columns x 3-rows frame, each
 // cell a month with its own dense mosaic (or an empty placeholder for a
@@ -561,17 +557,22 @@ function _renderYearMonthFrame(yearGroup) {
     `;
 
     const grid = groupEl.querySelector('.month-year-grid');
-    const cellMax = _monthCellMax();
     yearGroup.months.forEach(m => {
-        const shown = m.assets.slice(0, cellMax);
-        const overflow = m.assets.length - shown.length;
+        // The backend already caps m.assets at MONTH_CELL_CAP (kept in
+        // sync with _monthCellMax()) and sends the true count separately
+        // as total_count - a month with thousands of photos doesn't ship
+        // them all just to render this fixed mosaic, so the overflow is
+        // total_count minus however many actually came back, not a
+        // client-side slice of an already-complete list.
+        const shown = m.assets;
+        const overflow = m.total_count - shown.length;
 
         const cellEl = document.createElement('div');
         cellEl.className = 'month-cell';
         cellEl.innerHTML = `
             <div class="month-cell-header">
                 <span>${m.display_date}</span>
-                <span class="month-cell-count">${m.assets.length}</span>
+                <span class="month-cell-count">${m.total_count}</span>
             </div>
             ${shown.length
                 ? `<div class="photo-grid month-cell-grid">${shown.map(a => renderPhotoCard(a)).join('')}</div>`
@@ -590,11 +591,24 @@ function _renderYearMonthFrame(yearGroup) {
     return groupEl;
 }
 
-// Opens every photo in one month (not just the 7x7 shown in its cell) as
-// its own full-size browsing grid, since a month can easily have hundreds
-// of photos - too many to usefully cram into the year frame at once.
-function _openMonthDrilldown(year, month) {
+// Opens every photo in one month (not just the fixed mosaic shown in its
+// cell) as its own full-size browsing grid, since a month can easily have
+// hundreds/thousands of photos - too many to usefully cram into the year
+// frame at once, and no longer even sent to the client until this is
+// actually opened (see get_month_assets on the backend).
+async function _openMonthDrilldown(year, month) {
     const pc = $('page-content');
+    pc.innerHTML = `<div class="skeleton" style="height:400px;border-radius:12px"></div>`;
+    let assets;
+    try {
+        const g = state.gallery;
+        const data = await API.getMonthAssets(year, month.month, g.sortBy, g.filterBy);
+        assets = data.assets;
+    } catch (e) {
+        toast(e.message, 'error');
+        return;
+    }
+
     pc.innerHTML = `
         <div style="margin-bottom:16px">
             <button class="btn btn-secondary btn-sm" onclick="renderGallery()">${t('gallery.back_to_years')}</button>
@@ -602,12 +616,12 @@ function _openMonthDrilldown(year, month) {
         <div class="date-group">
             <div class="date-group-header">
                 <span class="date-group-title">${month.display_date} ${year}</span>
-                <span class="date-group-count">${t('gallery.item_count', { count: month.assets.length })}</span>
+                <span class="date-group-count">${t('gallery.item_count', { count: assets.length })}</span>
             </div>
-            <div class="photo-grid">${month.assets.map(a => renderPhotoCard(a)).join('')}</div>
+            <div class="photo-grid">${assets.map(a => renderPhotoCard(a)).join('')}</div>
         </div>
     `;
     bindPhotoCards(pc.querySelector('.date-group'));
-    state.viewerList = month.assets.map(a => a.id);
+    state.viewerList = assets.map(a => a.id);
 }
 

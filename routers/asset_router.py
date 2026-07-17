@@ -186,6 +186,18 @@ async def get_gallery(
         db, user, page, per_page, sort_by, group_by, filter_by
     )
 
+@router.get("/gallery/month")
+async def get_gallery_month(
+    year: int = Query(..., ge=1),
+    month: int = Query(..., ge=1, le=12),
+    sort_by: str = Query("date_desc"),
+    filter_by: str = Query("all"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Every asset in one month - the "By Month" grid's "+N" drilldown."""
+    return await gallery_service.get_month_assets(db, user, sort_by, filter_by, year, month)
+
 @router.get("/smart-categories")
 async def get_smart_categories(
     user: User = Depends(get_current_user),

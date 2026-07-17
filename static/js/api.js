@@ -67,6 +67,9 @@ const API = {
     getGallery(page = 1, perPage = 60, sortBy = 'date_desc', groupBy = 'none', filterBy = 'all') {
         return this.request(`/api/assets/gallery?page=${page}&per_page=${perPage}&sort_by=${sortBy}&group_by=${groupBy}&filter_by=${filterBy}`);
     },
+    getMonthAssets(year, month, sortBy = 'date_desc', filterBy = 'all') {
+        return this.request(`/api/assets/gallery/month?year=${year}&month=${month}&sort_by=${sortBy}&filter_by=${filterBy}`);
+    },
     getAsset(id) { return this.request(`/api/assets/${id}`); },
     getSimilarAssets(id) { return this.request(`/api/assets/${id}/similar`); },
     getAssetFile(id) { return `/api/assets/${id}/file`; },
