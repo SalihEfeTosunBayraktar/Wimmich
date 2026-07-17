@@ -158,10 +158,38 @@
     overflow: hidden;
     border: 3px solid transparent;
     background: var(--bg-tertiary);
+    cursor: pointer;
+    transition: border-color 0.15s, opacity 0.15s;
 }
 .dup-slideshow-card img { width: 100%; height: 100%; object-fit: cover; }
 .dup-slideshow-card--keep { border-color: var(--success); }
 .dup-slideshow-card--delete { border-color: var(--danger); opacity: 0.65; }
+
+/* Per-card keep/delete toggle, shown only for groups of more than two
+   photos - lets several survive a single group instead of just one. */
+.dup-slideshow-card-multi {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    padding: 0;
+}
+.dup-slideshow-card--keep .dup-slideshow-card-multi {
+    background: var(--success);
+    border-color: var(--success);
+}
 .dup-slideshow-card-tag {
     position: absolute;
     bottom: 8px;
