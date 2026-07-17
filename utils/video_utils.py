@@ -2,6 +2,8 @@
 import subprocess
 import json
 import re
+import threading
+import time
 from pathlib import Path
 from typing import Optional, Dict, Any
 import config
@@ -129,9 +131,20 @@ def transcode_video(
     output_path: str,
     max_height: int = 720,
     crf: int = 28,
+    cancel_event: Optional[threading.Event] = None,
+    timeout: float = 3600,  # 1hr ceiling, same as before - just enforced via polling now
 ) -> bool:
     """
     Transcode video to H.264 MP4.
+
+    Runs ffmpeg via Popen and polls it instead of a single blocking
+    subprocess.run(..., timeout=...) - that older approach blocked this
+    entire worker thread until ffmpeg exited on its own with no way to
+    react to cancel_event, so cancelling a job mid-transcode never
+    actually stopped ffmpeg (it kept burning CPU/RAM until done) and the
+    job worker itself stayed stuck on this same call, unable to start the
+    next queued job, until that same completion. Polling lets a cancelled
+    job kill ffmpeg within a couple seconds instead.
     """
     try:
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -149,11 +162,53 @@ def transcode_video(
             "-movflags", "+faststart",
             str(output_path),
         ]
-        result = subprocess.run(cmd, capture_output=True, timeout=3600)  # 1hr timeout
-        return result.returncode == 0 and Path(output_path).exists()
+        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
-    except (subprocess.TimeoutExpired, FileNotFoundError):
+        start = time.monotonic()
+        while True:
+            try:
+                proc.wait(timeout=0.5)
+                break
+            except subprocess.TimeoutExpired:
+                pass
+
+            if cancel_event is not None and cancel_event.is_set():
+                _terminate(proc)
+                return False
+            if time.monotonic() - start > timeout:
+                print(f"[FFMPEG] Transcode timed out after {timeout}s: {input_path}")
+                _terminate(proc)
+                return False
+
+        if proc.returncode != 0:
+            stderr = (proc.stderr.read() or b"").decode(errors="replace")[-800:] if proc.stderr else ""
+            print(f"[FFMPEG] Transcode failed (exit {proc.returncode}) for {input_path}: {stderr.strip()}")
+            return False
+
+        return Path(output_path).exists()
+
+    except FileNotFoundError:
         return False
+
+
+def _terminate(proc: subprocess.Popen) -> None:
+    """Force-kill ffmpeg and its whole process tree, then confirm it's
+    actually gone. Plain proc.kill() only kills the exact process the
+    Popen handle points at - if that's ever a wrapper/shim rather than
+    ffmpeg.exe directly, a child it spawned survives as an orphan still
+    burning CPU/RAM, so this tree-kills via PID instead."""
+    try:
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+            capture_output=True, timeout=10,
+        )
+    except Exception:
+        pass
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
 
 
 def is_ffmpeg_available() -> bool:
