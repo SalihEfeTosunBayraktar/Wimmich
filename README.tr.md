@@ -94,14 +94,26 @@ Cloudflare Tunnel entegrasyonu ile ev ağınızın dışından da erişim — po
 
 ### Opsiyonel ML bağımlılıkları
 
+Önerilen: sadece `install_full.bat`'ı çalıştırın — zaten güncel bir CUDA derleme etiketi zincirini dener (biri tutmazsa otomatik bir sonrakine, hiçbiri tutmazsa CPU'ya düşer), çünkü tek bir sabit etiket, PyTorch daha yeni Python sürümlerinde onu bırakınca eskir. Elle kurulum gerekiyorsa:
+
 ```
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-pip install open_clip_torch
-pip install facenet-pytorch requests --no-deps
-pip install scikit-learn
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130   # ya da cu126 / cu121 — tam yedekleme zinciri için install_full.bat'a bakın
+pip install open_clip_torch transformers
+pip install facenet-pytorch --no-deps
+pip install requests scikit-learn
 ```
 
 ## Kurulum
+
+### Hızlı kurulum (önerilen)
+
+1. **[bootstrap.bat](https://github.com/SalihEfeTosunBayraktar/Wimmich/releases/latest/download/bootstrap.bat)** dosyasını indirip çift tıklayın.
+2. Windows SmartScreen muhtemelen "Windows bilgisayarınızı korudu" uyarısı gösterecek — bu yeni, imzasız bir script için beklenen bir durum, bir şeyin yanlış gittiğinin işareti değil. **Diğer bilgiler**'e, ardından **Yine de çalıştır**'a tıklayın.
+3. Tarayıcınızda bir kurulum sayfası açılır: Full/Minimal, NVIDIA GPU'nuz olup olmadığı, kurulum klasörü ve port seçip **Install**'a tıklayın. Wimmich'in indirilmesi, ortamın oluşturulması, bağımlılıkların kurulması ve sunucunun başlatılması buradan sonra otomatik olarak gerçekleşir.
+
+Git kurmanıza veya terminale bir şey yazmanıza gerek yok — `bootstrap.bat` uygulamayı kendisi indiriyor.
+
+### Elle kurulum
 
 ```
 git clone https://github.com/SalihEfeTosunBayraktar/Wimmich.git

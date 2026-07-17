@@ -94,14 +94,26 @@ Interface disponible en anglais (par défaut), turc, français et allemand. La l
 
 ### Dépendances ML optionnelles
 
+Recommandé : lancez simplement `install_full.bat` — il essaie déjà une chaîne de tags de build CUDA récents (avec repli automatique, puis vers CPU si aucun ne correspond), car un tag unique fixe devient obsolète dès que PyTorch cesse de le prendre en charge sous les nouvelles versions de Python. Installation manuelle, si nécessaire :
+
 ```
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-pip install open_clip_torch
-pip install facenet-pytorch requests --no-deps
-pip install scikit-learn
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130   # ou cu126 / cu121 — voir install_full.bat pour la chaîne de repli complète
+pip install open_clip_torch transformers
+pip install facenet-pytorch --no-deps
+pip install requests scikit-learn
 ```
 
 ## Installation
+
+### Installation rapide (recommandée)
+
+1. Téléchargez **[bootstrap.bat](https://github.com/SalihEfeTosunBayraktar/Wimmich/releases/latest/download/bootstrap.bat)** et double-cliquez dessus.
+2. Windows SmartScreen affichera probablement « Windows a protégé votre ordinateur » — c'est normal pour un script neuf et non signé, pas un signe de problème. Cliquez sur **Informations complémentaires**, puis **Exécuter quand même**.
+3. Votre navigateur ouvre une page de configuration : choisissez Full/Minimal, si vous avez un GPU NVIDIA, un dossier d'installation et un port, puis cliquez sur **Install**. Le téléchargement de Wimmich, la création de l'environnement, l'installation des dépendances et le lancement du serveur se font ensuite automatiquement.
+
+Pas besoin d'installer git ni de taper quoi que ce soit dans un terminal — `bootstrap.bat` télécharge l'application lui-même.
+
+### Installation manuelle
 
 ```
 git clone https://github.com/SalihEfeTosunBayraktar/Wimmich.git
