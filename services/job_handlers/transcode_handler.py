@@ -19,7 +19,11 @@ from utils.video_utils import transcode_video, is_ffmpeg_available
 
 async def handle_job_transcode(db: AsyncSession, job: Job):
     """Transcode video assets that don't have a compatible encoded copy yet."""
-    if not is_ffmpeg_available():
+    # Off the event loop - see main.py's identical wrapping for why: this
+    # can shell out to a network download (utils/ffmpeg_setup.py) that
+    # would otherwise freeze the whole process, not just this job, for its
+    # full timeout on a bad network.
+    if not await asyncio.to_thread(is_ffmpeg_available):
         return
 
     data = job.data or {}

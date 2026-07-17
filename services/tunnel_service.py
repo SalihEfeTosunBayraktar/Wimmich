@@ -66,7 +66,7 @@ async def download_cloudflared() -> dict:
         )
 
         def _download():
-            with urllib.request.urlopen(req, context=ctx) as response:
+            with urllib.request.urlopen(req, context=ctx, timeout=30) as response:
                 with open(dest, "wb") as f:
                     f.write(response.read())
 

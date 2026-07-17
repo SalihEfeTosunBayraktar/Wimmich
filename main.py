@@ -2,6 +2,23 @@
 Wimmich - Windows-Based Photo/Video Management Server
 A self-hosted alternative to Immich, running natively on Windows.
 """
+import sys
+
+# Nothing in this codebase currently prints non-ASCII text to the console
+# (verified: every utils/log.py call site is plain ASCII), but Windows'
+# default console codepage often isn't UTF-8, especially on Turkish-locale
+# machines - reproduced directly: a Windows OSError's own (Turkish, OS-
+# generated) message came through mojibake in the terminal. Reconfiguring
+# here up front, before anything else prints, is cheap insurance against
+# a future UnicodeEncodeError crash from any non-ASCII text (ours or an
+# OS/library message passing through). try/except since .reconfigure()
+# is Python 3.7+ only and some redirected streams don't support it.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -64,7 +81,11 @@ async def lifespan(app: FastAPI):
 
     # Check FFmpeg
     from utils.video_utils import is_ffmpeg_available
-    if is_ffmpeg_available():
+    # off the event loop - this can shell out to a network download
+    # (utils/ffmpeg_setup.py) that would otherwise block every single
+    # startup (and everyone's requests) for its full timeout on a bad
+    # network.
+    if await asyncio.to_thread(is_ffmpeg_available):
         success("BOOT", "FFmpeg available (video support enabled)")
     else:
         warn("BOOT", "FFmpeg not found (video thumbnails disabled)")
@@ -202,7 +223,31 @@ async def health():
 
 
 if __name__ == "__main__":
+    import errno
+    import socket
+    import sys
     import uvicorn
+
+    # Checked up front, before handing off to uvicorn - confirmed directly
+    # that uvicorn.run() swallows a bind failure internally (its own
+    # logger prints "ERROR: [Errno 10048] ...", already after the lifespan
+    # above has run to completion) and returns normally instead of raising,
+    # so wrapping uvicorn.run() itself in try/except never catches this.
+    # A quick bind-and-release here is the only reliable way to surface a
+    # clear message before the user's real error is buried in uvicorn's own
+    # (differently-worded, OS-locale-dependent) log line.
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind((config.HOST, config.PORT))
+        probe.close()
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            error("BOOT", f"Port {config.PORT} is already in use by another program.")
+            error("BOOT", "Change WIMMICH_PORT in .env to a different port, or stop whatever else is using it.")
+        else:
+            error("BOOT", f"Cannot start the server on {config.HOST}:{config.PORT}: {e}")
+        sys.exit(1)
+
     uvicorn.run(
         "main:app",
         host=config.HOST,
