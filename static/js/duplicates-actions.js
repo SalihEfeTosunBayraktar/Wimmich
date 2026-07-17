@@ -4,7 +4,6 @@
 registerTranslations({
     en: {
         'duplicates_actions.group_skipped': 'Group skipped, files kept.',
-        'duplicates_actions.confirm_delete_all_in_group': 'ALL {count} file(s) in this group (none kept) will be moved to trash. Confirm?',
         'duplicates_actions.no_duplicates_to_clean': 'No duplicates found to clean up.',
         'duplicates_actions.confirm_clean_all': 'The best-quality file will be kept in all {groups} duplicate group(s), and the other {count} duplicate file(s) will be moved to trash. Start this operation?',
         'duplicates_actions.cleaned_success': '{count} duplicate file(s) moved to trash.',
@@ -17,7 +16,6 @@ registerTranslations({
     },
     tr: {
         'duplicates_actions.group_skipped': 'Grup atlandı, dosyalar korundu.',
-        'duplicates_actions.confirm_delete_all_in_group': 'Bu gruptaki {count} dosyanın TAMAMI (hiçbiri korunmadan) çöpe atılacak. Onaylıyor musunuz?',
         'duplicates_actions.no_duplicates_to_clean': 'Temizlenecek kopya bulunamadı.',
         'duplicates_actions.confirm_clean_all': 'Tüm {groups} kopya grubunda en kaliteli dosyalar korunacak ve diğer {count} kopya dosya çöpe atılacak. Bu işlemi başlatmak istiyor musunuz?',
         'duplicates_actions.cleaned_success': '{count} kopya dosya çöpe atıldı.',
@@ -30,7 +28,6 @@ registerTranslations({
     },
     fr: {
         'duplicates_actions.group_skipped': 'Groupe ignoré, fichiers conservés.',
-        'duplicates_actions.confirm_delete_all_in_group': 'TOUS les {count} fichier(s) de ce groupe (aucun conservé) seront déplacés vers la corbeille. Confirmer ?',
         'duplicates_actions.no_duplicates_to_clean': 'Aucun doublon à nettoyer.',
         'duplicates_actions.confirm_clean_all': "Le fichier de meilleure qualité sera conservé dans les {groups} groupe(s) de doublons, et les {count} autre(s) fichier(s) en double seront déplacés vers la corbeille. Démarrer cette opération ?",
         'duplicates_actions.cleaned_success': '{count} fichier(s) en double déplacé(s) vers la corbeille.',
@@ -43,7 +40,6 @@ registerTranslations({
     },
     de: {
         'duplicates_actions.group_skipped': 'Gruppe übersprungen, Dateien behalten.',
-        'duplicates_actions.confirm_delete_all_in_group': 'ALLE {count} Datei(en) in dieser Gruppe (keine wird behalten) werden in den Papierkorb verschoben. Bestätigen?',
         'duplicates_actions.no_duplicates_to_clean': 'Keine Duplikate zum Bereinigen gefunden.',
         'duplicates_actions.confirm_clean_all': 'In allen {groups} Duplikatgruppen wird die beste Datei behalten, die anderen {count} Duplikatdateien werden in den Papierkorb verschoben. Diesen Vorgang starten?',
         'duplicates_actions.cleaned_success': '{count} Duplikatdatei(en) in den Papierkorb verschoben.',
@@ -224,6 +220,9 @@ function bindDupActions(groups) {
         };
     });
 
+    // No confirm() here either, same reasoning as .btn-trash-dup/
+    // .btn-group-auto-clean above - clicked repeatedly while working
+    // through many groups, and only ever moves files to Trash (recoverable).
     qsa('.btn-group-delete-all').forEach(btn => {
         btn.onclick = async () => {
             const checksum = btn.dataset.checksum;
@@ -231,7 +230,6 @@ function bindDupActions(groups) {
             if (!group) return;
 
             const toDelete = group.assets.map(a => a.id);
-            if (!confirm(t('duplicates_actions.confirm_delete_all_in_group', { count: toDelete.length }))) return;
 
             try {
                 await API.bulkAction(toDelete, 'delete');
