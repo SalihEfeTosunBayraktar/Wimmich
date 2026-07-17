@@ -151,8 +151,12 @@ async def _check_for_updates_git() -> dict:
 
 async def _apply_update_git() -> dict:
     """Refuses to run over uncommitted local changes rather than risk
-    losing or clobbering them."""
-    status_result = await asyncio.to_thread(_run_git, ["status", "--porcelain"])
+    losing or clobbering them. --untracked-files=no on purpose: a stray
+    file sitting in the working tree (a desktop shortcut, a random icon
+    someone dropped in the project folder) can't conflict with `git pull`
+    at all - only modified/staged TRACKED files can - so it shouldn't
+    block an update the same way an actual local edit should."""
+    status_result = await asyncio.to_thread(_run_git, ["status", "--porcelain", "--untracked-files=no"])
     if status_result.stdout.strip():
         raise RuntimeError(
             "Yerel değişiklikler var, güncelleme uygulanamadı - önce bu değişiklikleri "
