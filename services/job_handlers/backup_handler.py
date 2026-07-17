@@ -12,6 +12,7 @@ from models import Asset, Job
 from services.job_core import check_job_cancelled
 from services import backup_service
 from utils.path_utils import resolve_data_path
+from utils.log import success
 
 
 async def handle_job_backup(db: AsyncSession, job: Job):
@@ -45,7 +46,7 @@ async def handle_job_backup(db: AsyncSession, job: Job):
         backup_service.record_backup_result("completed")
         job.progress = 100
         await db.commit()
-        print(f"[JOB] Backup completed: DB snapshot only (no new media since last backup)")
+        success("JOB", "Backup completed: DB snapshot only (no new media since last backup)")
         return
 
     media_dir = backup_dir / "media"
@@ -83,4 +84,4 @@ async def handle_job_backup(db: AsyncSession, job: Job):
         zf.close()
 
     backup_service.record_backup_result("completed")
-    print(f"[JOB] Backup completed: DB snapshot + {total} media file(s) archived to {backup_dir}")
+    success("JOB", f"Backup completed: DB snapshot + {total} media file(s) archived to {backup_dir}")

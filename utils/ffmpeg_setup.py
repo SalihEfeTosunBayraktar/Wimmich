@@ -6,6 +6,7 @@ import io
 from pathlib import Path
 
 import config
+from utils.log import info, success, error
 
 FFBINARIES_URLS = {
     "ffmpeg": "https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v4.4.1/ffmpeg-4.4.1-win-64.zip",
@@ -33,7 +34,7 @@ def check_and_download_ffmpeg() -> bool:
     except Exception:
         pass
 
-    print("[FFMPEG] FFmpeg not found. Auto-downloading portable Windows binaries...")
+    info("FFMPEG", "FFmpeg not found. Auto-downloading portable Windows binaries...")
     headers = {"User-Agent": "Mozilla/5.0"}
 
     for name, url in FFBINARIES_URLS.items():
@@ -41,7 +42,7 @@ def check_and_download_ffmpeg() -> bool:
         if dest.exists():
             continue
         try:
-            print(f"[FFMPEG] Downloading {name}...")
+            info("FFMPEG", f"Downloading {name}...")
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req) as resp:
                 zip_data = resp.read()
@@ -50,9 +51,9 @@ def check_and_download_ffmpeg() -> bool:
                     if member.endswith(".exe"):
                         with open(bin_dir / member, "wb") as f_out:
                             f_out.write(z.read(member))
-            print(f"[FFMPEG] {name} downloaded successfully.")
+            success("FFMPEG", f"{name} downloaded successfully.")
         except Exception as e:
-            print(f"[FFMPEG] Failed to download {name}: {e}")
+            error("FFMPEG", f"Failed to download {name}: {e}")
 
     if local_ffmpeg.exists():
         config.FFMPEG_PATH = str(local_ffmpeg)

@@ -10,6 +10,7 @@ from typing import Optional, Tuple
 
 import config
 from utils.hash_utils import compute_file_hash, get_file_size
+from utils.log import warn
 from services.media_processing import _process_image, _process_video
 
 
@@ -133,7 +134,7 @@ def delete_asset_files(asset) -> None:
                 if p.exists():
                     p.unlink()
             except Exception as e:
-                print(f"[WARN] Failed to delete file {path}: {e}")
+                warn("MEDIA", f"Failed to delete file {path}: {e}")
 
 
 def scan_external_directory(directory: str, user_id: str) -> list:

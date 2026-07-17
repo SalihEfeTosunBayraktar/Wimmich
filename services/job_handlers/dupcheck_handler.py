@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import Asset, Job
 from services.job_core import check_job_cancelled
 from utils.hash_utils import compute_file_hash
+from utils.log import warn, success
 
 
 async def handle_job_dupcheck(db: AsyncSession, job: Job):
@@ -30,7 +31,7 @@ async def handle_job_dupcheck(db: AsyncSession, job: Job):
             asset.checksum = await asyncio.to_thread(compute_file_hash, asset.file_path)
             updated += 1
         except Exception as e:
-            print(f"[WARN] Checksum backfill failed for asset {asset.id} ({asset.file_path}): {e}")
+            warn("JOB", f"Checksum backfill failed for asset {asset.id} ({asset.file_path}): {e}")
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()
@@ -38,4 +39,4 @@ async def handle_job_dupcheck(db: AsyncSession, job: Job):
         # bounded instead of holding every asset in the library at once.
         db.expunge(asset)
 
-    print(f"[JOB] Dupcheck completed: {updated}/{total} checksums computed")
+    success("JOB", f"Dupcheck completed: {updated}/{total} checksums computed")

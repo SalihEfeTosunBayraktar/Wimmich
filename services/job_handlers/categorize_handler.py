@@ -11,6 +11,7 @@ from services.job_core import check_job_cancelled
 from services.smart_category_service import classify_embedding, NO_CATEGORY
 from services.category_correction_service import load_correction_embeddings
 from utils.embedding_utils import load_embedding
+from utils.log import success
 
 
 async def handle_job_categorize(db: AsyncSession, job: Job):
@@ -80,4 +81,4 @@ async def handle_job_categorize(db: AsyncSession, job: Job):
         for asset in batch:
             db.expunge(asset)
 
-    print(f"[JOB] Categorize completed: {processed}/{total} assets classified")
+    success("JOB", f"Categorize completed: {processed}/{total} assets classified")

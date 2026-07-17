@@ -17,6 +17,7 @@ from models import Asset, Job, User
 from services.job_core import check_job_cancelled, JobAlreadyExistsException
 from services.job_handlers.import_reference import build_reference_asset
 from services.quota_service import check_server_quota, check_user_quota
+from utils.log import warn, error, success
 
 
 def _collect_import_files(path: str, recursive: bool) -> list:
@@ -105,7 +106,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
                 # importing it just creates an asset with no actual image/
                 # video content, which then fails CLIP/face processing every
                 # time it's retried.
-                print(f"[JOB] Import skipped for {file_path}: empty (0-byte) source file")
+                warn("JOB", f"Import skipped for {file_path}: empty (0-byte) source file")
                 skipped += 1
                 processed += 1
                 continue
@@ -114,7 +115,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
             if not quota_error and user:
                 quota_error = await check_user_quota(db, user, incoming_size)
             if quota_error:
-                print(f"[JOB] Import skipped for {file_path}: {quota_error}")
+                warn("JOB", f"Import skipped for {file_path}: {quota_error}")
                 skipped += 1
                 processed += 1
                 continue
@@ -143,7 +144,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
         for file_path, result in zip(to_process, results):
             processed += 1
             if isinstance(result, Exception):
-                print(f"[JOB] Import error for {file_path}: {result}")
+                error("JOB", f"Import error for {file_path}: {result}")
                 continue
 
             try:
@@ -183,7 +184,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
                 imported += 1
 
             except Exception as e:
-                print(f"[JOB] Import error for {file_path}: {e}")
+                error("JOB", f"Import error for {file_path}: {e}")
 
         job.progress = int(processed / total * 100) if total > 0 else 100
         await db.commit()
@@ -198,4 +199,4 @@ async def handle_job_import(db: AsyncSession, job: Job):
         "imported": imported,
         "skipped": skipped,
     })
-    print(f"[JOB] Import completed: {imported} imported, {skipped} skipped from {total} files")
+    success("JOB", f"Import completed: {imported} imported, {skipped} skipped from {total} files")

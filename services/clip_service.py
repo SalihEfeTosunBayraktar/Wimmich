@@ -12,6 +12,7 @@ import numpy as np
 
 import config
 from utils.embedding_utils import load_embedding, cosine_similarity
+from utils.log import info, success, error
 
 _model = None
 _preprocess = None
@@ -59,14 +60,14 @@ def _load_clip():
         _device = "cuda" if torch.cuda.is_available() else "cpu"
         cache_dir = str(config.ML_DIR / "clip_cache")
 
-        print(f"[ML] Loading CLIP model: {config.ML_CLIP_MODEL} ({config.ML_CLIP_PRETRAINED}) on device: {_device}...")
+        info("ML", f"Loading CLIP model: {config.ML_CLIP_MODEL} ({config.ML_CLIP_PRETRAINED}) on device: {_device}...")
         model, _, preprocess = open_clip.create_model_and_transforms(
             config.ML_CLIP_MODEL, pretrained=config.ML_CLIP_PRETRAINED, cache_dir=cache_dir,
         )
         _model = model.to(_device).eval()
         _preprocess = preprocess
         _tokenizer = open_clip.get_tokenizer(config.ML_CLIP_MODEL)
-        print(f"[ML] CLIP model loaded successfully on device: {_device}.")
+        success("ML", f"CLIP model loaded successfully on device: {_device}.")
 
 
 def compute_clip_embedding(image_path: str) -> Optional[np.ndarray]:
@@ -92,7 +93,7 @@ def compute_clip_embedding(image_path: str) -> Optional[np.ndarray]:
         return features.squeeze(0).cpu().numpy()
 
     except Exception as e:
-        print(f"[ML] CLIP embedding error for {image_path}: {e}")
+        error("ML", f"CLIP embedding error for {image_path}: {e}")
         return None
 
 
@@ -112,7 +113,7 @@ def compute_text_embedding(text: str) -> Optional[np.ndarray]:
         return features.squeeze(0).cpu().numpy()
 
     except Exception as e:
-        print(f"[ML] Text embedding error: {e}")
+        error("ML", f"Text embedding error: {e}")
         return None
 
 

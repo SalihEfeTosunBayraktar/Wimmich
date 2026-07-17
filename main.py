@@ -14,23 +14,26 @@ from database import init_db
 from services.job_service import job_worker
 from version import APP_VERSION_FULL, get_version_info
 from utils.spa_response import render_spa
+from utils.log import info, success, warn, error
+
+_DIVIDER = "\033[2m" + "=" * 60 + "\033[0m"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     # Startup
-    print("=" * 60)
-    print("  Wimmich - Photo/Video Management Server")
-    print("=" * 60)
-    print(f"  Version: {APP_VERSION_FULL}")
-    print(f"  Data directory: {config.DATA_DIR}")
-    print(f"  Server: http://localhost:{config.PORT}")
-    print("=" * 60)
+    print(_DIVIDER)
+    print("\033[1m  Wimmich - Photo/Video Management Server\033[0m")
+    print(_DIVIDER)
+    info("BOOT", f"Version: {APP_VERSION_FULL}")
+    info("BOOT", f"Data directory: {config.DATA_DIR}")
+    info("BOOT", f"Server: http://localhost:{config.PORT}")
+    print(_DIVIDER)
 
     # Initialize database
     await init_db()
-    print("  Database initialized")
+    success("BOOT", "Database initialized")
 
     # Check ML availability. torch/dlib are optional installs - never let a
     # missing one prevent server startup, it only changes the log line.
@@ -44,9 +47,9 @@ async def lifespan(app: FastAPI):
                 clip_device = f"GPU: {torch.cuda.get_device_name(0)}"
         except ImportError:
             pass
-        print(f"  CLIP semantic search available [{clip_device}]")
+        success("BOOT", f"CLIP semantic search available [{clip_device}]")
     else:
-        print("  CLIP not available (install torch + transformers for smart search)")
+        warn("BOOT", "CLIP not available (install torch + transformers for smart search)")
     if ml["face_recognition_available"]:
         face_device = "CPU"
         try:
@@ -55,39 +58,39 @@ async def lifespan(app: FastAPI):
                 face_device = f"GPU: {torch.cuda.get_device_name(0)}"
         except ImportError:
             pass
-        print(f"  Face recognition available [{face_device}]")
+        success("BOOT", f"Face recognition available [{face_device}]")
     else:
-        print("  Face recognition not available (install facenet-pytorch)")
+        warn("BOOT", "Face recognition not available (install facenet-pytorch)")
 
     # Check FFmpeg
     from utils.video_utils import is_ffmpeg_available
     if is_ffmpeg_available():
-        print("  FFmpeg available (video support enabled)")
+        success("BOOT", "FFmpeg available (video support enabled)")
     else:
-        print("  FFmpeg not found (video thumbnails disabled)")
+        warn("BOOT", "FFmpeg not found (video thumbnails disabled)")
 
     # Start background job worker
     await job_worker.start()
-    print("  Background job worker started")
+    success("BOOT", "Background job worker started")
 
     # Auto start tunnel if enabled
     if getattr(config, "AUTO_START_TUNNEL", False):
         try:
             from services.tunnel_service import start_tunnel
             await start_tunnel()
-            print("  Cloudflare Tunnel auto-started successfully")
+            success("BOOT", "Cloudflare Tunnel auto-started successfully")
         except Exception as e:
-            print(f"  Failed to auto-start Cloudflare Tunnel: {e}")
+            error("BOOT", f"Failed to auto-start Cloudflare Tunnel: {e}")
 
-    print("=" * 60)
-    print(f"  Ready! Open http://localhost:{config.PORT}")
-    print("=" * 60)
+    print(_DIVIDER)
+    print(f"\033[1m  Ready! Open http://localhost:{config.PORT}\033[0m")
+    print(_DIVIDER)
 
     yield
 
     # Shutdown
     await job_worker.stop()
-    print("  Wimmich shutting down...")
+    info("BOOT", "Wimmich shutting down...")
 
 
 # Create app

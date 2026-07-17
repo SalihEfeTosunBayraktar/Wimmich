@@ -6,6 +6,8 @@ feature-detection pattern as HAS_PILLOW/HAS_EXIFREAD in exif_utils.py.
 """
 from typing import Optional, Tuple
 
+from utils.log import error
+
 GEOCODING_AVAILABLE = False
 try:
     import reverse_geocoder
@@ -37,5 +39,5 @@ def lookup_city_country(lat: float, lon: float) -> Tuple[Optional[str], Optional
 
         return city, country
     except Exception as e:
-        print(f"[GEOCODE] Reverse geocoding error for ({lat}, {lon}): {e}")
+        error("GEOCODE", f"Reverse geocoding error for ({lat}, {lon}): {e}")
         return None, None

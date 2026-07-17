@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from models import Asset, Job
 from services.job_core import check_job_cancelled
+from utils.log import error
 
 
 async def handle_job_clip(db: AsyncSession, job: Job):
@@ -61,7 +62,7 @@ async def handle_job_clip(db: AsyncSession, job: Job):
         for asset, embedding in zip(batch, embeddings):
             processed += 1
             if isinstance(embedding, Exception):
-                print(f"[JOB] CLIP embedding failed for asset {asset.id}: {embedding}")
+                error("JOB", f"CLIP embedding failed for asset {asset.id}: {embedding}")
                 continue
             if embedding is not None:
                 emb_path = str(config.ML_DIR / f"clip_{asset.id}.npy")

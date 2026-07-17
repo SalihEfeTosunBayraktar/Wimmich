@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset
+from utils.log import info
 
 
 async def handle_cleanup_trash(db: AsyncSession):
@@ -28,4 +29,4 @@ async def handle_cleanup_trash(db: AsyncSession):
 
     if expired:
         await db.commit()
-        print(f"[JOB] Cleaned up {len(expired)} expired trash items.")
+        info("JOB", f"Cleaned up {len(expired)} expired trash items.")

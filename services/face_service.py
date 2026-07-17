@@ -11,6 +11,7 @@ from typing import List, Dict, Tuple
 import numpy as np
 
 import config
+from utils.log import info, success, error
 
 FACE_AVAILABLE = False
 try:
@@ -45,7 +46,7 @@ def _load_face_models():
         from facenet_pytorch import MTCNN, InceptionResnetV1
 
         _device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[ML] Loading face detection/recognition models on device: {_device}...")
+        info("ML", f"Loading face detection/recognition models on device: {_device}...")
         # min_face_size default (20px) let MTCNN "detect" tiny texture/pattern
         # patches as faces at high confidence (confirmed directly: a zigzag
         # stitching pattern on a swimsuit strap got flagged as a face) -
@@ -55,7 +56,7 @@ def _load_face_models():
         # downscaling to FACE_DETECT_MAX_DIM.
         _mtcnn = MTCNN(keep_all=True, device=_device, post_process=False, min_face_size=60)
         _resnet = InceptionResnetV1(pretrained="vggface2").eval().to(_device)
-        print(f"[ML] Face models loaded successfully on device: {_device}.")
+        success("ML", f"Face models loaded successfully on device: {_device}.")
 
 
 def _load_downscaled_rgb(image_path: str):
@@ -126,7 +127,7 @@ def detect_faces(image_path: str) -> List[Dict]:
                 })
             return faces
         except Exception as e:
-            print(f"[ML] Face detection error: {e}")
+            error("ML", f"Face detection error: {e}")
             # Do NOT fall through to the Haar Cascade path below: its
             # embedding is a completely different, incompatible shape
             # (128-d resized-grayscale-patch vs facenet's 512-d) - one image
@@ -168,7 +169,7 @@ def detect_faces(image_path: str) -> List[Dict]:
             })
         return faces
     except Exception as e:
-        print(f"[ML] OpenCV face detection error: {e}")
+        error("ML", f"OpenCV face detection error: {e}")
         return []
 
 
@@ -202,7 +203,7 @@ def cluster_faces(
     except ImportError:
         return _simple_cluster(face_embeddings, threshold)
     except Exception as e:
-        print(f"[ML] Clustering error: {e}")
+        error("ML", f"Clustering error: {e}")
         return {}
 
 

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Optional, Dict, Any
 import config
+from utils.log import warn, error
 
 
 def _run_ffprobe(file_path: str) -> Optional[Dict[str, Any]]:
@@ -131,13 +132,13 @@ def _run_ffmpeg_killable(
             _terminate(proc)
             return False
         if time.monotonic() - start > timeout:
-            print(f"[{log_prefix}] Timed out after {timeout}s")
+            warn(log_prefix, f"Timed out after {timeout}s")
             _terminate(proc)
             return False
 
     if proc.returncode != 0:
         stderr = (proc.stderr.read() or b"").decode(errors="replace")[-800:] if proc.stderr else ""
-        print(f"[{log_prefix}] Failed (exit {proc.returncode}): {stderr.strip()}")
+        error(log_prefix, f"Failed (exit {proc.returncode}): {stderr.strip()}")
         return False
 
     return True

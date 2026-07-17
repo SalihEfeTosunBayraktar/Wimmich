@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from database import AsyncSessionLocal
 from models import Job
+from utils.log import info, success, warn, error
 
 # How often a running job re-checks its own cancelled flag while a single
 # long-running unit of work (e.g. one ffmpeg call) is in flight - see
@@ -73,7 +74,7 @@ class JobWorker:
             return
         self.running = True
         self._task = asyncio.create_task(self._worker_loop())
-        print("[JOB] Background worker started.")
+        success("JOB", "Background worker started.")
 
     async def stop(self):
         """Stop the background worker."""
@@ -85,7 +86,7 @@ class JobWorker:
                     await task
                 except asyncio.CancelledError:
                     pass
-        print("[JOB] Background worker stopped.")
+        info("JOB", "Background worker stopped.")
 
     async def _recover_orphaned_jobs(self):
         """Reset jobs stuck in RUNNING from a previous crash back to PENDING.
@@ -100,7 +101,7 @@ class JobWorker:
             )
             await db.commit()
             if result.rowcount:
-                print(f"[JOB] Recovered {result.rowcount} orphaned RUNNING job(s) from a previous run.")
+                warn("JOB", f"Recovered {result.rowcount} orphaned RUNNING job(s) from a previous run.")
 
     async def _worker_loop(self):
         """Main worker loop - polls for pending jobs.
@@ -142,7 +143,7 @@ class JobWorker:
                             await self._maybe_schedule_backup(db, create_job)
 
             except Exception as e:
-                print(f"[JOB] Worker error: {e}")
+                error("JOB", f"Worker error: {e}")
                 await asyncio.sleep(config.JOB_POLL_INTERVAL_SECONDS)
                 continue
 
@@ -179,7 +180,7 @@ class JobWorker:
         """Execute a single job in an isolated DB session (runs as a Task)."""
         from services.job_handlers import JOB_HANDLERS
 
-        print(f"[JOB] Processing job {job_id} type={job_type}")
+        info("JOB", f"Processing job {job_id} type={job_type}")
         try:
             async with AsyncSessionLocal() as db:
                 # Re-fetch job inside its own session
@@ -204,17 +205,17 @@ class JobWorker:
                     job.status = "CANCELLED"
                     job.error_message = str(e)
                     job.completed_at = datetime.now(timezone.utc)
-                    print(f"[JOB] Job {job_id} cancelled: {e}")
+                    warn("JOB", f"Job {job_id} cancelled: {e}")
                 except Exception as e:
                     job.status = "FAILED"
                     job.error_message = str(e)
                     job.completed_at = datetime.now(timezone.utc)
-                    print(f"[JOB] Job {job_id} failed: {e}")
+                    error("JOB", f"Job {job_id} failed: {e}")
                     traceback.print_exc()
 
                 await db.commit()
         except Exception as e:
-            print(f"[JOB] Task wrapper error for job {job_id}: {e}")
+            error("JOB", f"Task wrapper error for job {job_id}: {e}")
             traceback.print_exc()
 
     async def _process_job(self, db: AsyncSession, job: Job):

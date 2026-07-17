@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Asset, Job
 from services.job_core import check_job_cancelled, JobAlreadyExistsException
+from utils.log import warn, error
 
 
 async def handle_job_scan(db: AsyncSession, job: Job):
@@ -38,7 +39,7 @@ async def handle_job_scan(db: AsyncSession, job: Job):
         if os.path.getsize(file_path) == 0:
             # Empty source file - would just create an asset with no actual
             # content, failing CLIP/face processing on every retry.
-            print(f"[JOB] Scan skipped {file_path}: empty (0-byte) source file")
+            warn("JOB", f"Scan skipped {file_path}: empty (0-byte) source file")
             job.progress = int((i + 1) / total * 100) if total > 0 else 100
             continue
 
@@ -95,7 +96,7 @@ async def handle_job_scan(db: AsyncSession, job: Job):
             db.expunge(asset)
 
         except Exception as e:
-            print(f"[JOB] Scan error for {file_path}: {e}")
+            error("JOB", f"Scan error for {file_path}: {e}")
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()

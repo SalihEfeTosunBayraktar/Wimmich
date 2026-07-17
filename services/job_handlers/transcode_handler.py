@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from models import Asset, Job
 from services.job_core import check_job_cancelled, run_cancellable
+from utils.log import error
 from utils.video_utils import transcode_video, is_ffmpeg_available
 
 
@@ -54,7 +55,7 @@ async def handle_job_transcode(db: AsyncSession, job: Job):
         if success:
             asset.encoded_video_path = str(output_path)
         else:
-            print(f"[JOB] Transcode failed for asset {asset.id}")
+            error("JOB", f"Transcode failed for asset {asset.id}")
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()

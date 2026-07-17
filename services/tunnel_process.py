@@ -9,6 +9,7 @@ from typing import Optional
 from datetime import datetime, timezone
 
 import config
+from utils.log import error
 
 # Tunnel state
 _tunnel_process: Optional[subprocess.Popen] = None
@@ -178,7 +179,7 @@ async def stop_tunnel() -> dict:
         except subprocess.TimeoutExpired:
             _tunnel_process.kill()
     except Exception as e:
-        print(f"[TUNNEL] Error stopping: {e}")
+        error("TUNNEL", f"Error stopping: {e}")
 
     old_url = _tunnel_url
     _tunnel_process = None

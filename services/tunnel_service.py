@@ -8,6 +8,7 @@ import ssl
 import urllib.request
 
 import config
+from utils.log import info, success
 from services.tunnel_process import (
     start_tunnel,
     stop_tunnel,
@@ -56,7 +57,7 @@ async def download_cloudflared() -> dict:
     dest = (config.DB_DIR if hasattr(config, "DB_DIR") else config.DATA_DIR) / config.CLOUDFLARED_EXE_NAME
 
     try:
-        print(f"[TUNNEL] Downloading cloudflared from {url}...")
+        info("TUNNEL", f"Downloading cloudflared from {url}...")
 
         ctx = ssl.create_default_context()
         req = urllib.request.Request(
@@ -70,7 +71,7 @@ async def download_cloudflared() -> dict:
                     f.write(response.read())
 
         await asyncio.get_event_loop().run_in_executor(None, _download)
-        print(f"[TUNNEL] Downloaded to {dest}")
+        success("TUNNEL", f"Downloaded to {dest}")
         return {"status": "downloaded", "path": str(dest)}
     except Exception as e:
         raise RuntimeError(f"İndirme başarısız: {e}")

@@ -9,6 +9,7 @@ from models import Asset, Job
 from models.common import utcnow
 from services.job_core import check_job_cancelled, run_cancellable, JobCancelledException
 from utils.path_utils import resolve_data_path
+from utils.log import error
 
 
 def _has_valid_thumbnails(asset: Asset) -> bool:
@@ -95,7 +96,7 @@ async def handle_job_thumbnail(db: AsyncSession, job: Job):
             # run_cancellable already killed any in-flight ffmpeg call.
             raise
         except Exception as e:
-            print(f"[JOB] Thumbnail generation failed for asset {asset.id}: {e}")
+            error("JOB", f"Thumbnail generation failed for asset {asset.id}: {e}")
 
         # Give up on permanently-failing assets (e.g. a video with no
         # decodable video stream) instead of retrying them on every future

@@ -7,6 +7,7 @@ import config
 from models import Asset, Face, Job
 from services.job_core import check_job_cancelled
 from services.face_clustering_service import cluster_user_faces
+from utils.log import error
 
 
 async def handle_job_face(db: AsyncSession, job: Job):
@@ -64,7 +65,7 @@ async def handle_job_face(db: AsyncSession, job: Job):
         for asset, faces in zip(to_detect, results):
             processed += 1
             if isinstance(faces, Exception):
-                print(f"[JOB] Face detection failed for asset {asset.id}: {faces}")
+                error("JOB", f"Face detection failed for asset {asset.id}: {faces}")
                 continue
 
             for face_idx, face_data in enumerate(faces):
