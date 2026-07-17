@@ -36,9 +36,8 @@
    of the normal-size cards used elsewhere - packed tight since the point
    is a glance across a whole year, not browsing individual photos. Fixed
    30 columns (not auto-fill) so it's a real modular grid: a full year is a
-   30x10 area (300 photos), and going past that just keeps extending with
-   another 30-wide row per 30 more photos, the same way infinite scroll
-   already appends into this grid - not auto-fill, which would just widen
+   30x7 area (210 photos, see gallery.js's YEAR_VIEW_MAX) before the rest
+   rolls into an overflow badge - not auto-fill, which would just widen
    or narrow individual cells instead of adding rows.
    minmax(0, 1fr): a plain 1fr track lets a photo's own pixel size push a
    column wider than its fair share (hit this exact bug once already, on
@@ -68,6 +67,27 @@
     text-align: center;
 }
 .year-overflow-badge:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* Shown instead of the invisible auto-scroll sentinel once every currently
+   loaded year is already at its render cap - see gallery.js's
+   yearGroupIsFull. Requires an explicit click to fetch further pages
+   instead of auto-firing, since further pages would otherwise likely just
+   feed overflow badges for data the user may never look at. */
+.gallery-load-more-btn {
+    display: block;
+    width: 100%;
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+.gallery-load-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
 .photo-grid--dense .photo-select,
 .photo-grid--dense .photo-cover-btn,

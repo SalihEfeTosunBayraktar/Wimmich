@@ -42,6 +42,7 @@ registerTranslations({
         'gallery.item_count': '{count} items',
         'gallery.no_photos': 'No photos',
         'gallery.back_to_years': '← Back to Years',
+        'gallery.load_more_btn': 'Load More',
     },
     tr: {
         'gallery.sort_date_desc': 'Tarih (Yeni → Eski)',
@@ -80,6 +81,7 @@ registerTranslations({
         'gallery.item_count': '{count} öğe',
         'gallery.no_photos': 'Fotoğraf yok',
         'gallery.back_to_years': '← Yıllara Dön',
+        'gallery.load_more_btn': 'Daha Fazla Yükle',
     },
     fr: {
         'gallery.sort_date_desc': 'Date (Récent → Ancien)',
@@ -118,6 +120,7 @@ registerTranslations({
         'gallery.item_count': '{count} éléments',
         'gallery.no_photos': 'Aucune photo',
         'gallery.back_to_years': '← Retour aux années',
+        'gallery.load_more_btn': 'Charger plus',
     },
     de: {
         'gallery.sort_date_desc': 'Datum (Neu → Alt)',
@@ -156,6 +159,7 @@ registerTranslations({
         'gallery.item_count': '{count} Elemente',
         'gallery.no_photos': 'Keine Fotos',
         'gallery.back_to_years': '← Zurück zu den Jahren',
+        'gallery.load_more_btn': 'Mehr laden',
     },
 });
 
@@ -215,7 +219,7 @@ function _galleryGridDensityClass(groupBy) {
 // directly per year and roll the rest into the same "+N" badge/overflow
 // pattern _renderYearMonthFrame already uses for month cells, instead of
 // just dumping everything in.
-const YEAR_VIEW_MAX = 30 * 10;
+const YEAR_VIEW_MAX = 30 * 7;
 // display_date (the year label) -> Asset[] fetched but not yet rendered,
 // shown on demand when that year's overflow badge is clicked.
 const _yearOverflowAssets = new Map();
@@ -484,21 +488,49 @@ async function loadGalleryPage() {
         const oldSentinel = $('gallery-scroll-sentinel');
         if (oldSentinel) oldSentinel.remove();
 
+        // Year mode's render cap only limits what gets drawn, not what
+        // gets fetched - auto-scroll would otherwise keep firing off page
+        // requests for a year that's already full and only feeding its
+        // overflow badge, fetching data the user may never even look at.
+        // Once the most recently touched year-group is at/over its cap,
+        // stop auto-loading and require an explicit click instead - a
+        // still-filling year (or any non-year mode) keeps auto-scrolling
+        // as before.
+        const lastTouchedEl = container.lastElementChild;
+        const yearGroupIsFull = g.groupBy === 'year' && lastTouchedEl &&
+            lastTouchedEl.dataset.renderedCount !== undefined &&
+            parseInt(lastTouchedEl.dataset.renderedCount, 10) >= YEAR_VIEW_MAX;
+
         if (data.total_pages > g.page) {
-            const sentinel = document.createElement('div');
-            sentinel.id = 'gallery-scroll-sentinel';
-            sentinel.style.height = '1px';
-            container.appendChild(sentinel);
-            const obs = new IntersectionObserver(async (entries) => {
-                if (entries[0].isIntersecting) {
-                    obs.disconnect();
-                    sentinel.remove();
+            if (yearGroupIsFull) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = 'gallery-scroll-sentinel'; // same id so the cleanup above still finds/removes it next render
+                btn.className = 'gallery-load-more-btn';
+                btn.textContent = t('gallery.load_more_btn');
+                btn.onclick = async () => {
+                    btn.remove();
                     g.page++;
                     g.loading = false;
                     await loadGalleryPage();
-                }
-            });
-            obs.observe(sentinel);
+                };
+                container.appendChild(btn);
+            } else {
+                const sentinel = document.createElement('div');
+                sentinel.id = 'gallery-scroll-sentinel';
+                sentinel.style.height = '1px';
+                container.appendChild(sentinel);
+                const obs = new IntersectionObserver(async (entries) => {
+                    if (entries[0].isIntersecting) {
+                        obs.disconnect();
+                        sentinel.remove();
+                        g.page++;
+                        g.loading = false;
+                        await loadGalleryPage();
+                    }
+                });
+                obs.observe(sentinel);
+            }
         }
     } catch (e) { toast(e.message, 'error'); }
     g.loading = false;
