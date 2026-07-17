@@ -266,13 +266,30 @@ function _initViewerSwipe() {
     }, { passive: true });
 }
 
-function navigateViewer(dir) {
+async function navigateViewer(dir) {
     // Clamp instead of wrapping around - viewerList is often only whatever
     // the current page has loaded so far (the main gallery loads in pages
     // of 60 via infinite scroll), not the whole library, so wrapping past
     // the last loaded item jumped back to the first one instead of doing
     // nothing, which looked like it had looped partway through the library.
-    const next = state.viewerIndex + dir;
+    let next = state.viewerIndex + dir;
+
+    // Moving forward past everything the gallery has loaded so far, but
+    // there's more on the server - fetch the next page instead of just
+    // stopping there, so paging through photos doesn't force closing the
+    // viewer, scrolling the grid to trigger a load, and reopening it.
+    // Only the main gallery paginates viewerList this way; every other
+    // page (albums/people/favorites/etc.) already loads its full list
+    // up front, so state.gallery.totalPages > state.gallery.page is only
+    // ever true there.
+    if (dir > 0 && next >= state.viewerList.length &&
+        state.currentPage === 'gallery' && state.gallery.totalPages > state.gallery.page) {
+        state.gallery.page++;
+        state.gallery.loading = false;
+        await loadGalleryPage();
+        next = state.viewerIndex + dir;
+    }
+
     if (next < 0 || next >= state.viewerList.length) return;
     state.viewerIndex = next;
     openViewer(state.viewerList[state.viewerIndex]);
