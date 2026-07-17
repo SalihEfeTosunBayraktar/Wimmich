@@ -276,12 +276,39 @@ def _run_install(install_dir: Path, port: int, profile: str, gpu: bool) -> None:
     _set_phase("launching", 97)
     _log("Launching Wimmich...")
     try:
-        # A new, visibly-titled console window running start.bat, same as
-        # a normal double-click - not a hidden background process, since
-        # the user should be able to see it (and its logs) same as any
-        # other Wimmich launch.
+        # A new, visible console window running start.bat, same as a
+        # normal double-click - not a hidden background process, since the
+        # user should be able to see it (and its logs) same as any other
+        # Wimmich launch.
+        #
+        # The "" is a required placeholder, not a mistake - cmd.exe's
+        # `start` treats its first argument as a window title only when
+        # quoted; passed as a bare word (as "Wimmich" was here) it reads as
+        # the program to run instead, and Python's list2cmdline never
+        # quotes a plain word with no spaces in it. Confirmed directly:
+        # that exact bare-word form produced "'Wimmich' Windows tarafından
+        # bulunamıyor" - Windows trying and failing to run a program
+        # literally named "Wimmich". Also confirmed that hand-inserting
+        # quote characters into the string ('"Wimmich"') doesn't fix it
+        # either - list2cmdline backslash-escapes embedded quotes for a
+        # normal argv-parsing program, which isn't how cmd.exe's own
+        # tokenizer reads them. The empty string is the one form
+        # list2cmdline always quotes (empty args need quoting to survive
+        # at all), so it's the only reliable way to fill this slot -
+        # costs the custom window title, not worth fighting cmd.exe's
+        # quoting rules to keep it.
+        #
+        # ".\\start.bat", not bare "start.bat" - confirmed directly that a
+        # bare filename fails to resolve here ("'start.bat' is not
+        # recognized...") even while cmd's own cwd is demonstrably the
+        # right folder, while the explicit relative path runs it every
+        # time. Same landmine already documented elsewhere in this
+        # project: a bare "start.bat" is looked up via cmd's normal
+        # command search rather than treated as a direct file reference,
+        # and that search doesn't reliably include the current directory
+        # in every environment - ".\\" sidesteps the search entirely.
         subprocess.Popen(
-            ["cmd.exe", "/c", "start", "Wimmich", "cmd.exe", "/k", "start.bat"],
+            ["cmd.exe", "/c", "start", "", "cmd.exe", "/k", ".\\start.bat"],
             cwd=str(install_dir),
         )
     except Exception as e:
