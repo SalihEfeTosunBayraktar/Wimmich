@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/branding/wimmich-logo.png" alt="Wimmich" width="200">
+</p>
+
 **[English](README.md) | [Türkçe](README.tr.md) | [Français](README.fr.md) | [Deutsch](README.de.md)**
 
 # Wimmich
