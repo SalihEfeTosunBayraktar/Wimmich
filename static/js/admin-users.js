@@ -15,7 +15,8 @@ registerTranslations({
         'admin_users.storage_path_required': 'Storage path cannot be empty',
         'admin_users.backup_dir_required': 'Backup folder cannot be empty',
         'admin_users.backup_settings_saved': 'Backup settings saved',
-        'admin_users.quota_prompt': 'Enter new storage limit (in MB, enter 0 for Unlimited):',
+        'admin_users.quota_mb_label': 'Storage limit (MB, 0 for Unlimited)',
+        'admin_users.quota_gb_hint': '≈ {gb} GB',
         'admin_users.invalid_quota': 'Invalid quota amount',
         'admin_users.quota_updated': 'User quota updated successfully',
         'admin_users.confirm_delete_user': 'Are you sure you want to permanently delete this user and all files they uploaded? This action cannot be undone!',
@@ -42,7 +43,8 @@ registerTranslations({
         'admin_users.storage_path_required': 'Depolama yolu boş olamaz',
         'admin_users.backup_dir_required': 'Yedekleme klasörü boş olamaz',
         'admin_users.backup_settings_saved': 'Yedekleme ayarları kaydedildi',
-        'admin_users.quota_prompt': 'Yeni depolama sınırı girin (MB cinsinden, Sınırsız için 0 girin):',
+        'admin_users.quota_mb_label': 'Depolama sınırı (MB, Sınırsız için 0)',
+        'admin_users.quota_gb_hint': '≈ {gb} GB',
         'admin_users.invalid_quota': 'Geçersiz kota miktarı',
         'admin_users.quota_updated': 'Kullanıcı kotası başarıyla güncellendi',
         'admin_users.confirm_delete_user': 'Bu kullanıcıyı ve yüklediği tüm dosyaları kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz!',
@@ -69,7 +71,8 @@ registerTranslations({
         'admin_users.storage_path_required': 'Le chemin de stockage ne peut pas être vide',
         'admin_users.backup_dir_required': 'Le dossier de sauvegarde ne peut pas être vide',
         'admin_users.backup_settings_saved': 'Paramètres de sauvegarde enregistrés',
-        'admin_users.quota_prompt': 'Entrez la nouvelle limite de stockage (en Mo, entrez 0 pour Illimité) :',
+        'admin_users.quota_mb_label': 'Limite de stockage (Mo, 0 pour Illimité)',
+        'admin_users.quota_gb_hint': '≈ {gb} Go',
         'admin_users.invalid_quota': 'Quantité de quota invalide',
         'admin_users.quota_updated': "Quota de l'utilisateur mis à jour avec succès",
         'admin_users.confirm_delete_user': "Voulez-vous vraiment supprimer définitivement cet utilisateur et tous les fichiers qu'il a téléversés ? Cette action est irréversible !",
@@ -96,7 +99,8 @@ registerTranslations({
         'admin_users.storage_path_required': 'Speicherpfad darf nicht leer sein',
         'admin_users.backup_dir_required': 'Sicherungsordner darf nicht leer sein',
         'admin_users.backup_settings_saved': 'Sicherungseinstellungen gespeichert',
-        'admin_users.quota_prompt': 'Neues Speicherlimit eingeben (in MB, 0 für Unbegrenzt eingeben):',
+        'admin_users.quota_mb_label': 'Speicherlimit (MB, 0 für Unbegrenzt)',
+        'admin_users.quota_gb_hint': '≈ {gb} GB',
         'admin_users.invalid_quota': 'Ungültige Kontingentmenge',
         'admin_users.quota_updated': 'Benutzerkontingent erfolgreich aktualisiert',
         'admin_users.confirm_delete_user': 'Möchten Sie diesen Benutzer und alle von ihm hochgeladenen Dateien wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden!',
@@ -183,14 +187,48 @@ async function saveBackupConfig() {
     }
 }
 
-async function editUserQuota(userId, currentQuota) {
-    const quotaStr = prompt(t('admin_users.quota_prompt'), currentQuota);
-    if (quotaStr === null) return;
+function editUserQuota(userId, currentQuota) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'quota-edit-modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:340px;background:var(--bg-secondary);border:1px solid var(--border-color);padding:24px;border-radius:12px;color:var(--text-primary)">
+            <h3 style="margin-top:0">${t('admin_users.quota_label')}</h3>
+            <label class="admin-field-label" for="quota-edit-input">${t('admin_users.quota_mb_label')}</label>
+            <input type="number" id="quota-edit-input" min="0" value="${currentQuota}" style="width:100%;box-sizing:border-box">
+            <p class="text-muted admin-field-hint" id="quota-edit-gb-hint"></p>
+            <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px">
+                <button class="btn btn-secondary btn-sm" id="quota-edit-cancel">${t('common.cancel')}</button>
+                <button class="btn btn-primary btn-sm" id="quota-edit-save">${t('common.save')}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = $('quota-edit-input');
+    const hint = $('quota-edit-gb-hint');
+    const updateHint = () => {
+        const mb = parseInt(input.value);
+        if (isNaN(mb) || mb < 0) { hint.textContent = ''; return; }
+        hint.textContent = mb === 0 ? t('admin_users.unlimited') : t('admin_users.quota_gb_hint', { gb: (mb / 1024).toFixed(2) });
+    };
+    input.oninput = updateHint;
+    updateHint();
+    input.focus();
+    input.select();
+
+    const close = () => modal.remove();
+    $('quota-edit-cancel').onclick = close;
+    $('quota-edit-save').onclick = () => saveUserQuota(userId, input.value, close);
+}
+
+async function saveUserQuota(userId, quotaStr, close) {
     const quota = parseInt(quotaStr);
     if (isNaN(quota) || quota < 0) {
         toast(t('admin_users.invalid_quota'), 'error');
         return;
     }
+    close();
     try {
         await API.updateUserQuota(userId, quota);
         toast(t('admin_users.quota_updated'), 'success');
