@@ -47,6 +47,14 @@ def _load_clip():
 
         import torch
         import open_clip
+        import logging
+
+        # Harmless noise, not an error: huggingface_hub warns on every
+        # unauthenticated download that an HF_TOKEN would mean higher rate
+        # limits/faster downloads - true, but irrelevant here since the
+        # checkpoint gets cached locally (cache_dir below) after the first
+        # download and never touches the network again after that.
+        logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
         _device = "cuda" if torch.cuda.is_available() else "cpu"
         cache_dir = str(config.ML_DIR / "clip_cache")
