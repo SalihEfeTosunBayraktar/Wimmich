@@ -315,6 +315,14 @@
                     <label for="album-desc" data-i18n="albums.description"></label>
                     <textarea id="album-desc" data-i18n-placeholder="albums.description_placeholder" rows="3"></textarea>
                 </div>
+                <div class="form-group">
+                    <label class="checkbox-label"><input type="checkbox" id="album-smart-toggle"> <span data-i18n="albums.smart_toggle_label"></span></label>
+                    <p class="text-muted admin-field-hint" data-i18n="albums.smart_toggle_hint"></p>
+                </div>
+                <div class="form-group hidden" id="album-smart-query-group">
+                    <label for="album-smart-query" data-i18n="albums.smart_query_label"></label>
+                    <input type="text" id="album-smart-query" data-i18n-placeholder="albums.smart_query_placeholder">
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="album-modal-cancel" data-i18n="common.cancel"></button>

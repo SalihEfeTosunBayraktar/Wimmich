@@ -14,6 +14,12 @@ class Album(Base):
     name = Column(String(500), nullable=False)
     description = Column(Text, nullable=True)
     cover_asset_id = Column(String(36), nullable=True)
+    # Dynamic/"live" album: smart_query is a CLIP text search (e.g. "kedi")
+    # that new photos are matched against as they're indexed, auto-adding
+    # any that score above the match threshold - see
+    # services/album_service.py's smart-album helpers.
+    is_smart = Column(Boolean, default=False)
+    smart_query = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 

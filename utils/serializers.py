@@ -73,4 +73,6 @@ def album_to_dict(
         "user_id": album.user_id,
         "is_owner": is_owner if viewer_id is not None else None,
         "can_edit": True if is_owner else viewer_can_edit,
+        "is_smart": bool(album.is_smart),
+        "smart_query": album.smart_query,
     }

@@ -70,3 +70,13 @@ async def init_db():
             await conn.execute(text("ALTER TABLE assets ADD COLUMN backed_up_at DATETIME"))
         except Exception:
             pass
+
+        # Automatic column migration for dynamic/smart albums
+        try:
+            await conn.execute(text("ALTER TABLE albums ADD COLUMN is_smart BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text("ALTER TABLE albums ADD COLUMN smart_query VARCHAR(500)"))
+        except Exception:
+            pass

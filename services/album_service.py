@@ -1,11 +1,20 @@
 """Album business logic: listing, CRUD, membership, sharing."""
-from typing import Optional, List
+import asyncio
+from typing import Optional, List, Tuple
 from fastapi import HTTPException
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User, Album, AlbumAsset, AlbumUser, Asset
 from utils.serializers import album_to_dict, asset_to_dict
+
+# Same acceptance bar search_smart() uses for its CLIP results - if a query
+# would surface a photo in search, that's a reasonable bar for auto-adding
+# it to a dynamic album too. This model's real photo-vs-text scores run
+# much lower than typical CLIP models (-0.05 to +0.18 per
+# smart_category_service.py's own calibration note), so don't raise this
+# casually - it was not guessed, it matches an already-shipped threshold.
+SMART_ALBUM_MATCH_THRESHOLD = 0.15
 
 
 async def get_album_for_user(
@@ -83,19 +92,114 @@ async def list_albums_for_user(db: AsyncSession, user: User) -> dict:
 
 
 async def create_album(
-    db: AsyncSession, user: User, name: str, description: Optional[str], asset_ids: Optional[List[str]]
+    db: AsyncSession, user: User, name: str, description: Optional[str], asset_ids: Optional[List[str]],
+    is_smart: bool = False, smart_query: Optional[str] = None,
 ) -> dict:
-    album = Album(user_id=user.id, name=name, description=description)
+    is_smart = bool(is_smart and smart_query and smart_query.strip())
+    album = Album(
+        user_id=user.id, name=name, description=description,
+        is_smart=is_smart, smart_query=smart_query.strip() if is_smart else None,
+    )
     db.add(album)
     await db.flush()
 
-    if asset_ids:
+    if is_smart:
+        # A dynamic album's contents come purely from matching its query -
+        # any asset_ids passed alongside it are ignored rather than mixed
+        # in, since that would leave the album half auto-curated and half
+        # not with no way to tell the two apart later.
+        matched_ids = await _backfill_smart_album(db, album)
+        if matched_ids:
+            album.cover_asset_id = matched_ids[0]
+        count = len(matched_ids)
+    elif asset_ids:
         for aid in asset_ids:
             db.add(AlbumAsset(album_id=album.id, asset_id=aid))
         album.cover_asset_id = asset_ids[0]
+        count = len(asset_ids)
+    else:
+        count = 0
 
     await db.commit()
-    return album_to_dict(album, len(asset_ids or []), viewer_id=user.id)
+    return album_to_dict(album, count, viewer_id=user.id)
+
+
+async def _backfill_smart_album(db: AsyncSession, album: Album) -> List[str]:
+    """Populate a freshly-created dynamic album by scoring every already-
+    CLIP-indexed photo in the owner's library against its query - the same
+    check the CLIP job applies to new photos as they're indexed from here
+    on (see load_smart_album_queries_for_user/match_asset_to_smart_albums).
+    """
+    from services.ml_service import CLIP_AVAILABLE, search_by_text
+
+    if not CLIP_AVAILABLE:
+        return []
+
+    stmt = select(Asset.id, Asset.clip_embedding_path).where(
+        and_(
+            Asset.user_id == album.user_id,
+            Asset.is_trashed == False,
+            Asset.clip_embedding_path.isnot(None),
+        )
+    )
+    embedding_data = [(aid, path) for aid, path in (await db.execute(stmt)).all()]
+    if not embedding_data:
+        return []
+
+    # top_k = the whole library, not search's usual small page size - a
+    # dynamic album wants every matching photo, not just the best handful.
+    scored = await asyncio.to_thread(search_by_text, album.smart_query, embedding_data, len(embedding_data))
+    matched_ids = [aid for aid, score in scored if score > SMART_ALBUM_MATCH_THRESHOLD]
+
+    for aid in matched_ids:
+        db.add(AlbumAsset(album_id=album.id, asset_id=aid))
+
+    return matched_ids
+
+
+async def load_smart_album_queries_for_user(db: AsyncSession, user_id: str) -> List[Tuple[str, "object"]]:
+    """(album_id, query_text_embedding) pairs for a user's dynamic albums -
+    meant to be computed once per CLIP job run and reused across every
+    photo it processes, rather than re-embedding the same query text once
+    per photo."""
+    from services.ml_service import CLIP_AVAILABLE, compute_text_embedding
+
+    if not CLIP_AVAILABLE:
+        return []
+
+    result = await db.execute(
+        select(Album).where(and_(Album.user_id == user_id, Album.is_smart == True, Album.smart_query.isnot(None)))
+    )
+    albums = list(result.scalars().all())
+
+    entries = []
+    for album in albums:
+        emb = await asyncio.to_thread(compute_text_embedding, album.smart_query)
+        if emb is not None:
+            entries.append((album.id, emb))
+    return entries
+
+
+async def match_asset_to_smart_albums(
+    db: AsyncSession, asset_id: str, embedding, smart_album_entries: List[Tuple[str, "object"]]
+) -> None:
+    """Auto-adds asset_id to any of the given dynamic albums its embedding
+    scores above the match threshold on - called right after a photo's own
+    CLIP embedding is computed. Skips albums it's already in."""
+    if not smart_album_entries:
+        return
+    from utils.embedding_utils import cosine_similarity
+
+    for album_id, query_emb in smart_album_entries:
+        if query_emb.shape != embedding.shape:
+            continue
+        if cosine_similarity(query_emb, embedding) <= SMART_ALBUM_MATCH_THRESHOLD:
+            continue
+        existing = await db.execute(
+            select(AlbumAsset).where(and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id == asset_id))
+        )
+        if not existing.scalar_one_or_none():
+            db.add(AlbumAsset(album_id=album_id, asset_id=asset_id))
 
 
 async def get_album_detail(db: AsyncSession, album_id: str, user_id: str) -> dict:

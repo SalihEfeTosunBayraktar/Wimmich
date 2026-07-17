@@ -40,6 +40,12 @@ async def handle_job_clip(db: AsyncSession, job: Job):
     total = len(assets)
     processed = 0
 
+    # Dynamic albums' query text only needs embedding once per job run, not
+    # once per photo - lazily filled in per user_id as this batch (which can
+    # span multiple users on a shared server) actually encounters them.
+    from services.album_service import load_smart_album_queries_for_user, match_asset_to_smart_albums
+    smart_album_cache: dict = {}
+
     # Each call is a PIL decode (CPU) followed by a model forward pass (GPU);
     # running a batch concurrently overlaps one image's decode with another's
     # inference instead of doing everything one image at a time.
@@ -62,6 +68,10 @@ async def handle_job_clip(db: AsyncSession, job: Job):
                 if save_embedding(embedding, emb_path):
                     asset.clip_embedding_path = emb_path
                     asset.ml_processed = True
+                    if asset.user_id not in smart_album_cache:
+                        smart_album_cache[asset.user_id] = await load_smart_album_queries_for_user(db, asset.user_id)
+                    if smart_album_cache[asset.user_id]:
+                        await match_asset_to_smart_albums(db, asset.id, embedding, smart_album_cache[asset.user_id])
 
         job.progress = int(processed / total * 100) if total > 0 else 100
         await db.commit()

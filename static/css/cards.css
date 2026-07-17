@@ -91,6 +91,23 @@
     padding: 2px 10px;
 }
 
+.album-card-smart-badge {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+}
+
+.album-smart-badge {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
 /* ─── Album Account-Share Modal ─────────────────────────── */
 .album-share-row {
     display: flex;

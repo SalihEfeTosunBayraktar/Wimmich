@@ -30,6 +30,14 @@ registerTranslations({
         'albums.shared_by': 'Shared by {name}',
         'albums.view_only_badge': 'View only',
         'albums.remove_access': 'Remove access',
+        'albums.smart_toggle_label': 'Dynamic album',
+        'albums.smart_toggle_hint': 'Instead of picking photos yourself, describe what belongs here (e.g. "cat") - matching photos are added automatically, including new ones as they\'re indexed.',
+        'albums.smart_query_label': 'What should this album contain?',
+        'albums.smart_query_placeholder': 'e.g. cat, sunset, screenshot...',
+        'albums.smart_query_required': 'Describe what this album should contain',
+        'albums.smart_created': 'Dynamic album created - {count} matching photos added so far',
+        'albums.smart_badge': '🔮 Dynamic',
+        'albums.smart_query_display': 'Auto-adds photos matching: "{query}"',
     },
     tr: {
         'albums.empty_title': 'Henüz albüm yok',
@@ -59,6 +67,14 @@ registerTranslations({
         'albums.shared_by': '{name} tarafından paylaşıldı',
         'albums.view_only_badge': 'Sadece görüntüleme',
         'albums.remove_access': 'Erişimi kaldır',
+        'albums.smart_toggle_label': 'Dinamik albüm',
+        'albums.smart_toggle_hint': 'Fotoğrafları kendin seçmek yerine bu albümde ne olması gerektiğini tarif et (örn. "kedi") - eşleşen fotoğraflar otomatik eklenir, yeni yüklenenler de indekslendikçe dahil olur.',
+        'albums.smart_query_label': 'Bu albümde ne olmalı?',
+        'albums.smart_query_placeholder': 'örn. kedi, gün batımı, ekran görüntüsü...',
+        'albums.smart_query_required': 'Bu albümde ne olması gerektiğini yazın',
+        'albums.smart_created': 'Dinamik albüm oluşturuldu - şimdiden {count} eşleşen fotoğraf eklendi',
+        'albums.smart_badge': '🔮 Dinamik',
+        'albums.smart_query_display': 'Şununla eşleşen fotoğrafları otomatik ekler: "{query}"',
     },
     fr: {
         'albums.empty_title': "Pas encore d'albums",
@@ -88,6 +104,14 @@ registerTranslations({
         'albums.shared_by': 'Partagé par {name}',
         'albums.view_only_badge': 'Lecture seule',
         'albums.remove_access': "Retirer l'accès",
+        'albums.smart_toggle_label': 'Album dynamique',
+        'albums.smart_toggle_hint': 'Au lieu de choisir vous-même les photos, décrivez ce que cet album doit contenir (ex. "chat") - les photos correspondantes sont ajoutées automatiquement, y compris les nouvelles au fur et à mesure de leur indexation.',
+        'albums.smart_query_label': 'Que doit contenir cet album ?',
+        'albums.smart_query_placeholder': 'ex. chat, coucher de soleil, capture d\'écran...',
+        'albums.smart_query_required': 'Décrivez ce que cet album doit contenir',
+        'albums.smart_created': 'Album dynamique créé - {count} photos correspondantes déjà ajoutées',
+        'albums.smart_badge': '🔮 Dynamique',
+        'albums.smart_query_display': 'Ajoute automatiquement les photos correspondant à : "{query}"',
     },
     de: {
         'albums.empty_title': 'Noch keine Alben',
@@ -117,6 +141,14 @@ registerTranslations({
         'albums.shared_by': 'Geteilt von {name}',
         'albums.view_only_badge': 'Nur ansehen',
         'albums.remove_access': 'Zugriff entfernen',
+        'albums.smart_toggle_label': 'Dynamisches Album',
+        'albums.smart_toggle_hint': 'Statt Fotos selbst auszuwählen, beschreiben Sie, was hier hineingehört (z. B. "Katze") - passende Fotos werden automatisch hinzugefügt, auch neue, sobald sie indiziert werden.',
+        'albums.smart_query_label': 'Was soll dieses Album enthalten?',
+        'albums.smart_query_placeholder': 'z. B. Katze, Sonnenuntergang, Screenshot...',
+        'albums.smart_query_required': 'Beschreiben Sie, was dieses Album enthalten soll',
+        'albums.smart_created': 'Dynamisches Album erstellt - {count} passende Fotos bereits hinzugefügt',
+        'albums.smart_badge': '🔮 Dynamisch',
+        'albums.smart_query_display': 'Fügt automatisch Fotos hinzu, die zu „{query}“ passen',
     },
 });
 
@@ -136,6 +168,7 @@ async function renderAlbums() {
                     <div class="album-card-cover">
                         ${a.cover_thumb ? `<img src="${a.cover_thumb}" alt="" loading="lazy">` : '<div class="empty-cover">📁</div>'}
                         ${a.is_owner === false ? `<span class="album-card-shared-badge">👥</span>` : ''}
+                        ${a.is_smart ? `<span class="album-card-smart-badge">${t('albums.smart_badge')}</span>` : ''}
                     </div>
                     <div class="album-card-info">
                         <div class="album-card-name">${escHtml(a.name)}</div>
@@ -160,6 +193,7 @@ async function openAlbum(id) {
                 <button class="btn btn-secondary btn-sm" onclick="navigateTo('albums')">${t('albums.back_to_albums')}</button>
                 <h3 class="album-detail-title">${escHtml(album.name)}</h3>
                 <span class="text-muted">${t('albums.item_count', { count: album.assets?.length || 0 })}</span>
+                ${album.is_smart ? `<span class="album-view-only-badge album-smart-badge">${t('albums.smart_badge')}</span>` : ''}
                 ${!isOwner ? `<span class="text-muted">${t('albums.shared_by', { name: escHtml(album.owner_name || '') })}</span>` : ''}
                 ${!isOwner && !album.can_edit ? `<span class="album-view-only-badge">${t('albums.view_only_badge')}</span>` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="showShareModal('ALBUM', '${id}')">🔗 ${t('albums.share_button')}</button>
@@ -167,6 +201,7 @@ async function openAlbum(id) {
                 ${isOwner ? `<button class="btn btn-danger btn-sm" onclick="deleteAlbum('${id}')">${t('common.delete')}</button>` : ''}
             </div>
             ${album.description ? `<p style="color:var(--text-secondary);margin-bottom:16px">${escHtml(album.description)}</p>` : ''}
+            ${album.is_smart && album.smart_query ? `<p class="text-muted admin-field-hint" style="margin-bottom:16px">${t('albums.smart_query_display', { query: escHtml(album.smart_query) })}</p>` : ''}
             <div class="photo-grid">${(album.assets || []).map(a => renderPhotoCard(a)).join('')}</div>
         `;
         bindPhotoCards(pc);
@@ -205,19 +240,30 @@ function showAlbumModal() {
     $('album-modal').classList.remove('hidden');
     $('album-name').value = '';
     $('album-desc').value = '';
+    $('album-smart-toggle').checked = false;
+    $('album-smart-query').value = '';
+    $('album-smart-query-group').classList.add('hidden');
     $('album-name').focus();
 }
 
 function initAlbumModal() {
     $('album-modal-close').onclick = () => $('album-modal').classList.add('hidden');
     $('album-modal-cancel').onclick = () => $('album-modal').classList.add('hidden');
+    $('album-smart-toggle').onchange = () => {
+        $('album-smart-query-group').classList.toggle('hidden', !$('album-smart-toggle').checked);
+    };
     $('album-modal-save').onclick = async () => {
         const name = $('album-name').value.trim();
         if (!name) { toast(t('albums.name_required'), 'warning'); return; }
+
+        const isSmart = $('album-smart-toggle').checked;
+        const smartQuery = $('album-smart-query').value.trim();
+        if (isSmart && !smartQuery) { toast(t('albums.smart_query_required'), 'warning'); return; }
+
         const ids = state.selectedAssets.size > 0 ? [...state.selectedAssets] : undefined;
-        await API.createAlbum(name, $('album-desc').value.trim() || null, ids);
+        const result = await API.createAlbum(name, $('album-desc').value.trim() || null, ids, isSmart, smartQuery);
         $('album-modal').classList.add('hidden');
-        toast(t('albums.created'), 'success');
+        toast(isSmart ? t('albums.smart_created', { count: result.asset_count || 0 }) : t('albums.created'), 'success');
         clearSelection();
         if (state.currentPage === 'albums') navigateTo('albums');
     };

@@ -16,6 +16,8 @@ class AlbumCreateRequest(BaseModel):
     name: str
     description: Optional[str] = None
     asset_ids: Optional[List[str]] = None
+    is_smart: bool = False
+    smart_query: Optional[str] = None
 
 
 class AlbumUpdateRequest(BaseModel):
@@ -60,7 +62,9 @@ async def create_album(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new album."""
-    return await album_service.create_album(db, user, req.name, req.description, req.asset_ids)
+    return await album_service.create_album(
+        db, user, req.name, req.description, req.asset_ids, req.is_smart, req.smart_query
+    )
 
 
 @router.get("/{album_id}")

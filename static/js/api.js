@@ -101,8 +101,11 @@ const API = {
 
     // Albums
     getAlbums() { return this.request('/api/albums'); },
-    createAlbum(name, description, assetIds) {
-        return this.request('/api/albums', { method: 'POST', body: { name, description, asset_ids: assetIds } });
+    createAlbum(name, description, assetIds, isSmart, smartQuery) {
+        return this.request('/api/albums', {
+            method: 'POST',
+            body: { name, description, asset_ids: assetIds, is_smart: !!isSmart, smart_query: smartQuery || null },
+        });
     },
     getAlbum(id) { return this.request(`/api/albums/${id}`); },
     updateAlbum(id, data) { return this.request(`/api/albums/${id}`, { method: 'PUT', body: data }); },
