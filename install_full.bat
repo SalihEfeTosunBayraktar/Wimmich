@@ -81,7 +81,12 @@ pip install torch torchvision
 if errorlevel 1 goto :torch_failed
 
 echo   Installing CLIP (semantic search)...
-pip install open_clip_torch
+REM transformers isn't a hard dependency of open_clip_torch itself, but the
+REM specific checkpoint this app uses (config.ML_CLIP_MODEL, an XLM-RoBERTa
+REM text tower for multilingual search) is loaded through HuggingFace under
+REM the hood and fails at runtime ("pip install transformers to use
+REM pre-trained HuggingFace models") without it - not optional here.
+pip install open_clip_torch transformers
 
 REM --no-deps only on facenet-pytorch itself (it pins old torch/numpy/Pillow
 REM versions that conflict with what CLIP above needs) - requests is
