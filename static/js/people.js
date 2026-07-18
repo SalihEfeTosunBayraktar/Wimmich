@@ -163,7 +163,6 @@ function _renderPersonCard(p, { hidden = false, showDissolve = false } = {}) {
 }
 
 async function dissolvePersonAction(personId) {
-    if (!confirm(t('people.confirm_dissolve'))) return;
     try {
         await API.dissolvePerson(personId);
         toast(t('people.dissolved_success'), 'success');
