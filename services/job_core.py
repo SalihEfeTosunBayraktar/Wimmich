@@ -74,6 +74,16 @@ class JobWorker:
         # PENDING rows genuinely persist across a restart).
         self._session_completed = 0
         self._session_failed = 0
+        # Which job _job_task is currently running, and when it was
+        # dispatched - needed by the hang watchdog (see _check_hang_watchdog)
+        # since job_id/job_type in _worker_loop are loop-local and vanish
+        # the moment busy becomes true.
+        self._current_job_id = None
+        self._current_job_started_at = None
+        # Job ids the watchdog has already given up on - checked by
+        # _run_job_task so a straggler task that finishes (or fails) late
+        # can never overwrite what the watchdog already recorded for it.
+        self._watchdog_abandoned_job_ids = set()
 
     async def start(self):
         """Start the background worker."""
@@ -145,9 +155,13 @@ class JobWorker:
                             await db.commit()
                             job_id, job_type = job.id, job.job_type
                             found_pending = True
+                            self._current_job_id = job_id
+                            self._current_job_started_at = job.started_at
                         else:
                             await handle_cleanup_trash(db)
                             await self._maybe_schedule_backup(db, create_job)
+                else:
+                    await self._check_hang_watchdog(create_job)
 
             except Exception as e:
                 error("JOB", f"Worker error: {e}")
@@ -167,6 +181,87 @@ class JobWorker:
                 await asyncio.sleep(config.JOB_BUSY_CHECK_INTERVAL_SECONDS)
             else:
                 await asyncio.sleep(config.JOB_POLL_INTERVAL_SECONDS)
+
+    async def _check_hang_watchdog(self, create_job) -> None:
+        """Runs once per loop iteration while busy=True (every
+        JOB_BUSY_CHECK_INTERVAL_SECONDS, ~0.2s - cheap, a no-op datetime
+        comparison until the threshold is actually exceeded).
+
+        Most handlers have no per-call timeout at all; even the two known
+        ML model-download hangs (CLIP/face model first load) are only
+        bounded by ML_MODEL_LOAD_TIMEOUT_SECONDS inside clip_service.py/
+        face_service.py, not by anything here. This is the general
+        backstop: past JOB_HANG_TIMEOUT_MINUTES of wall-clock time since
+        dispatch, give up regardless of *why* it's stuck, so one hung job
+        can't block the entire queue behind it forever - only one job runs
+        at a time by design (see _worker_loop's docstring), so without this
+        a single wedged job means nothing else ever runs again.
+
+        Python cannot forcibly kill a thread blocked in a synchronous call
+        (asyncio.to_thread) - the old task is abandoned in place, not
+        actually terminated. It keeps running/committing in the background
+        until it resolves on its own or the process restarts. See
+        _run_job_task for how a late straggler is kept from clobbering
+        what's written here.
+        """
+        if not self._current_job_id or not self._current_job_started_at:
+            return
+
+        elapsed_min = (datetime.now(timezone.utc) - self._current_job_started_at).total_seconds() / 60
+        if elapsed_min < config.JOB_HANG_TIMEOUT_MINUTES:
+            return
+
+        job_id = self._current_job_id
+        warn("JOB", f"Job {job_id} exceeded the {config.JOB_HANG_TIMEOUT_MINUTES}min hang watchdog - abandoning it.")
+
+        # Recorded synchronously, before any await in this method - by the
+        # time any other coroutine (including a resuming straggler) gets
+        # scheduled again, this has unconditionally already happened.
+        self._watchdog_abandoned_job_ids.add(job_id)
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Job).where(Job.id == job_id))
+            job = result.scalar_one_or_none()
+            # Only rewrite if still RUNNING. If it's already CANCELLED, a
+            # user hit "Cancel" on this exact job while it was wedged -
+            # cancellation is only re-polled between awaits inside a
+            # handler, so cancelling a job stuck in one giant blocking call
+            # never actually reaches that check, and busy would otherwise
+            # stay true forever even though the row already says CANCELLED.
+            # Leave their CANCELLED status alone and don't queue a retry
+            # (they asked it to stop, not run again), but still free the
+            # worker below unconditionally.
+            if job and job.status == "RUNNING":
+                retries = (job.data or {}).get("_watchdog_retries", 0)
+                job.status = "FAILED"
+                job.completed_at = datetime.now(timezone.utc)
+                self._session_failed += 1
+
+                if retries < config.JOB_HANG_MAX_RETRIES:
+                    job.error_message = (
+                        f"İşlem {config.JOB_HANG_TIMEOUT_MINUTES} dakikadır yanıt vermediği için "
+                        f"zaman aşımına uğradı, yeniden deneniyor ({retries + 1}/{config.JOB_HANG_MAX_RETRIES})."
+                    )
+                    retry_data = dict(job.data or {})
+                    retry_data["_watchdog_retries"] = retries + 1
+                    try:
+                        new_job = await create_job(db, job.job_type, retry_data)
+                        info("JOB", f"Job {job_id} re-queued as {new_job.id} (retry {retries + 1}).")
+                    except JobAlreadyExistsException:
+                        pass  # an equivalent job is already queued - fine
+                else:
+                    job.error_message = (
+                        f"İşlem {config.JOB_HANG_TIMEOUT_MINUTES} dakikadır yanıt vermediği için "
+                        f"zaman aşımına uğradı. {config.JOB_HANG_MAX_RETRIES} deneme sonrası vazgeçildi."
+                    )
+                    error("JOB", f"Job {job_id} ({job.job_type}) exceeded the retry limit after repeated timeouts - giving up.")
+                await db.commit()
+
+        # Stop tracking this task as "busy" so the loop picks up the next
+        # PENDING job on its very next iteration.
+        self._job_task = None
+        self._current_job_id = None
+        self._current_job_started_at = None
 
     async def _maybe_schedule_backup(self, db: AsyncSession, create_job) -> None:
         """Auto-queues a BACKUP job once the configured interval has
@@ -196,6 +291,7 @@ class JobWorker:
                 if not job:
                     return
 
+                status = error_message = None
                 try:
                     handler = JOB_HANDLERS.get(job.job_type)
                     if handler:
@@ -203,24 +299,34 @@ class JobWorker:
 
                     # Check once more in case it was cancelled at the end
                     await check_job_cancelled(db, job.id)
-
-                    job.status = "COMPLETED"
-                    job.progress = 100
-                    job.completed_at = datetime.now(timezone.utc)
-                    self._session_completed += 1
+                    status = "COMPLETED"
 
                 except JobCancelledException as e:
-                    job.status = "CANCELLED"
-                    job.error_message = str(e)
-                    job.completed_at = datetime.now(timezone.utc)
+                    status, error_message = "CANCELLED", str(e)
                     warn("JOB", f"Job {job_id} cancelled: {e}")
                 except Exception as e:
-                    job.status = "FAILED"
-                    job.error_message = str(e)
-                    job.completed_at = datetime.now(timezone.utc)
-                    self._session_failed += 1
+                    status, error_message = "FAILED", str(e)
                     error("JOB", f"Job {job_id} failed: {e}")
                     traceback.print_exc()
+
+                # See _check_hang_watchdog: if it already gave up on this
+                # exact job_id (and possibly already queued a retry under a
+                # new id), this straggler finishing - however late - must
+                # never overwrite what the watchdog already recorded.
+                if job_id in self._watchdog_abandoned_job_ids:
+                    self._watchdog_abandoned_job_ids.discard(job_id)
+                    warn("JOB", f"Job {job_id} finished after the watchdog abandoned it (would have been {status}) - discarded.")
+                    return
+
+                job.status = status
+                job.completed_at = datetime.now(timezone.utc)
+                if status == "COMPLETED":
+                    job.progress = 100
+                    self._session_completed += 1
+                else:
+                    job.error_message = error_message
+                    if status == "FAILED":
+                        self._session_failed += 1
 
                 await db.commit()
         except Exception as e:

@@ -6,6 +6,7 @@ being True says nothing about dlib itself), so face detection previously
 ran entirely on CPU regardless of the machine's GPU - facenet-pytorch reuses
 the same torch/CUDA install already working for CLIP.
 """
+import concurrent.futures
 import threading
 from typing import List, Dict, Tuple
 import numpy as np
@@ -47,15 +48,40 @@ def _load_face_models():
 
         _device = "cuda" if torch.cuda.is_available() else "cpu"
         info("ML", f"Loading face detection/recognition models on device: {_device}...")
-        # min_face_size default (20px) let MTCNN "detect" tiny texture/pattern
-        # patches as faces at high confidence (confirmed directly: a zigzag
-        # stitching pattern on a swimsuit strap got flagged as a face) -
-        # those false positives all embedded similarly to each other, which
-        # is what merged thousands of unrelated faces into one giant cluster.
-        # Real faces worth grouping are rarely under ~60px even after
-        # downscaling to FACE_DETECT_MAX_DIM.
-        _mtcnn = MTCNN(keep_all=True, device=_device, post_process=False, min_face_size=60)
-        _resnet = InceptionResnetV1(pretrained="vggface2").eval().to(_device)
+
+        def _create():
+            # min_face_size default (20px) let MTCNN "detect" tiny texture/
+            # pattern patches as faces at high confidence (confirmed
+            # directly: a zigzag stitching pattern on a swimsuit strap got
+            # flagged as a face) - those false positives all embedded
+            # similarly to each other, which is what merged thousands of
+            # unrelated faces into one giant cluster. Real faces worth
+            # grouping are rarely under ~60px even after downscaling to
+            # FACE_DETECT_MAX_DIM.
+            mtcnn = MTCNN(keep_all=True, device=_device, post_process=False, min_face_size=60)
+            resnet = InceptionResnetV1(pretrained="vggface2").eval().to(_device)
+            return mtcnn, resnet
+
+        # Same reasoning as clip_service.py's _load_clip(): this already runs
+        # inside a worker thread, so a throwaway single-worker executor
+        # bounds the vggface2 weight download (no timeout of its own) -
+        # deliberately NOT `with ThreadPoolExecutor(...)`, whose __exit__
+        # would block on shutdown(wait=True) until an abandoned download
+        # thread finishes, defeating the timeout entirely.
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
+            future = executor.submit(_create)
+            try:
+                _mtcnn, _resnet = future.result(timeout=config.ML_MODEL_LOAD_TIMEOUT_SECONDS)
+            except concurrent.futures.TimeoutError:
+                raise RuntimeError(
+                    f"Yüz tanıma modelleri {config.ML_MODEL_LOAD_TIMEOUT_SECONDS // 60} dakika içinde "
+                    f"yüklenemedi (muhtemelen yavaş/kesik internet bağlantısı nedeniyle model indirme "
+                    f"işlemi takıldı)."
+                )
+        finally:
+            executor.shutdown(wait=False)
+
         success("ML", f"Face models loaded successfully on device: {_device}.")
 
 

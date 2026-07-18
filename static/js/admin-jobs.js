@@ -33,6 +33,11 @@ registerTranslations({
         'admin_jobs.confirm_cancel_all': 'All pending/running background jobs will be cancelled. Are you sure?',
         'admin_jobs.jobs_cancelled_success': 'Jobs cancelled',
         'admin_jobs.job_started': '{type} job started',
+        'admin_jobs.concurrency_label': 'Files Processed in Parallel',
+        'admin_jobs.concurrency_hint': 'Your system: {cpu} CPU cores, {ram} RAM - suggested: {suggested}. Higher values finish bulk imports/CLIP/categorize runs faster but use more RAM/CPU at once.',
+        'admin_jobs.apply_suggestion_btn': 'Use Suggested ({value})',
+        'admin_jobs.invalid_concurrency': 'Enter a number of at least 1',
+        'admin_jobs.concurrency_saved': 'Concurrency setting saved',
     },
     tr: {
         'admin_jobs.clip_title': 'CLIP Akıllı Arama İndeksleme',
@@ -65,6 +70,11 @@ registerTranslations({
         'admin_jobs.confirm_cancel_all': 'Bekleyen/çalışan tüm arka plan işlemleri iptal edilecek. Emin misiniz?',
         'admin_jobs.jobs_cancelled_success': 'İşlemler iptal edildi',
         'admin_jobs.job_started': '{type} işi başlatıldı',
+        'admin_jobs.concurrency_label': 'Aynı Anda İşlenecek Dosya Sayısı',
+        'admin_jobs.concurrency_hint': 'Sisteminiz: {cpu} CPU çekirdeği, {ram} RAM - önerilen: {suggested}. Daha yüksek değerler toplu içe aktarma/CLIP/kategorize işlemlerini daha hızlı bitirir ama aynı anda daha fazla RAM/CPU kullanır.',
+        'admin_jobs.apply_suggestion_btn': 'Önerileni Kullan ({value})',
+        'admin_jobs.invalid_concurrency': 'En az 1 olan bir sayı girin',
+        'admin_jobs.concurrency_saved': 'Eş zamanlılık ayarı kaydedildi',
     },
     fr: {
         'admin_jobs.clip_title': 'Indexation de recherche intelligente CLIP',
@@ -97,6 +107,11 @@ registerTranslations({
         'admin_jobs.confirm_cancel_all': 'Toutes les tâches en arrière-plan en attente/en cours seront annulées. Êtes-vous sûr ?',
         'admin_jobs.jobs_cancelled_success': 'Tâches annulées',
         'admin_jobs.job_started': 'Tâche {type} démarrée',
+        'admin_jobs.concurrency_label': 'Fichiers traités en parallèle',
+        'admin_jobs.concurrency_hint': 'Votre système : {cpu} cœurs CPU, {ram} RAM - suggéré : {suggested}. Des valeurs plus élevées terminent les imports/CLIP/catégorisations en masse plus vite mais utilisent plus de RAM/CPU à la fois.',
+        'admin_jobs.apply_suggestion_btn': 'Utiliser la suggestion ({value})',
+        'admin_jobs.invalid_concurrency': 'Entrez un nombre d\'au moins 1',
+        'admin_jobs.concurrency_saved': 'Paramètre de concurrence enregistré',
     },
     de: {
         'admin_jobs.clip_title': 'CLIP Intelligente Suchindizierung',
@@ -129,6 +144,11 @@ registerTranslations({
         'admin_jobs.confirm_cancel_all': 'Alle ausstehenden/laufenden Hintergrundaufgaben werden abgebrochen. Sind Sie sicher?',
         'admin_jobs.jobs_cancelled_success': 'Aufgaben abgebrochen',
         'admin_jobs.job_started': 'Aufgabe {type} gestartet',
+        'admin_jobs.concurrency_label': 'Parallel verarbeitete Dateien',
+        'admin_jobs.concurrency_hint': 'Ihr System: {cpu} CPU-Kerne, {ram} RAM - empfohlen: {suggested}. Höhere Werte beschleunigen Massenimporte/CLIP/Kategorisierung, nutzen aber gleichzeitig mehr RAM/CPU.',
+        'admin_jobs.apply_suggestion_btn': 'Vorschlag verwenden ({value})',
+        'admin_jobs.invalid_concurrency': 'Geben Sie eine Zahl von mindestens 1 ein',
+        'admin_jobs.concurrency_saved': 'Parallelitätseinstellung gespeichert',
     },
 });
 
@@ -215,6 +235,24 @@ async function cancelAllAdminJobs() {
         const r = await API.cancelAllJobs();
         toast(r.message || t('admin_jobs.jobs_cancelled_success'), 'success');
         pollAdminJobs();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveJobConcurrency() {
+    const value = parseInt($('job-concurrency-input').value, 10);
+    if (!value || value < 1) { toast(t('admin_jobs.invalid_concurrency'), 'error'); return; }
+    try {
+        await API.updateJobConcurrency(value);
+        toast(t('admin_jobs.concurrency_saved'), 'success');
+        renderAdmin();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function applyJobConcurrencySuggestion() {
+    try {
+        const data = await API.getJobConcurrency();
+        $('job-concurrency-input').value = data.suggested;
+        await saveJobConcurrency();
     } catch (e) { toast(e.message, 'error'); }
 }
 

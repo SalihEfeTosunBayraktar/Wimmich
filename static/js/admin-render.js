@@ -393,13 +393,14 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, storageConfig, backupSettings, referenceRootsData] = await Promise.all([
+        const [stats, users, tunnelStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
             API.getStorageConfig().catch(() => ({ data_dir: '', db_dir: '' })),
             API.getBackupSettings().catch(() => ({ backup_dir: '', interval_hours: 24, enabled: false, last_backup_at: null, last_backup_status: null, last_backup_error: null })),
             API.getReferenceRoots().catch(() => ({ references: [] })),
+            API.getJobConcurrency().catch(() => ({ effective: 4, override: null, default: 4, suggested: 4, system: { cpu_count: null, total_ram_gb: null } })),
         ]);
 
         pc.innerHTML = `
@@ -445,6 +446,22 @@ async function renderAdmin() {
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
                         <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
+                    </div>
+                    <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">
+                        <label class="admin-field-label">${t('admin_jobs.concurrency_label')}</label>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            <input type="number" id="job-concurrency-input" min="1" max="32"
+                                   value="${jobConcurrency.override ?? jobConcurrency.effective}" style="width:80px">
+                            <button class="btn btn-secondary btn-sm" onclick="saveJobConcurrency()">${t('admin_render.save_settings_btn')}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="applyJobConcurrencySuggestion()">
+                                ${t('admin_jobs.apply_suggestion_btn', { value: jobConcurrency.suggested })}
+                            </button>
+                        </div>
+                        <p class="text-muted admin-field-hint">${t('admin_jobs.concurrency_hint', {
+                            cpu: jobConcurrency.system.cpu_count ?? '?',
+                            ram: jobConcurrency.system.total_ram_gb != null ? jobConcurrency.system.total_ram_gb + ' GB' : '?',
+                            suggested: jobConcurrency.suggested,
+                        })}</p>
                     </div>
                     <div id="job-list-container" style="max-height:160px;overflow-y:auto;border-top:1px solid var(--border-color);padding-top:8px">
                         <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">

@@ -103,8 +103,15 @@ async def handle_job_import(db: AsyncSession, job: Job):
     skipped = 0
     processed = 0
 
-    for batch_start in range(0, total, config.JOB_IMPORT_CONCURRENCY):
-        batch = found_files[batch_start:batch_start + config.JOB_IMPORT_CONCURRENCY]
+    # Read once, not once per range()/slice reference below - the range()
+    # step is evaluated once when the loop starts, so if an admin saves a
+    # new concurrency setting mid-run, reading it again in the slice would
+    # desync the two and batches would overlap or skip assets.
+    from services.job_concurrency_service import get_effective_concurrency
+    concurrency = get_effective_concurrency()
+
+    for batch_start in range(0, total, concurrency):
+        batch = found_files[batch_start:batch_start + concurrency]
         await check_job_cancelled(db, job.id)
 
         # Quota/dedup checks are cheap DB reads - keep them sequential and

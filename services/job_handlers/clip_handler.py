@@ -52,11 +52,17 @@ async def handle_job_clip(db: AsyncSession, job: Job):
     from services.album_service import load_smart_album_queries_for_user, match_asset_to_smart_albums
     smart_album_cache: dict = {}
 
+    # Read once, not once per range()/slice reference below - see
+    # import_handler.py's identical comment for why (a setting change saved
+    # mid-run must not desync the range's fixed step from the slice width).
+    from services.job_concurrency_service import get_effective_concurrency
+    concurrency = get_effective_concurrency()
+
     # Each call is a PIL decode (CPU) followed by a model forward pass (GPU);
     # running a batch concurrently overlaps one image's decode with another's
     # inference instead of doing everything one image at a time.
-    for batch_start in range(0, total, config.JOB_IMPORT_CONCURRENCY):
-        batch = assets[batch_start:batch_start + config.JOB_IMPORT_CONCURRENCY]
+    for batch_start in range(0, total, concurrency):
+        batch = assets[batch_start:batch_start + concurrency]
         await check_job_cancelled(db, job.id)
 
         embeddings = await asyncio.gather(

@@ -171,6 +171,13 @@ ML_CLIP_MODEL = os.getenv("WIMMICH_CLIP_MODEL", "xlm-roberta-large-ViT-H-14")
 ML_CLIP_PRETRAINED = os.getenv("WIMMICH_CLIP_PRETRAINED", "frozen_laion5b_s13b_b90k")
 ML_BATCH_SIZE = int(os.getenv("WIMMICH_ML_BATCH_SIZE", "16"))
 ML_ENABLED = os.getenv("WIMMICH_ML_ENABLED", "true").lower() == "true"
+# Bounds the CLIP/face-recognition model's first-use download (a multi-GB
+# checkpoint over HTTP with no timeout of its own) - see clip_service.py's
+# _load_clip() and face_service.py's _load_face_models(). Without this, a
+# slow/interrupted connection mid-download hangs that job (and, until the
+# job-hang watchdog's much longer ceiling kicks in, the entire queue behind
+# it) indefinitely.
+ML_MODEL_LOAD_TIMEOUT_SECONDS = int(os.getenv("WIMMICH_ML_MODEL_LOAD_TIMEOUT_SECONDS", "1200"))
 
 # Face clustering. Distance is the L2 distance between facenet-pytorch
 # (InceptionResnetV1, vggface2 weights) 512-d embeddings - a different scale
@@ -230,6 +237,15 @@ JOB_IMPORT_CONCURRENCY = int(os.getenv("WIMMICH_JOB_IMPORT_CONCURRENCY", "4"))
 # batches rather than being VRAM-bound. If CUDA OOM errors show up in the
 # logs during a CLIP+FACE overlap, lower this back down.
 FACE_DETECT_CONCURRENCY = int(os.getenv("WIMMICH_FACE_DETECT_CONCURRENCY", "6"))
+# How long a single job can run before the worker gives up waiting on it and
+# moves on to the next PENDING job - see JobWorker._check_hang_watchdog.
+# Comfortably above transcode_handler.py's own legitimate 3600s/60min ceiling
+# for one video, so a genuinely slow-but-alive large transcode is never
+# falsely killed by this.
+JOB_HANG_TIMEOUT_MINUTES = float(os.getenv("WIMMICH_JOB_HANG_TIMEOUT_MINUTES", "90"))
+# How many times a job that hit the hang watchdog gets automatically
+# re-queued before being left FAILED for good.
+JOB_HANG_MAX_RETRIES = int(os.getenv("WIMMICH_JOB_HANG_MAX_RETRIES", "2"))
 
 # External Library
 EXTERNAL_LIBRARY_PATHS = os.getenv("WIMMICH_EXTERNAL_LIBS", "").split(";") if os.getenv("WIMMICH_EXTERNAL_LIBS") else []

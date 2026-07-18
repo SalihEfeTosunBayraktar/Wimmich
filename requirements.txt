@@ -47,3 +47,4 @@ pycountry>=24.6.1
 
 # Utils
 python-dotenv>=1.0.1
+psutil>=6.0.0  # RAM detection for the job-concurrency admin suggestion (CPU count uses stdlib os.cpu_count(), no dependency needed)

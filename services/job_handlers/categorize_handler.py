@@ -76,8 +76,13 @@ async def handle_job_categorize(db: AsyncSession, job: Job):
     # with an explicit user_id applied them at all.
     corrections_by_user = {}
 
-    for batch_start in range(0, total, config.JOB_IMPORT_CONCURRENCY):
-        batch = assets[batch_start:batch_start + config.JOB_IMPORT_CONCURRENCY]
+    # Read once, not once per range()/slice reference below - see
+    # import_handler.py's identical comment for why.
+    from services.job_concurrency_service import get_effective_concurrency
+    concurrency = get_effective_concurrency()
+
+    for batch_start in range(0, total, concurrency):
+        batch = assets[batch_start:batch_start + concurrency]
         await check_job_cancelled(db, job.id)
 
         embeddings = await asyncio.gather(

@@ -2,13 +2,16 @@
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from database import get_db
 from models import User, Job
 from auth import get_admin_user
 from services.job_service import create_job
+from services import job_concurrency_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -114,3 +117,27 @@ async def cancel_job(
     job.error_message = "İşlem kullanıcı tarafından iptal edildi."
     await db.commit()
     return {"message": "İşlem iptal edildi"}
+
+
+class UpdateJobConcurrencyRequest(BaseModel):
+    concurrency: Optional[int] = None  # None = use the env-var default
+
+
+@router.get("/jobs/concurrency")
+async def get_job_concurrency(admin: User = Depends(get_admin_user)):
+    settings = job_concurrency_service.get_concurrency_settings()
+    return {
+        "effective": job_concurrency_service.get_effective_concurrency(),
+        "override": settings["concurrency"],
+        "default": config.JOB_IMPORT_CONCURRENCY,
+        "suggested": job_concurrency_service.get_suggested_concurrency(),
+        "system": job_concurrency_service.get_system_info(),
+    }
+
+
+@router.post("/jobs/concurrency")
+async def update_job_concurrency(
+    req: UpdateJobConcurrencyRequest,
+    admin: User = Depends(get_admin_user),
+):
+    return job_concurrency_service.update_concurrency_settings(req.concurrency)

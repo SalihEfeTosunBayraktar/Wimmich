@@ -6,6 +6,7 @@ the same embedding space the images were embedded into. Noticeably
 stronger than a ViT-B/32 or ViT-L/14 pair, at the cost of wanting a real
 GPU with a few GB of headroom.
 """
+import concurrent.futures
 import threading
 from typing import Optional, List, Tuple
 import numpy as np
@@ -70,9 +71,35 @@ def _load_clip():
         cache_dir = str(config.ML_DIR / "clip_cache")
 
         info("ML", f"Loading CLIP model: {config.ML_CLIP_MODEL} ({config.ML_CLIP_PRETRAINED}) on device: {_device}...")
-        model, _, preprocess = open_clip.create_model_and_transforms(
-            config.ML_CLIP_MODEL, pretrained=config.ML_CLIP_PRETRAINED, cache_dir=cache_dir,
-        )
+
+        def _create():
+            return open_clip.create_model_and_transforms(
+                config.ML_CLIP_MODEL, pretrained=config.ML_CLIP_PRETRAINED, cache_dir=cache_dir,
+            )
+
+        # _load_clip() already runs inside a worker thread (asyncio.to_thread
+        # from the handler) - no running event loop here for asyncio.wait_for.
+        # A throwaway single-worker executor bounds just this call instead,
+        # so a slow/interrupted connection mid-download of the ~5GB
+        # checkpoint (open_clip/huggingface_hub set no timeout of their own)
+        # fails cleanly instead of hanging this job - and, until the much
+        # longer job-hang watchdog's ceiling, the entire queue - forever.
+        # Deliberately NOT `with ThreadPoolExecutor(...)`: its __exit__ calls
+        # shutdown(wait=True), which would block here until the abandoned
+        # download thread finishes, silently defeating the timeout below.
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
+            future = executor.submit(_create)
+            try:
+                model, _, preprocess = future.result(timeout=config.ML_MODEL_LOAD_TIMEOUT_SECONDS)
+            except concurrent.futures.TimeoutError:
+                raise RuntimeError(
+                    f"CLIP modeli {config.ML_MODEL_LOAD_TIMEOUT_SECONDS // 60} dakika içinde yüklenemedi "
+                    f"(muhtemelen yavaş/kesik internet bağlantısı nedeniyle model indirme işlemi takıldı)."
+                )
+        finally:
+            executor.shutdown(wait=False)
+
         _model = model.to(_device).eval()
         _preprocess = preprocess
         _tokenizer = open_clip.get_tokenizer(config.ML_CLIP_MODEL)

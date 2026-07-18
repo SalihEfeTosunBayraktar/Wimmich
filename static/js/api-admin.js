@@ -15,6 +15,10 @@ Object.assign(API, {
     runJob(type) { return this.request(`/api/admin/jobs/${type}/run`, { method: 'POST' }); },
     cancelJob(jobId) { return this.request(`/api/admin/jobs/${jobId}/cancel`, { method: 'POST' }); },
     cancelAllJobs() { return this.request('/api/admin/jobs/cancel-all', { method: 'POST' }); },
+    getJobConcurrency() { return this.request('/api/admin/jobs/concurrency'); },
+    updateJobConcurrency(concurrency) {
+        return this.request('/api/admin/jobs/concurrency', { method: 'POST', body: { concurrency } });
+    },
     shutdownServer() { return this.request('/api/admin/shutdown', { method: 'POST' }); },
     checkForUpdate() { return this.request('/api/admin/update/check'); },
     applyUpdate() { return this.request('/api/admin/update/apply', { method: 'POST' }); },
