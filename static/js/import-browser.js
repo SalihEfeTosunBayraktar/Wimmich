@@ -25,6 +25,10 @@ registerTranslations({
         'import_browser.import_completed': 'Import completed!',
         'import_browser.completed_label': '✓ Completed',
         'import_browser.import_failed_prefix': 'Import failed: ',
+        'import_browser.browsing_btn': 'Loading...',
+        'import_browser.scanning_btn': 'Scanning...',
+        'import_browser.scanning_hint': '🔍 Scanning the folder... this can take a while for a large drive.',
+        'import_browser.starting_btn': 'Starting...',
     },
     tr: {
         'import_browser.parent_folder': '⬆ Üst Klasör',
@@ -49,6 +53,10 @@ registerTranslations({
         'import_browser.import_completed': 'İçe aktarma tamamlandı!',
         'import_browser.completed_label': '✓ Tamamlandı',
         'import_browser.import_failed_prefix': 'İçe aktarma başarısız: ',
+        'import_browser.browsing_btn': 'Yükleniyor...',
+        'import_browser.scanning_btn': 'Taranıyor...',
+        'import_browser.scanning_hint': '🔍 Klasör taranıyor... büyük bir disk için bu biraz sürebilir.',
+        'import_browser.starting_btn': 'Başlatılıyor...',
     },
     fr: {
         'import_browser.parent_folder': '⬆ Dossier parent',
@@ -73,6 +81,10 @@ registerTranslations({
         'import_browser.import_completed': 'Importation terminée !',
         'import_browser.completed_label': '✓ Terminé',
         'import_browser.import_failed_prefix': "Échec de l'importation : ",
+        'import_browser.browsing_btn': 'Chargement...',
+        'import_browser.scanning_btn': 'Analyse...',
+        'import_browser.scanning_hint': "🔍 Analyse du dossier en cours... cela peut prendre un moment pour un grand disque.",
+        'import_browser.starting_btn': 'Démarrage...',
     },
     de: {
         'import_browser.parent_folder': '⬆ Übergeordneter Ordner',
@@ -97,6 +109,10 @@ registerTranslations({
         'import_browser.import_completed': 'Import abgeschlossen!',
         'import_browser.completed_label': '✓ Abgeschlossen',
         'import_browser.import_failed_prefix': 'Import fehlgeschlagen: ',
+        'import_browser.browsing_btn': 'Lädt...',
+        'import_browser.scanning_btn': 'Wird gescannt...',
+        'import_browser.scanning_hint': '🔍 Ordner wird gescannt... bei einem großen Laufwerk kann das etwas dauern.',
+        'import_browser.starting_btn': 'Wird gestartet...',
     },
 });
 
@@ -104,6 +120,15 @@ async function browsePath(path) {
     const results = $('browse-results');
     if (!results) return;
     results.innerHTML = '<div class="skeleton" style="height:200px"></div>';
+
+    // A real drive can have thousands of entries in a single folder, and
+    // this whole panel previously gave zero indication anything was
+    // happening beyond the skeleton bar above - clicking a folder row (or
+    // Go) repeatedly, thinking it hadn't registered, was a completely
+    // reasonable reaction to that silence.
+    const goBtn = $('browse-go-btn');
+    const prevGoText = goBtn ? goBtn.textContent : null;
+    if (goBtn) { goBtn.disabled = true; goBtn.textContent = t('import_browser.browsing_btn'); }
 
     try {
         const data = await API.browsePath(path || '');
@@ -140,6 +165,8 @@ async function browsePath(path) {
         results.innerHTML = html;
     } catch (e) {
         results.innerHTML = `<div style="padding:16px;color:var(--danger)">${e.message}</div>`;
+    } finally {
+        if (goBtn) { goBtn.disabled = false; goBtn.textContent = prevGoText; }
     }
 }
 
@@ -150,7 +177,13 @@ async function scanImportPath() {
     const copyFiles = $('import-copy').checked;
     const recursive = $('import-recursive').checked;
     const sr = $('scan-results');
-    sr.innerHTML = '<div class="skeleton" style="height:80px;border-radius:8px"></div>';
+    // Same reasoning as browsePath's Go button - a recursive scan over a
+    // real external drive can take a while, and a static skeleton with no
+    // further change for that whole stretch reads as frozen, not busy.
+    sr.innerHTML = `<div class="skeleton" style="height:36px;border-radius:8px;margin-bottom:8px"></div><p class="text-muted" style="margin:0;font-size:0.85rem">${t('import_browser.scanning_hint')}</p>`;
+    const scanBtn = $('scan-import-btn');
+    const prevScanText = scanBtn ? scanBtn.textContent : null;
+    if (scanBtn) { scanBtn.disabled = true; scanBtn.textContent = t('import_browser.scanning_btn'); }
 
     try {
         const data = await API.scanFolder(path, copyFiles, recursive);
@@ -174,6 +207,8 @@ async function scanImportPath() {
         `;
     } catch (e) {
         sr.innerHTML = `<div style="padding:12px;color:var(--danger)">${e.message}</div>`;
+    } finally {
+        if (scanBtn) { scanBtn.disabled = false; scanBtn.textContent = prevScanText; }
     }
 }
 

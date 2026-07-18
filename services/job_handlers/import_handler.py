@@ -18,24 +18,18 @@ from services.job_core import check_job_cancelled, JobAlreadyExistsException
 from services.job_handlers.import_reference import build_reference_asset
 from services.quota_service import check_server_quota, check_user_quota
 from utils.log import warn, error, success
+from utils.media_scan_utils import iter_media_files
 
 
 def _collect_import_files(path: str, recursive: bool) -> list:
     target = Path(path)
     if not target.exists():
         raise ValueError(f"Path not found: {path}")
-
-    found_files = []
-    if target.is_file():
-        if target.suffix.lower() in config.ALL_EXTENSIONS:
-            found_files.append(str(target))
-    elif target.is_dir():
-        pattern = "**/*" if recursive else "*"
-        for ext in config.ALL_EXTENSIONS:
-            found_files.extend([str(f) for f in target.glob(f"{pattern}{ext}")])
-            found_files.extend([str(f) for f in target.glob(f"{pattern}{ext.upper()}")])
-        found_files = list(set(found_files))
-    return found_files
+    # One pass per directory (see utils/media_scan_utils) instead of one
+    # glob() per extension - the same ~50x-fewer-filesystem-calls fix as
+    # the folder browser/scan preview, applied here too since a real
+    # import walks the exact same tree.
+    return list(iter_media_files(path, recursive))
 
 
 async def _process_one(file_path: str, user_id: str, copy_files: bool, source_root: str):

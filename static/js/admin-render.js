@@ -525,8 +525,8 @@ async function renderAdmin() {
                             <div id="file-browser">
                                 <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
                                     <input type="text" id="browse-path" placeholder="${t('admin_render.browse_path_placeholder')}" style="flex:1">
-                                    <button class="btn btn-secondary btn-sm" onclick="browsePath($('browse-path').value)">${t('admin_render.go_btn')}</button>
-                                    <button class="btn btn-primary btn-sm" onclick="scanImportPath()">${t('admin_render.scan_btn')}</button>
+                                    <button id="browse-go-btn" class="btn btn-secondary btn-sm" onclick="browsePath($('browse-path').value)">${t('admin_render.go_btn')}</button>
+                                    <button id="scan-import-btn" class="btn btn-primary btn-sm" onclick="scanImportPath()">${t('admin_render.scan_btn')}</button>
                                 </div>
                                 <div style="display:flex;gap:8px;margin-bottom:12px">
                                     <label class="checkbox-label"><input type="checkbox" id="import-copy" checked> ${t('admin_render.import_copy_label')}</label>

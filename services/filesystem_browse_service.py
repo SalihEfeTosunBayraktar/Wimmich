@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from models import Asset
 from services.media_service import delete_asset_files
+from utils.media_scan_utils import iter_media_files, count_immediate_media
 
 
 def _list_drives() -> dict:
@@ -56,14 +57,7 @@ def browse_path(path: Optional[str]) -> dict:
                 item = {"name": entry.name, "path": str(entry), "type": "folder" if is_dir else "file"}
 
                 if is_dir:
-                    try:
-                        media_count = 0
-                        for ext in config.ALL_EXTENSIONS:
-                            media_count += sum(1 for _ in entry.glob(f"*{ext}"))
-                            media_count += sum(1 for _ in entry.glob(f"*{ext.upper()}"))
-                        item["media_count"] = media_count
-                    except (PermissionError, OSError):
-                        item["media_count"] = 0
+                    item["media_count"] = count_immediate_media(str(entry))
                 else:
                     ext = entry.suffix.lower()
                     if ext in config.ALL_EXTENSIONS:
@@ -85,19 +79,10 @@ def browse_path(path: Optional[str]) -> dict:
 
 
 def _collect_scan_candidates(path: str, recursive: bool) -> list:
-    """Recursively glob a folder for media files - pure filesystem walking,
-    can take a while on a large/deep tree."""
-    target = Path(path)
-    found_files = []
-    if target.is_file():
-        if target.suffix.lower() in config.ALL_EXTENSIONS:
-            found_files.append(str(target))
-    elif target.is_dir():
-        pattern = "**/*" if recursive else "*"
-        for ext in config.ALL_EXTENSIONS:
-            found_files.extend([str(f) for f in target.glob(f"{pattern}{ext}")])
-            found_files.extend([str(f) for f in target.glob(f"{pattern}{ext.upper()}")])
-    return list(set(found_files))
+    """Walk a folder for media files - one pass per directory (see
+    utils/media_scan_utils), can still take a while on a large/deep tree,
+    but nowhere near as long as the old one-glob()-per-extension approach."""
+    return list(iter_media_files(path, recursive))
 
 
 def _compute_scan_stats(new_files: list) -> tuple:
