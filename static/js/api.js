@@ -84,6 +84,8 @@ const API = {
     updateAsset(id, data) { return this.request(`/api/assets/${id}`, { method: 'PUT', body: data }); },
     toggleFavorite(id) { return this.request(`/api/assets/${id}/favorite`, { method: 'PUT' }); },
     toggleArchive(id) { return this.request(`/api/assets/${id}/archive`, { method: 'PUT' }); },
+    regenerateThumbnail(id) { return this.request(`/api/assets/${id}/regenerate-thumbnail`, { method: 'POST' }); },
+    retranscodeVideo(id) { return this.request(`/api/assets/${id}/retranscode`, { method: 'POST' }); },
     trashAsset(id) { return this.request(`/api/assets/${id}`, { method: 'DELETE' }); },
     restoreAsset(id) { return this.request(`/api/assets/${id}/restore`, { method: 'POST' }); },
     deleteAsset(id) { return this.request(`/api/assets/${id}/permanent`, { method: 'DELETE' }); },

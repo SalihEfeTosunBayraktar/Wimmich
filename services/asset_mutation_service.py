@@ -134,6 +134,34 @@ async def toggle_archive(db: AsyncSession, asset_id: str, user: User) -> dict:
     return {"is_archived": asset.is_archived}
 
 
+async def regenerate_thumbnail(db: AsyncSession, asset_id: str, user: User) -> dict:
+    """Force-regenerate one asset's thumbnails - a THUMBNAIL job with a
+    specific asset_id bypasses the handler's normal "only what's missing"
+    bulk filter (see thumbnail_handler.py), so this works even when the
+    existing thumbnail looks fine but is actually stale/wrong."""
+    asset = await get_asset_or_404(db, asset_id, user.id)
+    try:
+        await create_job(db, "THUMBNAIL", {"asset_id": asset.id})
+    except JobAlreadyExistsException:
+        pass
+    return {"message": "Küçük resim yeniden oluşturuluyor"}
+
+
+async def retranscode_video(db: AsyncSession, asset_id: str, user: User) -> dict:
+    """Force-retranscode one video asset, same asset_id bypass as
+    regenerate_thumbnail above (see transcode_handler.py)."""
+    from fastapi import HTTPException
+
+    asset = await get_asset_or_404(db, asset_id, user.id)
+    if asset.file_type != "VIDEO":
+        raise HTTPException(status_code=400, detail="Bu işlem yalnızca videolar için geçerli")
+    try:
+        await create_job(db, "TRANSCODE", {"asset_id": asset.id})
+    except JobAlreadyExistsException:
+        pass
+    return {"message": "Video yeniden dönüştürülüyor"}
+
+
 async def trash_asset(db: AsyncSession, asset_id: str, user: User) -> dict:
     asset = await get_asset_or_404(db, asset_id, user.id)
     asset.is_trashed = True

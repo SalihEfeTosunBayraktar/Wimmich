@@ -21,6 +21,7 @@ registerTranslations({
         'import_browser.no_new_files': 'No new files found to import.',
         'import_browser.import_in_progress': '✓ Import continuing in the background',
         'import_browser.job_id_label': 'Job ID: {id}',
+        'import_browser.import_path_label': 'Path: {path}',
         'import_browser.import_started': 'Import started!',
         'import_browser.import_completed': 'Import completed!',
         'import_browser.completed_label': '✓ Completed',
@@ -49,6 +50,7 @@ registerTranslations({
         'import_browser.no_new_files': 'Aktarılacak yeni dosya bulunamadı.',
         'import_browser.import_in_progress': '✓ İçe aktarma arka planda devam ediyor',
         'import_browser.job_id_label': 'İş ID: {id}',
+        'import_browser.import_path_label': 'Yol: {path}',
         'import_browser.import_started': 'İçe aktarma başlatıldı!',
         'import_browser.import_completed': 'İçe aktarma tamamlandı!',
         'import_browser.completed_label': '✓ Tamamlandı',
@@ -77,6 +79,7 @@ registerTranslations({
         'import_browser.no_new_files': 'Aucun nouveau fichier à importer.',
         'import_browser.import_in_progress': "✓ L'importation se poursuit en arrière-plan",
         'import_browser.job_id_label': 'ID de tâche : {id}',
+        'import_browser.import_path_label': 'Chemin : {path}',
         'import_browser.import_started': 'Importation démarrée !',
         'import_browser.import_completed': 'Importation terminée !',
         'import_browser.completed_label': '✓ Terminé',
@@ -105,6 +108,7 @@ registerTranslations({
         'import_browser.no_new_files': 'Keine neuen Dateien zum Importieren gefunden.',
         'import_browser.import_in_progress': '✓ Import wird im Hintergrund fortgesetzt',
         'import_browser.job_id_label': 'Job-ID: {id}',
+        'import_browser.import_path_label': 'Pfad: {path}',
         'import_browser.import_started': 'Import gestartet!',
         'import_browser.import_completed': 'Import abgeschlossen!',
         'import_browser.completed_label': '✓ Abgeschlossen',
@@ -214,13 +218,14 @@ async function scanImportPath() {
 
 const IMPORT_JOB_STORAGE_KEY = 'wimmich_active_import_job';
 
-function _renderImportProgressBar(jobId) {
+function _renderImportProgressBar(jobId, path) {
     const sr = $('scan-results');
     if (!sr) return;
     sr.innerHTML = `
         <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:16px">
             <p style="color:var(--success);font-weight:600">${t('import_browser.import_in_progress')}</p>
             <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px">${t('import_browser.job_id_label', { id: jobId })}</p>
+            ${path ? `<p style="color:var(--text-secondary);font-size:0.85rem;margin-top:2px">${t('import_browser.import_path_label', { path: escHtml(path) })}</p>` : ''}
             <div id="import-progress-bar" style="margin-top:8px">
                 <div class="upload-progress-bar"><div class="upload-progress-fill" id="import-fill" style="width:0%"></div></div>
                 <span id="import-percent" style="font-size:0.8rem;color:var(--text-muted)">0%</span>
@@ -237,7 +242,7 @@ async function startImport(path) {
         const result = await API.startImport(path, copyFiles, recursive);
         toast(t('import_browser.import_started'), 'success');
         localStorage.setItem(IMPORT_JOB_STORAGE_KEY, result.job_id);
-        _renderImportProgressBar(result.job_id);
+        _renderImportProgressBar(result.job_id, path);
         pollImportProgress(result.job_id);
     } catch (e) { toast(e.message, 'error'); }
 }
@@ -254,7 +259,7 @@ async function resumeImportProgressIfActive() {
     try {
         const s = await API.getImportStatus(jobId);
         if (s.status === 'PENDING' || s.status === 'RUNNING') {
-            _renderImportProgressBar(jobId);
+            _renderImportProgressBar(jobId, s.path);
             pollImportProgress(jobId);
         } else {
             localStorage.removeItem(IMPORT_JOB_STORAGE_KEY);

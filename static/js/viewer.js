@@ -28,6 +28,11 @@ registerTranslations({
         'viewer.label_aperture': 'Aperture',
         'viewer.people_title': 'People ({count})',
         'viewer.faces_detected': '{count} faces detected',
+        'viewer.maintenance_title': 'Maintenance',
+        'viewer.regenerate_thumbnail_btn': '🔄 Regenerate Thumbnail',
+        'viewer.regenerating_btn': 'Regenerating...',
+        'viewer.retranscode_video_btn': '🎬 Retranscode Video',
+        'viewer.retranscoding_btn': 'Retranscoding...',
     },
     tr: {
         'viewer.moved_to_trash': 'Çöp kutusuna taşındı',
@@ -55,6 +60,11 @@ registerTranslations({
         'viewer.label_aperture': 'Diyafram',
         'viewer.people_title': 'Kişiler ({count})',
         'viewer.faces_detected': '{count} yüz algılandı',
+        'viewer.maintenance_title': 'Bakım',
+        'viewer.regenerate_thumbnail_btn': '🔄 Küçük Resmi Yeniden Oluştur',
+        'viewer.regenerating_btn': 'Yeniden oluşturuluyor...',
+        'viewer.retranscode_video_btn': '🎬 Videoyu Yeniden Dönüştür',
+        'viewer.retranscoding_btn': 'Yeniden dönüştürülüyor...',
     },
     fr: {
         'viewer.moved_to_trash': 'Déplacé vers la corbeille',
@@ -82,6 +92,11 @@ registerTranslations({
         'viewer.label_aperture': 'Ouverture',
         'viewer.people_title': 'Personnes ({count})',
         'viewer.faces_detected': '{count} visages détectés',
+        'viewer.maintenance_title': 'Maintenance',
+        'viewer.regenerate_thumbnail_btn': '🔄 Régénérer la miniature',
+        'viewer.regenerating_btn': 'Régénération...',
+        'viewer.retranscode_video_btn': '🎬 Retranscoder la vidéo',
+        'viewer.retranscoding_btn': 'Retranscodage...',
     },
     de: {
         'viewer.moved_to_trash': 'In den Papierkorb verschoben',
@@ -109,6 +124,11 @@ registerTranslations({
         'viewer.label_aperture': 'Blende',
         'viewer.people_title': 'Personen ({count})',
         'viewer.faces_detected': '{count} Gesichter erkannt',
+        'viewer.maintenance_title': 'Wartung',
+        'viewer.regenerate_thumbnail_btn': '🔄 Miniaturbild neu erstellen',
+        'viewer.regenerating_btn': 'Wird neu erstellt...',
+        'viewer.retranscode_video_btn': '🎬 Video neu transkodieren',
+        'viewer.retranscoding_btn': 'Wird neu transkodiert...',
     },
 });
 
@@ -295,6 +315,20 @@ async function navigateViewer(dir) {
     openViewer(state.viewerList[state.viewerIndex]);
 }
 
+async function _runViewerReprocess(btn, apiCall, idleLabel, busyLabel) {
+    btn.disabled = true;
+    btn.textContent = busyLabel;
+    try {
+        const result = await apiCall();
+        toast(result.message, 'success');
+    } catch (e) {
+        toast(e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = idleLabel;
+    }
+}
+
 function renderViewerInfo(asset) {
     const sc = $('viewer-sidebar-content');
     const exif = asset.exif || {};
@@ -306,6 +340,13 @@ function renderViewerInfo(asset) {
             <div class="viewer-info-row"><span class="label">${t('viewer.label_size')}</span><span class="value">${formatSize(asset.file_size)}</span></div>
             ${asset.width ? `<div class="viewer-info-row"><span class="label">${t('viewer.label_resolution')}</span><span class="value">${asset.width} × ${asset.height}</span></div>` : ''}
             ${asset.duration_seconds ? `<div class="viewer-info-row"><span class="label">${t('viewer.label_duration')}</span><span class="value">${formatDuration(asset.duration_seconds)}</span></div>` : ''}
+        </div>
+        <div class="viewer-info-section">
+            <h4>${t('viewer.maintenance_title')}</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-secondary btn-sm" id="viewer-regen-thumb-btn">${t('viewer.regenerate_thumbnail_btn')}</button>
+                ${asset.file_type === 'VIDEO' ? `<button class="btn btn-secondary btn-sm" id="viewer-retranscode-btn">${t('viewer.retranscode_video_btn')}</button>` : ''}
+            </div>
         </div>
         <div class="viewer-info-section">
             <div class="viewer-info-section-header">
@@ -337,6 +378,17 @@ function renderViewerInfo(asset) {
         </div>
     `;
     $('viewer-exif-edit-btn').onclick = () => renderViewerExifEditForm(asset);
+    $('viewer-regen-thumb-btn').onclick = () => _runViewerReprocess(
+        $('viewer-regen-thumb-btn'), () => API.regenerateThumbnail(asset.id),
+        t('viewer.regenerate_thumbnail_btn'), t('viewer.regenerating_btn'),
+    );
+    const retranscodeBtn = $('viewer-retranscode-btn');
+    if (retranscodeBtn) {
+        retranscodeBtn.onclick = () => _runViewerReprocess(
+            retranscodeBtn, () => API.retranscodeVideo(asset.id),
+            t('viewer.retranscode_video_btn'), t('viewer.retranscoding_btn'),
+        );
+    }
     // Whatever's already been fetched for the currently-open photo (by
     // _loadSimilarForViewer, triggered from openViewer) - not a new fetch,
     // this just renders it if/when the sidebar happens to be open.

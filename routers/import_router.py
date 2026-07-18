@@ -89,6 +89,7 @@ async def import_status(
         "status": job.status,
         "progress": job.progress,
         "error": job.error_message,
+        "path": job.data.get("path"),
         "created_at": job.created_at.isoformat() if job.created_at else None,
         "completed_at": job.completed_at.isoformat() if job.completed_at else None,
     }

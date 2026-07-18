@@ -277,6 +277,24 @@ async def toggle_archive(
     """Toggle archive status."""
     return await asset_mutation_service.toggle_archive(db, asset_id, user)
 
+@router.post("/{asset_id}/regenerate-thumbnail")
+async def regenerate_thumbnail(
+    asset_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Force-regenerate this asset's thumbnails."""
+    return await asset_mutation_service.regenerate_thumbnail(db, asset_id, user)
+
+@router.post("/{asset_id}/retranscode")
+async def retranscode_video(
+    asset_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Force-retranscode this video asset."""
+    return await asset_mutation_service.retranscode_video(db, asset_id, user)
+
 @router.delete("/{asset_id}")
 async def trash_asset(
     asset_id: str,
