@@ -33,6 +33,12 @@ registerTranslations({
         'admin_render.backup_now_title': 'Immediately backs up the database and any photos/videos not yet backed up.',
         'admin_render.folder_import_heading': 'Folder Import',
         'admin_render.folder_import_desc': 'Import your old photo archives from your computer into Wimmich.',
+        'admin_render.reference_roots_heading': 'Referenced Folders',
+        'admin_render.reference_roots_desc': "Folders linked via \"Reference\" mode - their files stay on your drive, only indexed in Wimmich. Removing one only unlinks it, the original files are never touched.",
+        'admin_render.reference_roots_empty': 'No referenced folders yet.',
+        'admin_render.reference_roots_item_count': '{count} item(s)',
+        'admin_render.reference_roots_remove_btn': 'Remove',
+        'admin_render.reference_roots_removed_toast': '{count} item(s) unlinked - original files were not touched.',
         'admin_render.browse_path_placeholder': 'Enter a folder path or choose one below...',
         'admin_render.go_btn': 'Go',
         'admin_render.scan_btn': 'Scan',
@@ -118,6 +124,12 @@ registerTranslations({
         'admin_render.backup_now_title': 'Veritabanını ve henüz yedeklenmemiş fotoğraf/videoları hemen yedekler',
         'admin_render.folder_import_heading': 'Klasör Aktarımı',
         'admin_render.folder_import_desc': "Bilgisayarınızdaki eski fotoğraf arşivlerini Wimmich'e aktarın.",
+        'admin_render.reference_roots_heading': 'Referanslı Klasörler',
+        'admin_render.reference_roots_desc': '"Referans" modunda bağlanan klasörler - dosyalar diskinizde kalır, sadece Wimmich içinde indekslenir. Birini kaldırmak sadece bağlantıyı keser, orijinal dosyalara dokunmaz.',
+        'admin_render.reference_roots_empty': 'Henüz referanslı klasör yok.',
+        'admin_render.reference_roots_item_count': '{count} öğe',
+        'admin_render.reference_roots_remove_btn': 'Kaldır',
+        'admin_render.reference_roots_removed_toast': '{count} öğenin bağlantısı kaldırıldı - orijinal dosyalara dokunulmadı.',
         'admin_render.browse_path_placeholder': 'Klasör yolu girin veya aşağıdan seçin...',
         'admin_render.go_btn': 'Git',
         'admin_render.scan_btn': 'Tara',
@@ -203,6 +215,12 @@ registerTranslations({
         'admin_render.backup_now_title': 'Sauvegarde immédiatement la base de données ainsi que les photos/vidéos pas encore sauvegardées.',
         'admin_render.folder_import_heading': 'Importation de dossier',
         'admin_render.folder_import_desc': 'Importez vos anciennes archives photo depuis votre ordinateur vers Wimmich.',
+        'admin_render.reference_roots_heading': 'Dossiers référencés',
+        'admin_render.reference_roots_desc': "Dossiers liés en mode « Référence » - leurs fichiers restent sur votre disque, seulement indexés dans Wimmich. Supprimer un lien ne fait que le dissocier, les fichiers originaux ne sont jamais touchés.",
+        'admin_render.reference_roots_empty': 'Aucun dossier référencé pour le moment.',
+        'admin_render.reference_roots_item_count': '{count} élément(s)',
+        'admin_render.reference_roots_remove_btn': 'Retirer',
+        'admin_render.reference_roots_removed_toast': '{count} élément(s) dissocié(s) - les fichiers originaux n\'ont pas été touchés.',
         'admin_render.browse_path_placeholder': 'Saisissez un chemin de dossier ou choisissez-en un ci-dessous...',
         'admin_render.go_btn': 'Aller',
         'admin_render.scan_btn': 'Analyser',
@@ -288,6 +306,12 @@ registerTranslations({
         'admin_render.backup_now_title': 'Sichert sofort die Datenbank sowie alle noch nicht gesicherten Fotos/Videos.',
         'admin_render.folder_import_heading': 'Ordnerimport',
         'admin_render.folder_import_desc': 'Importieren Sie Ihre alten Fotoarchive von Ihrem Computer in Wimmich.',
+        'admin_render.reference_roots_heading': 'Referenzierte Ordner',
+        'admin_render.reference_roots_desc': 'Über den Modus "Referenz" verknüpfte Ordner - ihre Dateien bleiben auf Ihrem Laufwerk, werden nur in Wimmich indiziert. Das Entfernen hebt nur die Verknüpfung auf, die Originaldateien werden nie angetastet.',
+        'admin_render.reference_roots_empty': 'Noch keine referenzierten Ordner.',
+        'admin_render.reference_roots_item_count': '{count} Element(e)',
+        'admin_render.reference_roots_remove_btn': 'Entfernen',
+        'admin_render.reference_roots_removed_toast': '{count} Element(e) getrennt - Originaldateien wurden nicht angetastet.',
         'admin_render.browse_path_placeholder': 'Geben Sie einen Ordnerpfad ein oder wählen Sie unten einen aus...',
         'admin_render.go_btn': 'Los',
         'admin_render.scan_btn': 'Scannen',
@@ -349,12 +373,13 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, storageConfig, backupSettings] = await Promise.all([
+        const [stats, users, tunnelStatus, storageConfig, backupSettings, referenceRootsData] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
             API.getStorageConfig().catch(() => ({ data_dir: '', db_dir: '' })),
             API.getBackupSettings().catch(() => ({ backup_dir: '', interval_hours: 24, enabled: false, last_backup_at: null, last_backup_status: null, last_backup_error: null })),
+            API.getReferenceRoots().catch(() => ({ references: [] })),
         ]);
 
         pc.innerHTML = `
@@ -511,6 +536,12 @@ async function renderAdmin() {
                                 <div id="scan-results" style="margin-top:12px"></div>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="admin-status-card">
+                        <h4>🔗 ${t('admin_render.reference_roots_heading')}</h4>
+                        <p class="admin-section-desc" style="margin:0">${t('admin_render.reference_roots_desc')}</p>
+                        <div id="reference-roots-list">${renderReferenceRootsList(referenceRootsData.references)}</div>
                     </div>
 
                     <div class="admin-status-card">

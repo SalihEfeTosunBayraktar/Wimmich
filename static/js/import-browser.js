@@ -244,10 +244,46 @@ async function pollImportProgress(jobId) {
                 if (s.status === 'COMPLETED') {
                     toast(t('import_browser.import_completed'), 'success');
                     if (pct) pct.textContent = t('import_browser.completed_label');
+                    refreshReferenceRootsList();
                 } else {
                     toast(t('import_browser.import_failed_prefix') + (s.error || ''), 'error');
                 }
             }
         } catch { clearInterval(interval); }
     }, IMPORT_POLL_INTERVAL_MS);
+}
+
+function renderReferenceRootsList(roots) {
+    if (!roots || !roots.length) {
+        return `<p class="text-muted admin-field-hint" style="margin:0">${t('admin_render.reference_roots_empty')}</p>`;
+    }
+    return `
+        <div style="display:flex;flex-direction:column;gap:8px">
+            ${roots.map(r => `
+                <div class="browse-item" style="display:flex;align-items:center;gap:8px">
+                    <span>🔗</span>
+                    <span style="flex:1;font-size:0.9rem;word-break:break-all">${escHtml(r.path)}</span>
+                    <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap">${t('admin_render.reference_roots_item_count', { count: r.asset_count })} · ${formatSize(r.total_size)}</span>
+                    <button class="btn btn-danger btn-sm" onclick="removeReferenceRoot('${escAttr(r.path)}')">${t('admin_render.reference_roots_remove_btn')}</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function refreshReferenceRootsList() {
+    const container = $('reference-roots-list');
+    if (!container) return;
+    try {
+        const data = await API.getReferenceRoots();
+        container.innerHTML = renderReferenceRootsList(data.references);
+    } catch { /* leave the previous list showing rather than blank it on a transient error */ }
+}
+
+async function removeReferenceRoot(path) {
+    try {
+        const result = await API.removeReferenceRoot(path);
+        toast(t('admin_render.reference_roots_removed_toast', { count: result.count }), 'success');
+        refreshReferenceRootsList();
+    } catch (e) { toast(e.message, 'error'); }
 }

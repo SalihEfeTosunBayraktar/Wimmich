@@ -38,7 +38,7 @@ def _collect_import_files(path: str, recursive: bool) -> list:
     return found_files
 
 
-async def _process_one(file_path: str, user_id: str, copy_files: bool):
+async def _process_one(file_path: str, user_id: str, copy_files: bool, source_root: str):
     """Hash/EXIF/thumbnail work for one file - no DB access, safe to run
     concurrently with other files via asyncio.gather."""
     import asyncio
@@ -61,7 +61,7 @@ async def _process_one(file_path: str, user_id: str, copy_files: bool):
         attrs = await process_upload(file_data, filename, user_id, fallback_taken_at)
         return ("copy", attrs)
     else:
-        asset = await build_reference_asset(file_path, filename, user_id)
+        asset = await build_reference_asset(file_path, filename, user_id, source_root)
         return ("ref", asset)
 
 
@@ -136,7 +136,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
             to_process.append(file_path)
 
         results = await asyncio.gather(
-            *[_process_one(fp, user_id, copy_files) for fp in to_process],
+            *[_process_one(fp, user_id, copy_files, path) for fp in to_process],
             return_exceptions=True,
         )
 

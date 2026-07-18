@@ -8,8 +8,12 @@ import config
 from models import Asset
 
 
-async def build_reference_asset(file_path: str, filename: str, user_id: str) -> Asset:
-    """Build an Asset that indexes a file in place, without copying it (reference mode)."""
+async def build_reference_asset(file_path: str, filename: str, user_id: str, source_root: str) -> Asset:
+    """Build an Asset that indexes a file in place, without copying it (reference mode).
+
+    source_root is the top-level folder the user pointed the import at (not
+    this specific file's own path) - stored so the whole batch can later be
+    listed/removed as one "reference point" instead of file by file."""
     import asyncio
     from services.media_service import get_file_type, get_mime_type
     from utils.exif_utils import extract_exif
@@ -27,6 +31,7 @@ async def build_reference_asset(file_path: str, filename: str, user_id: str) -> 
         file_size=file_size,
         is_external=True,
         external_path=file_path,
+        reference_root=source_root,
     )
     asset.checksum = await asyncio.to_thread(compute_file_hash, file_path)
 

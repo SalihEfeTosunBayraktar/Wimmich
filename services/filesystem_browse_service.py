@@ -3,11 +3,12 @@ import os
 from pathlib import Path
 from typing import Optional
 from fastapi import HTTPException
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset
+from services.media_service import delete_asset_files
 
 
 def _list_drives() -> dict:
@@ -147,3 +148,47 @@ async def scan_folder_preview(
         "total_size": total_size,
         "copy_mode": copy_files,
     }
+
+
+async def list_reference_roots(db: AsyncSession, user_id: str) -> list:
+    """Distinct source folders currently linked via a "Reference" mode
+    import, with an asset count and total size per folder - lets the whole
+    batch from one import be seen/removed as a group instead of hunting
+    down its files one at a time in the main gallery."""
+    stmt = (
+        select(Asset.reference_root, func.count(Asset.id), func.sum(Asset.file_size))
+        .where(and_(
+            Asset.user_id == user_id,
+            Asset.is_external == True,
+            Asset.reference_root.isnot(None),
+            Asset.is_trashed == False,
+        ))
+        .group_by(Asset.reference_root)
+        .order_by(Asset.reference_root)
+    )
+    result = await db.execute(stmt)
+    return [
+        {"path": path, "asset_count": count, "total_size": total_size or 0}
+        for path, count, total_size in result.all()
+    ]
+
+
+async def remove_reference_root(db: AsyncSession, user_id: str, path: str) -> int:
+    """Un-links every asset that came from this reference folder - deletes
+    Wimmich's own derivative files (thumbnails, CLIP embedding) but never
+    the original on disk, via delete_asset_files' is_external guard. This
+    only removes the link, it's not a file-delete - the folder itself is
+    untouched and can be re-imported later if wanted."""
+    result = await db.execute(
+        select(Asset).where(and_(
+            Asset.user_id == user_id,
+            Asset.reference_root == path,
+            Asset.is_external == True,
+        ))
+    )
+    assets = list(result.scalars().all())
+    for asset in assets:
+        delete_asset_files(asset)
+        await db.delete(asset)
+    await db.commit()
+    return len(assets)

@@ -109,3 +109,10 @@ async def init_db():
             await conn.execute(text("ALTER TABLE assets ADD COLUMN thumbnail_failed_at DATETIME"))
         except Exception:
             pass
+
+        # Automatic column migration for grouping/removing reference-mode
+        # imports by their source folder
+        try:
+            await conn.execute(text("ALTER TABLE assets ADD COLUMN reference_root VARCHAR(1000)"))
+        except Exception:
+            pass

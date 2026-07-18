@@ -36,6 +36,8 @@ Object.assign(API, {
         return this.request('/api/import/start', { method: 'POST', body: { path, copy_files: copyFiles, recursive } });
     },
     getImportStatus(jobId) { return this.request(`/api/import/status/${jobId}`); },
+    getReferenceRoots() { return this.request('/api/import/references'); },
+    removeReferenceRoot(path) { return this.request('/api/import/references', { method: 'DELETE', body: { path } }); },
 
     // Config
     getStorageConfig() { return this.request('/api/admin/config'); },

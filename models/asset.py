@@ -76,6 +76,12 @@ class Asset(Base):
     # External library source
     is_external = Column(Boolean, default=False)
     external_path = Column(String(1000), nullable=True)
+    # Top-level folder a "Reference" mode import was pointed at (e.g.
+    # "D:\Photos\2020"), not the individual file's own path - lets assets
+    # from the same import be listed/removed as one group instead of only
+    # one file at a time. Null for copy-mode imports/uploads and for
+    # anything imported before this column existed.
+    reference_root = Column(String(1000), nullable=True, index=True)
 
     # Backup: when this asset's file was last included in a completed
     # media backup archive - see services/backup_service.py. Null means
