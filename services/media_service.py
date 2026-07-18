@@ -110,11 +110,30 @@ async def process_upload(
         "thumb_large_path": None,
     }
 
-    # Process based on file type in thread pool
-    if file_type == "IMAGE":
-        result = await asyncio.to_thread(_process_image, result, str(file_path), unique_name, user_id)
-    elif file_type == "VIDEO":
-        result = await asyncio.to_thread(_process_video, result, str(file_path), unique_name, user_id)
+    # Process based on file type in thread pool. Bounded so one pathological
+    # file (huge/corrupt image, decompression-bomb-scale panorama) can't
+    # hang forever - see config.MEDIA_PROCESSING_TIMEOUT_SECONDS. Note
+    # asyncio.to_thread can't be force-cancelled: on timeout the abandoned
+    # OS thread keeps running in the background (harmless here, its return
+    # value is simply discarded), but control returns so the caller's
+    # existing per-file try/except can log this file and move on to the
+    # next one instead of the whole batch/job stalling on it.
+    try:
+        if file_type == "IMAGE":
+            result = await asyncio.wait_for(
+                asyncio.to_thread(_process_image, result, str(file_path), unique_name, user_id),
+                timeout=config.MEDIA_PROCESSING_TIMEOUT_SECONDS,
+            )
+        elif file_type == "VIDEO":
+            result = await asyncio.wait_for(
+                asyncio.to_thread(_process_video, result, str(file_path), unique_name, user_id),
+                timeout=config.MEDIA_PROCESSING_TIMEOUT_SECONDS,
+            )
+    except asyncio.TimeoutError:
+        raise TimeoutError(
+            f"{original_filename}: medya işleme {config.MEDIA_PROCESSING_TIMEOUT_SECONDS} saniye içinde "
+            f"tamamlanamadı (muhtemelen bozuk veya aşırı büyük bir dosya)"
+        )
 
     if result["taken_at"] is None and fallback_taken_at is not None:
         result["taken_at"] = fallback_taken_at

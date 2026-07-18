@@ -179,6 +179,18 @@ ML_ENABLED = os.getenv("WIMMICH_ML_ENABLED", "true").lower() == "true"
 # it) indefinitely.
 ML_MODEL_LOAD_TIMEOUT_SECONDS = int(os.getenv("WIMMICH_ML_MODEL_LOAD_TIMEOUT_SECONDS", "1200"))
 
+# Bounds EXIF/thumbnail extraction for a single image (services/media_service.py's
+# process_upload -> media_processing._process_image, PIL/rawpy-based, no
+# timeout of its own). Video already has its own ceiling via ffmpeg's
+# internal timeouts (utils/video_utils.py), but a pathological image
+# (decompression-bomb-scale panorama, malformed RAW) can otherwise hang
+# its worker thread forever. For import_handler.py's concurrent batches
+# this is worse than it sounds: one stuck file blocks the whole
+# asyncio.gather() the rest of that batch is waiting on, freezing the
+# job's progress bar long before the much longer, job-total-age-based
+# hang watchdog would ever notice.
+MEDIA_PROCESSING_TIMEOUT_SECONDS = int(os.getenv("WIMMICH_MEDIA_PROCESSING_TIMEOUT_SECONDS", "180"))
+
 # Face clustering. Distance is the L2 distance between facenet-pytorch
 # (InceptionResnetV1, vggface2 weights) 512-d embeddings - a different scale
 # than dlib's old 128-d descriptor (whose 0.55-0.6 range doesn't apply here).
