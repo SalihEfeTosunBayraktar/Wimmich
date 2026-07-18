@@ -41,17 +41,19 @@ async def _process_one(file_path: str, user_id: str, copy_files: bool, source_ro
     filename = os.path.basename(file_path)
 
     if copy_files:
-        def read_file():
+        # One thread dispatch doing both reads back-to-back, not two
+        # separate asyncio.to_thread calls (each its own round-trip to the
+        # source drive, possibly picked up by a different thread-pool
+        # worker) for what's really one unit of "read this file" work.
+        def read_file_and_mtime():
             with open(file_path, "rb") as f:
-                return f.read()
-        file_data = await asyncio.to_thread(read_file)
-
-        # Files being imported already exist on disk with a real mtime -
-        # use it as a taken_at fallback instead of "now" (the import time)
-        # when the file has no EXIF/embedded date.
-        def get_mtime():
-            return datetime.fromtimestamp(os.path.getmtime(file_path))
-        fallback_taken_at = await asyncio.to_thread(get_mtime)
+                data = f.read()
+            # Files being imported already exist on disk with a real mtime -
+            # use it as a taken_at fallback instead of "now" (the import
+            # time) when the file has no EXIF/embedded date.
+            mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+            return data, mtime
+        file_data, fallback_taken_at = await asyncio.to_thread(read_file_and_mtime)
         attrs = await process_upload(file_data, filename, user_id, fallback_taken_at)
         return ("copy", attrs)
     else:
@@ -91,8 +93,16 @@ async def handle_job_import(db: AsyncSession, job: Job):
         # filter the batch down before doing any heavy per-file work.
         to_process = []
         for file_path in batch:
+            # One stat() call instead of exists()+getsize() (two separate
+            # round-trips to the source drive for the same information) -
+            # cheap on a local disk, but every extra round-trip adds up on
+            # a slow/external one, and this runs once per file in the
+            # whole import.
             def get_size():
-                return os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                try:
+                    return os.stat(file_path).st_size
+                except OSError:
+                    return 0
             incoming_size = await asyncio.to_thread(get_size)
 
             if incoming_size == 0:
