@@ -201,7 +201,7 @@ async function renderPeople() {
             ${hiddenPeople.length ? `
                 <details class="hidden-people-section">
                     <summary class="hidden-people-title">🙈 ${t('people.hidden_people_title', { count: hiddenPeople.length })}</summary>
-                    <div class="people-grid">${hiddenPeople.map(p => _renderPersonCard(p, { hidden: true })).join('')}</div>
+                    <div class="people-grid">${hiddenPeople.map(p => _renderPersonCard(p, { hidden: true, showDissolve: true })).join('')}</div>
                 </details>
             ` : ''}
         `;
