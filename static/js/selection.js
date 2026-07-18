@@ -204,7 +204,12 @@ function selectAllVisible() {
     updateSelectionBar();
 }
 
-const SELECT_ALL_PAGES = new Set(['gallery', 'favorites', 'archive', 'trash']);
+// 'albums' covers both the album cover-grid list (no .photo-card elements,
+// selectAllVisible() is a harmless no-op there) and a single opened album's
+// photo grid (openAlbum() in albums.js renders straight into #page-content
+// without a navigateTo() call, so state.currentPage stays 'albums' the
+// whole time - this is what actually needs Select All to work).
+const SELECT_ALL_PAGES = new Set(['gallery', 'favorites', 'archive', 'trash', 'albums']);
 $('select-all-btn').onclick = () => selectAllVisible();
 document.addEventListener('keydown', (e) => {
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;

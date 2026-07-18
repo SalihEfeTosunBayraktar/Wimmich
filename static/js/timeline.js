@@ -49,9 +49,51 @@ function renderPhotoCard(asset) {
 
 // Shared across every grid using bindPhotoCards (timeline/gallery/archive/
 // trash/albums): true while a mouse-drag or touch-drag selection gesture is
-// in progress, so dragging across cards extends the selection to each one.
+// in progress. Selection is computed as a real rectangle between the drag's
+// start point and the current pointer position - not just whichever cards
+// the pointer's path happened to cross (the old mouseenter/elementFromPoint
+// approach only ever selected a thin diagonal line for a fast corner-to-
+// corner drag) - so every card inside the box ends up selected, matching
+// Google Photos/Immich's drag-select.
 let _dragSelectActive = false;
-document.addEventListener('mouseup', () => { _dragSelectActive = false; });
+let _dragStartPoint = null; // {x, y} in viewport coords, set when the drag begins
+let _dragOriginSelected = null; // asset IDs already selected before this drag started - never deselected by it
+
+function _updateRectSelection(currentX, currentY) {
+    if (!_dragStartPoint) return;
+    const minX = Math.min(_dragStartPoint.x, currentX);
+    const maxX = Math.max(_dragStartPoint.x, currentX);
+    const minY = Math.min(_dragStartPoint.y, currentY);
+    const maxY = Math.max(_dragStartPoint.y, currentY);
+
+    document.querySelectorAll('.photo-card').forEach(card => {
+        const r = card.getBoundingClientRect();
+        const intersects = r.left < maxX && r.right > minX && r.top < maxY && r.bottom > minY;
+        const id = card.dataset.id;
+        const isSelected = state.selectedAssets.has(id);
+        if (intersects && !isSelected) {
+            state.selectedAssets.add(id);
+            card.classList.add('selected');
+        } else if (!intersects && isSelected && !_dragOriginSelected.has(id)) {
+            // Dragged back out past a card the CURRENT drag had picked up -
+            // drop it, same as a real lasso. Anything selected before the
+            // drag started is left alone.
+            state.selectedAssets.delete(id);
+            card.classList.remove('selected');
+        }
+    });
+    updateSelectionBar();
+}
+
+function _endDragSelect() {
+    _dragSelectActive = false;
+    _dragStartPoint = null;
+    _dragOriginSelected = null;
+}
+document.addEventListener('mouseup', _endDragSelect);
+document.addEventListener('mousemove', (e) => {
+    if (_dragSelectActive) _updateRectSelection(e.clientX, e.clientY);
+});
 
 function bindPhotoCards(container) {
     container.querySelectorAll('.photo-card').forEach(card => {
@@ -71,20 +113,18 @@ function bindPhotoCards(container) {
         };
 
         // Desktop: mousedown on the checkbox (or anywhere once already
-        // selecting) arms a drag; dragging the held button over other cards
-        // (mouseenter) extends the selection to each one crossed.
+        // selecting) arms a drag; a global mousemove (registered once,
+        // above) then extends the selection to every card inside the
+        // rectangle between here and the current pointer position.
         card.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
             const onCheckbox = !!e.target.closest('.photo-select');
             const alreadySelected = state.selectedAssets.has(card.dataset.id);
             if (!alreadySelected && (onCheckbox || state.selectedAssets.size > 0)) {
                 _dragSelectActive = true;
+                _dragStartPoint = { x: e.clientX, y: e.clientY };
+                _dragOriginSelected = new Set(state.selectedAssets);
                 suppressClick = true;
-                toggleSelect(card.dataset.id, card);
-            }
-        });
-        card.addEventListener('mouseenter', () => {
-            if (_dragSelectActive && !state.selectedAssets.has(card.dataset.id)) {
                 toggleSelect(card.dataset.id, card);
             }
         });
@@ -94,9 +134,12 @@ function bindPhotoCards(container) {
         // long-press needed), same gesture as Google Photos/Immich.
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length !== 1) return;
+            const touch = e.touches[0];
             if (state.selectedAssets.size > 0) {
                 if (!state.selectedAssets.has(card.dataset.id)) {
                     _dragSelectActive = true;
+                    _dragStartPoint = { x: touch.clientX, y: touch.clientY };
+                    _dragOriginSelected = new Set(state.selectedAssets);
                     suppressClick = true;
                     toggleSelect(card.dataset.id, card);
                 }
@@ -104,6 +147,8 @@ function bindPhotoCards(container) {
             }
             touchTimer = setTimeout(() => {
                 _dragSelectActive = true;
+                _dragStartPoint = { x: touch.clientX, y: touch.clientY };
+                _dragOriginSelected = new Set(state.selectedAssets);
                 suppressClick = true;
                 toggleSelect(card.dataset.id, card);
                 if (navigator.vibrate) {
@@ -114,18 +159,14 @@ function bindPhotoCards(container) {
 
         card.addEventListener('touchend', () => {
             clearTimeout(touchTimer);
-            _dragSelectActive = false;
+            _endDragSelect();
         });
 
         card.addEventListener('touchmove', (e) => {
             if (!_dragSelectActive) { clearTimeout(touchTimer); return; }
             e.preventDefault(); // block page scroll while actively drag-selecting
             const t = e.touches[0];
-            const el = document.elementFromPoint(t.clientX, t.clientY);
-            const targetCard = el && el.closest('.photo-card');
-            if (targetCard && !state.selectedAssets.has(targetCard.dataset.id)) {
-                toggleSelect(targetCard.dataset.id, targetCard);
-            }
+            _updateRectSelection(t.clientX, t.clientY);
         }, { passive: false });
     });
 }
