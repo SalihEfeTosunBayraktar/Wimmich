@@ -29,6 +29,15 @@ registerTranslations({
         'admin_users.confirm_remove_admin': "Remove this user's admin access?",
         'admin_users.admin_granted': 'Admin access granted',
         'admin_users.admin_revoked': 'Admin access removed',
+        'admin_users.new_user_button': '+ New User',
+        'admin_users.create_user_title': 'Create User',
+        'admin_users.name_label': 'Name',
+        'admin_users.email_label': 'Email',
+        'admin_users.password_label': 'Password',
+        'admin_users.is_admin_checkbox': 'Grant admin access',
+        'admin_users.create': 'Create',
+        'admin_users.fields_required': 'Name, email and password are required',
+        'admin_users.user_created': 'User created successfully',
     },
     tr: {
         'admin_users.badge_admin': 'Admin',
@@ -57,6 +66,15 @@ registerTranslations({
         'admin_users.confirm_remove_admin': 'Bu kullanıcının yöneticilik yetkisi kaldırılsın mı?',
         'admin_users.admin_granted': 'Yöneticilik yetkisi verildi',
         'admin_users.admin_revoked': 'Yöneticilik yetkisi kaldırıldı',
+        'admin_users.new_user_button': '+ Yeni Kullanıcı',
+        'admin_users.create_user_title': 'Kullanıcı Oluştur',
+        'admin_users.name_label': 'İsim',
+        'admin_users.email_label': 'E-posta',
+        'admin_users.password_label': 'Şifre',
+        'admin_users.is_admin_checkbox': 'Yönetici yetkisi ver',
+        'admin_users.create': 'Oluştur',
+        'admin_users.fields_required': 'İsim, e-posta ve şifre zorunludur',
+        'admin_users.user_created': 'Kullanıcı başarıyla oluşturuldu',
     },
     fr: {
         'admin_users.badge_admin': 'Admin',
@@ -85,6 +103,15 @@ registerTranslations({
         'admin_users.confirm_remove_admin': "Retirer les droits d'administrateur de cet utilisateur ?",
         'admin_users.admin_granted': "Droits d'administrateur accordés",
         'admin_users.admin_revoked': "Droits d'administrateur retirés",
+        'admin_users.new_user_button': '+ Nouvel utilisateur',
+        'admin_users.create_user_title': 'Créer un utilisateur',
+        'admin_users.name_label': 'Nom',
+        'admin_users.email_label': 'E-mail',
+        'admin_users.password_label': 'Mot de passe',
+        'admin_users.is_admin_checkbox': "Accorder les droits d'administrateur",
+        'admin_users.create': 'Créer',
+        'admin_users.fields_required': "Le nom, l'e-mail et le mot de passe sont requis",
+        'admin_users.user_created': 'Utilisateur créé avec succès',
     },
     de: {
         'admin_users.badge_admin': 'Admin',
@@ -113,6 +140,15 @@ registerTranslations({
         'admin_users.confirm_remove_admin': 'Admin-Zugriff dieses Benutzers entziehen?',
         'admin_users.admin_granted': 'Admin-Zugriff gewährt',
         'admin_users.admin_revoked': 'Admin-Zugriff entzogen',
+        'admin_users.new_user_button': '+ Neuer Benutzer',
+        'admin_users.create_user_title': 'Benutzer erstellen',
+        'admin_users.name_label': 'Name',
+        'admin_users.email_label': 'E-Mail',
+        'admin_users.password_label': 'Passwort',
+        'admin_users.is_admin_checkbox': 'Admin-Zugriff gewähren',
+        'admin_users.create': 'Erstellen',
+        'admin_users.fields_required': 'Name, E-Mail und Passwort sind erforderlich',
+        'admin_users.user_created': 'Benutzer erfolgreich erstellt',
     },
 });
 
@@ -220,6 +256,72 @@ function editUserQuota(userId, currentQuota) {
     const close = () => modal.remove();
     $('quota-edit-cancel').onclick = close;
     $('quota-edit-save').onclick = () => saveUserQuota(userId, input.value, close);
+}
+
+function showCreateUserModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'create-user-modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:340px;background:var(--bg-secondary);border:1px solid var(--border-color);padding:24px;border-radius:12px;color:var(--text-primary)">
+            <h3 style="margin-top:0">${t('admin_users.create_user_title')}</h3>
+            <label class="admin-field-label" for="create-user-name">${t('admin_users.name_label')}</label>
+            <input type="text" id="create-user-name" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+            <label class="admin-field-label" for="create-user-email">${t('admin_users.email_label')}</label>
+            <input type="email" id="create-user-email" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+            <label class="admin-field-label" for="create-user-password">${t('admin_users.password_label')}</label>
+            <input type="password" id="create-user-password" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+            <label class="admin-field-label" for="create-user-quota">${t('admin_users.quota_mb_label')}</label>
+            <input type="number" id="create-user-quota" min="0" value="0" style="width:100%;box-sizing:border-box">
+            <p class="text-muted admin-field-hint" id="create-user-quota-hint"></p>
+            <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
+                <input type="checkbox" id="create-user-admin">
+                ${t('admin_users.is_admin_checkbox')}
+            </label>
+            <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px">
+                <button class="btn btn-secondary btn-sm" id="create-user-cancel">${t('common.cancel')}</button>
+                <button class="btn btn-primary btn-sm" id="create-user-save">${t('admin_users.create')}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const quotaInput = $('create-user-quota');
+    const quotaHint = $('create-user-quota-hint');
+    const updateHint = () => {
+        const mb = parseInt(quotaInput.value);
+        if (isNaN(mb) || mb < 0) { quotaHint.textContent = ''; return; }
+        quotaHint.textContent = mb === 0 ? t('admin_users.unlimited') : t('admin_users.quota_gb_hint', { gb: (mb / 1024).toFixed(2) });
+    };
+    quotaInput.oninput = updateHint;
+    updateHint();
+    $('create-user-name').focus();
+
+    const close = () => modal.remove();
+    $('create-user-cancel').onclick = close;
+    $('create-user-save').onclick = () => createUserAction(close);
+}
+
+async function createUserAction(close) {
+    const name = $('create-user-name').value.trim();
+    const email = $('create-user-email').value.trim();
+    const password = $('create-user-password').value;
+    const isAdmin = $('create-user-admin').checked;
+    const quota = parseInt($('create-user-quota').value) || 0;
+
+    if (!name || !email || !password) {
+        toast(t('admin_users.fields_required'), 'warning');
+        return;
+    }
+
+    try {
+        await API.createUser({ name, email, password, is_admin: isAdmin, storage_quota_mb: quota });
+        close();
+        toast(t('admin_users.user_created'), 'success');
+        renderAdmin();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
 }
 
 async function saveUserQuota(userId, quotaStr, close) {

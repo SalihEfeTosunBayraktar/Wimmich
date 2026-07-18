@@ -491,7 +491,10 @@ async function renderAdmin() {
 
             <div id="admin-tab-genel" class="admin-tab-panel" ${activeAdminTab === 'genel' ? '' : 'hidden'}>
                 <div class="admin-section">
-                    <h3>👥 ${t('admin_render.stat_users')}</h3>
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h3>👥 ${t('admin_render.stat_users')}</h3>
+                        <button class="btn btn-primary btn-sm" onclick="showCreateUserModal()">${t('admin_users.new_user_button')}</button>
+                    </div>
                     <div class="user-list">${renderUserList(users.users)}</div>
                 </div>
             </div>
