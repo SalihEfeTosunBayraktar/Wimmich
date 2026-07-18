@@ -434,12 +434,18 @@ async function _runGallerySearch(query) {
         return;
     }
 
+    // Shared counter with loadGalleryPage() - both write into the same
+    // container, so whichever of the two (filter click vs. typed search)
+    // was requested LAST should be the one that's allowed to render,
+    // regardless of which one's network response happens to land first.
+    const myRequestId = (g.requestId = (g.requestId || 0) + 1);
     const container = $('gallery-grid-container');
     // The CLIP model is loaded lazily on first use (a real, multi-second
     // multi-GB load onto the GPU) - without this, someone's very first
     // search just sat on a blank grid with no clue why it was slower than
     // every search after it.
     const clipStatus = await _getClipStatus();
+    if (myRequestId !== g.requestId) return;
     container.innerHTML = (clipStatus.clip_available && !clipStatus.clip_loaded)
         ? `<div class="skeleton" style="height:200px;border-radius:12px;margin-bottom:10px"></div>
            <p class="text-muted" style="text-align:center">${t('gallery.clip_warming_hint')}</p>`
@@ -447,6 +453,7 @@ async function _runGallerySearch(query) {
 
     try {
         const data = await API.search(query, 'smart');
+        if (myRequestId !== g.requestId) return;
         if (data.clip_was_cold) {
             _clipStatusCache = { clip_available: true, clip_loaded: true };
             toast(t('gallery.clip_ready_toast'), 'success');
@@ -462,18 +469,30 @@ async function _runGallerySearch(query) {
         bindPhotoCards(container);
         state.viewerList = data.results.map(a => a.id);
     } catch (e) {
-        container.innerHTML = renderEmptyState(t('common.error'), e.message);
-        toast(e.message, 'error');
+        if (myRequestId === g.requestId) {
+            container.innerHTML = renderEmptyState(t('common.error'), e.message);
+            toast(e.message, 'error');
+        }
     }
 }
 
 async function loadGalleryPage() {
     const g = state.gallery;
-    if (g.loading) return;
+    // Every call gets its own id, and a response only ever gets applied if
+    // it's still the latest one requested. Reproduced directly: clicking a
+    // category filter while the initial "All Photos" load was still in
+    // flight always lost to that older request when this instead used a
+    // plain g.loading boolean guard - the new click's own load either got
+    // silently dropped (guard still true) or, if it did fire, whichever
+    // response happened to arrive last (not whichever was requested last)
+    // won and could still overwrite the filter the user actually asked
+    // for with stale "all" results.
+    const myRequestId = (g.requestId = (g.requestId || 0) + 1);
     g.loading = true;
 
     try {
         const data = await API.getGallery(g.page, 60, g.sortBy, g.groupBy, g.filterBy);
+        if (myRequestId !== g.requestId) return;
         const container = $('gallery-grid-container');
 
         if (g.page === 1) container.innerHTML = '';
@@ -548,8 +567,10 @@ async function loadGalleryPage() {
             });
             obs.observe(sentinel);
         }
-    } catch (e) { toast(e.message, 'error'); }
-    g.loading = false;
+    } catch (e) {
+        if (myRequestId === g.requestId) toast(e.message, 'error');
+    }
+    if (myRequestId === g.requestId) g.loading = false;
 }
 
 // Each month cell shows a fixed square mosaic (6x6 = 36, matching the
