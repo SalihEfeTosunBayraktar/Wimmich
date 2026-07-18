@@ -192,3 +192,18 @@
     animation: fadeIn 0.3s ease;
 }
 
+/* ─── Public Share Viewer ───────────────────────────────── */
+#shared-view-root {
+    min-height: 100vh;
+    padding: var(--space-lg);
+    background: var(--bg-primary);
+}
+
+.shared-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+

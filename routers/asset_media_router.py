@@ -1,17 +1,15 @@
 """Asset Media Router - original file/thumbnail streaming, bulk zip download, memories."""
 from typing import List
-from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from database import get_db
 from models import User
 from auth import get_current_user
-from services import asset_query_service, download_service
+from services import asset_query_service, download_service, asset_media_service
 from services.memory_service import get_memories as _get_memories
-from utils.image_utils import RAW_EXTENSIONS
 from utils.serializers import asset_to_dict
 from utils.path_utils import resolve_data_path
 
@@ -35,26 +33,7 @@ async def get_asset_file(
     embedded preview - see utils/image_utils.py) is served in its place.
     """
     asset = await asset_query_service.get_asset_or_404(db, asset_id, user.id)
-
-    encoded_path = resolve_data_path(asset.encoded_video_path, config.ENCODED_DIR)
-    if not original and encoded_path and encoded_path.exists():
-        return FileResponse(encoded_path, media_type="video/mp4", filename=asset.original_file_name)
-
-    is_raw = Path(asset.file_path).suffix.lower() in RAW_EXTENSIONS
-    thumb_large_path = resolve_data_path(asset.thumb_large_path, config.THUMB_DIR)
-    if not original and is_raw and thumb_large_path and thumb_large_path.exists():
-        media_type = "image/webp" if str(thumb_large_path).endswith(".webp") else "image/jpeg"
-        return FileResponse(thumb_large_path, media_type=media_type)
-
-    file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
-    if not file_path or not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found on disk")
-
-    return FileResponse(
-        file_path,
-        media_type=asset.mime_type,
-        filename=asset.original_file_name,
-    )
+    return asset_media_service.build_file_response(asset, original)
 
 
 @router.get("/{asset_id}/thumbnail")
@@ -66,18 +45,7 @@ async def get_asset_thumbnail(
 ):
     """Get asset thumbnail."""
     asset = await asset_query_service.get_asset_or_404(db, asset_id, user.id)
-
-    stored_thumb_path = getattr(asset, f"thumb_{size}_path", None)
-    thumb_path = resolve_data_path(stored_thumb_path, config.THUMB_DIR)
-    if not thumb_path or not thumb_path.exists():
-        # Fallback to original for images
-        file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
-        if asset.file_type == "IMAGE" and file_path and file_path.exists():
-            return FileResponse(file_path, media_type=asset.mime_type)
-        raise HTTPException(status_code=404, detail="Thumbnail not found")
-
-    media_type = "image/webp" if str(thumb_path).endswith(".webp") else "image/jpeg"
-    return FileResponse(thumb_path, media_type=media_type)
+    return asset_media_service.build_thumbnail_response(asset, size)
 
 
 @router.get("/faces/{face_id}")

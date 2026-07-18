@@ -13,5 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     initShareModal();
     initAlbumShareModal();
     initProfileModal();
-    checkAuth();
+
+    // A shared-link visitor never has (or needs) an auth session - dispatch
+    // to the standalone public viewer before checkAuth() ever runs, instead
+    // of falling into the login screen.
+    const sharedMatch = location.pathname.match(/^\/shared\/([^/]+)/);
+    if (sharedMatch) {
+        renderSharedView(sharedMatch[1]);
+    } else {
+        checkAuth();
+    }
 });
