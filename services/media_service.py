@@ -117,16 +117,25 @@ async def process_upload(
 
 
 def delete_asset_files(asset) -> None:
-    """Delete all files associated with an asset."""
+    """Delete all files associated with an asset.
+
+    is_external assets (the "Reference" import mode, and external-library
+    scans) point file_path directly at the user's own original file outside
+    Wimmich's data directory instead of an app-owned copy - deleting an
+    asset must never delete that original. Reproduced directly: permanently
+    deleting a reference-mode asset silently erased the source file on
+    disk. Everything else (thumbnails, encoded video, CLIP embedding) is
+    still an app-owned derivative and safe to remove either way."""
     paths_to_delete = [
-        asset.file_path,
         asset.thumb_small_path,
         asset.thumb_medium_path,
         asset.thumb_large_path,
         asset.encoded_video_path,
         asset.clip_embedding_path,
     ]
-    
+    if not asset.is_external:
+        paths_to_delete.append(asset.file_path)
+
     for path in paths_to_delete:
         if path:
             try:
