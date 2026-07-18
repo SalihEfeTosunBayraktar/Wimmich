@@ -174,6 +174,13 @@ async function browsePath(path) {
     }
 }
 
+// A scan is a single synchronous request, not a background job - there's
+// nothing server-side to resume after a refresh kills it mid-flight, unlike
+// IMPORT jobs. Remembering the in-flight request's parameters and simply
+// re-issuing the same scan on the next page load is the closest equivalent
+// to "resuming" - the loading skeleton reappears instead of a blank panel.
+const ACTIVE_SCAN_STORAGE_KEY = 'wimmich_active_scan';
+
 async function scanImportPath() {
     const path = $('browse-path').value.trim();
     if (!path) { toast(t('import_browser.enter_path'), 'warning'); return; }
@@ -188,6 +195,7 @@ async function scanImportPath() {
     const scanBtn = $('scan-import-btn');
     const prevScanText = scanBtn ? scanBtn.textContent : null;
     if (scanBtn) { scanBtn.disabled = true; scanBtn.textContent = t('import_browser.scanning_btn'); }
+    localStorage.setItem(ACTIVE_SCAN_STORAGE_KEY, JSON.stringify({ path, copyFiles, recursive }));
 
     try {
         const data = await API.scanFolder(path, copyFiles, recursive);
@@ -213,7 +221,34 @@ async function scanImportPath() {
         sr.innerHTML = `<div style="padding:12px;color:var(--danger)">${e.message}</div>`;
     } finally {
         if (scanBtn) { scanBtn.disabled = false; scanBtn.textContent = prevScanText; }
+        localStorage.removeItem(ACTIVE_SCAN_STORAGE_KEY);
     }
+}
+
+// Called once when the admin page mounts, alongside resumeImportProgressIfActive() -
+// if the page was refreshed while a scan's request was still in flight, redo
+// it instead of leaving the panel blank with no indication anything was ever
+// happening.
+function resumeScanIfActive() {
+    let saved;
+    try {
+        saved = JSON.parse(localStorage.getItem(ACTIVE_SCAN_STORAGE_KEY) || 'null');
+    } catch {
+        saved = null;
+    }
+    if (!saved || !saved.path) {
+        localStorage.removeItem(ACTIVE_SCAN_STORAGE_KEY);
+        return false;
+    }
+    // Caller skips its own browsePath('') root-listing call when this
+    // returns true - both write into #browse-path, and the root listing
+    // resolving after this would otherwise stomp the restored path back to
+    // blank while the resumed scan is still running.
+    $('browse-path').value = saved.path;
+    $('import-copy').checked = saved.copyFiles;
+    $('import-recursive').checked = saved.recursive;
+    scanImportPath();
+    return true;
 }
 
 // Holds a JSON array of {jobId, path} - not a single job ID - so more than

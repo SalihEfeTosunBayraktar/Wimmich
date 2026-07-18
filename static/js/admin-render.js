@@ -44,6 +44,7 @@ registerTranslations({
         'admin_render.scan_btn': 'Scan',
         'admin_render.import_copy_label': 'Copy files (move)',
         'admin_render.import_recursive_label': 'Include subfolders',
+        'admin_render.import_dest_path_label': 'Import Destination Folder',
         'admin_render.import_dest_path_placeholder': "Destination folder (optional - leave blank for the app's default storage)",
         'admin_render.import_dest_path_hint': 'Only used in Copy mode - lets copies land on a different drive/folder than the app default. Ignored in Reference mode.',
         'admin_render.ml_status_heading': 'ML Status',
@@ -139,6 +140,7 @@ registerTranslations({
         'admin_render.scan_btn': 'Tara',
         'admin_render.import_copy_label': 'Dosyaları kopyala (taşı)',
         'admin_render.import_recursive_label': 'Alt klasörleri dahil et',
+        'admin_render.import_dest_path_label': 'İçe Aktarma Hedef Klasörü',
         'admin_render.import_dest_path_placeholder': 'Hedef klasör (opsiyonel - boş bırakılırsa uygulamanın varsayılan depolama alanı kullanılır)',
         'admin_render.import_dest_path_hint': 'Sadece Kopyalama modunda kullanılır - kopyaların uygulamanın varsayılanından farklı bir disk/klasöre gitmesini sağlar. Referans modunda göz ardı edilir.',
         'admin_render.ml_status_heading': 'ML Durumu',
@@ -234,6 +236,7 @@ registerTranslations({
         'admin_render.scan_btn': 'Analyser',
         'admin_render.import_copy_label': 'Copier les fichiers (déplacer)',
         'admin_render.import_recursive_label': 'Inclure les sous-dossiers',
+        'admin_render.import_dest_path_label': "Dossier de destination de l'import",
         'admin_render.import_dest_path_placeholder': "Dossier de destination (facultatif - laissez vide pour le stockage par défaut de l'application)",
         'admin_render.import_dest_path_hint': "Utilisé uniquement en mode Copie - permet aux copies d'atterrir sur un autre disque/dossier que celui par défaut. Ignoré en mode Référence.",
         'admin_render.ml_status_heading': 'État du ML',
@@ -329,6 +332,7 @@ registerTranslations({
         'admin_render.scan_btn': 'Scannen',
         'admin_render.import_copy_label': 'Dateien kopieren (verschieben)',
         'admin_render.import_recursive_label': 'Unterordner einschließen',
+        'admin_render.import_dest_path_label': 'Import-Zielordner',
         'admin_render.import_dest_path_placeholder': 'Zielordner (optional - leer lassen für den Standardspeicher der App)',
         'admin_render.import_dest_path_hint': 'Nur im Kopiermodus verwendet - lässt Kopien auf einem anderen Laufwerk/Ordner als dem App-Standard landen. Im Referenzmodus ignoriert.',
         'admin_render.ml_status_heading': 'ML-Status',
@@ -487,6 +491,11 @@ async function renderAdmin() {
                                 </div>
                             </div>
                             <div>
+                                <label class="admin-field-label">${t('admin_render.import_dest_path_label')}</label>
+                                <input type="text" id="import-dest-path" placeholder="${t('admin_render.import_dest_path_placeholder')}" style="width:100%">
+                                <p class="text-muted admin-field-hint">${t('admin_render.import_dest_path_hint')}</p>
+                            </div>
+                            <div>
                                 <label class="admin-field-label">${t('admin_render.tunnel_token_label')}</label>
                                 <div style="display:flex;gap:8px;align-items:center">
                                     <input type="password" id="storage-token-input" value="${escHtml(storageConfig.tunnel_token || '')}" placeholder="${t('admin_render.tunnel_token_placeholder')}" style="flex:1">
@@ -555,8 +564,6 @@ async function renderAdmin() {
                                     <label class="checkbox-label"><input type="checkbox" id="import-copy" checked> ${t('admin_render.import_copy_label')}</label>
                                     <label class="checkbox-label" style="margin-left:16px"><input type="checkbox" id="import-recursive" checked> ${t('admin_render.import_recursive_label')}</label>
                                 </div>
-                                <input type="text" id="import-dest-path" placeholder="${t('admin_render.import_dest_path_placeholder')}" style="width:100%;margin-bottom:4px">
-                                <p class="text-muted admin-field-hint" style="margin-bottom:12px">${t('admin_render.import_dest_path_hint')}</p>
                                 <div id="browse-results" style="max-height:220px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px"></div>
                                 <div id="scan-results" style="margin-top:12px"></div>
                             </div>
@@ -579,7 +586,7 @@ async function renderAdmin() {
             </div>
         `;
 
-        browsePath('');
+        if (!resumeScanIfActive()) browsePath('');
         resumeImportProgressIfActive();
 
         pollAdminJobs();
