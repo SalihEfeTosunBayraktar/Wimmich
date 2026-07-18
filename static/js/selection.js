@@ -209,7 +209,13 @@ function selectAllVisible() {
 // photo grid (openAlbum() in albums.js renders straight into #page-content
 // without a navigateTo() call, so state.currentPage stays 'albums' the
 // whole time - this is what actually needs Select All to work).
-const SELECT_ALL_PAGES = new Set(['gallery', 'favorites', 'archive', 'trash', 'albums']);
+// 'people' is the identical case: openPerson() (people.js) also renders
+// straight into #page-content with no navigateTo() call, so a person's
+// "Photos" tab (a plain .photo-grid of .photo-card, same as everywhere
+// else) needs Select All to work while state.currentPage is still
+// 'people' - the people list itself and the "Face Correction" sub-tab
+// have no .photo-card elements, so Select All is a harmless no-op there.
+const SELECT_ALL_PAGES = new Set(['gallery', 'favorites', 'archive', 'trash', 'albums', 'people']);
 $('select-all-btn').onclick = () => selectAllVisible();
 document.addEventListener('keydown', (e) => {
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
