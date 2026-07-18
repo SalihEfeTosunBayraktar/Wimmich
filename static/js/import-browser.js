@@ -174,12 +174,38 @@ async function browsePath(path) {
     }
 }
 
-// A scan is a single synchronous request, not a background job - there's
-// nothing server-side to resume after a refresh kills it mid-flight, unlike
-// IMPORT jobs. Remembering the in-flight request's parameters and simply
-// re-issuing the same scan on the next page load is the closest equivalent
-// to "resuming" - the loading skeleton reappears instead of a blank panel.
+// A scan is a single request, not a background job - there's nothing
+// server-side to poll/resume after a refresh the way IMPORT jobs can be.
+// Caches the RESULT itself (not just "a scan was requested"), so a refresh
+// that lands after the scan already finished - by far the common case now
+// that scanning is fast (see the N+1 query fix) - redraws instantly from
+// the cached result instead of the panel just going blank. `result: null`
+// specifically means "was still in flight when last saved," the one case
+// where redoing the request is the only option.
 const ACTIVE_SCAN_STORAGE_KEY = 'wimmich_active_scan';
+
+function _renderScanResult(path, data) {
+    const sr = $('scan-preview-slot');
+    if (!sr) return;
+    sr.innerHTML = `
+        <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:10px;padding:16px">
+            <h4 style="margin-bottom:8px">${t('import_browser.scan_result_title')}</h4>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px">
+                <div><span style="color:var(--text-muted)">${t('import_browser.total_label')}</span> <strong>${data.total_found}</strong></div>
+                <div><span style="color:var(--text-muted)">${t('import_browser.new_label')}</span> <strong style="color:var(--success)">${data.new_files}</strong></div>
+                <div><span style="color:var(--text-muted)">${t('import_browser.existing_label')}</span> <strong>${data.already_imported}</strong></div>
+                <div><span style="color:var(--text-muted)">${t('import_browser.photos_label')}</span> <strong>${data.images}</strong></div>
+                <div><span style="color:var(--text-muted)">${t('import_browser.video_label')}</span> <strong>${data.videos}</strong></div>
+                <div><span style="color:var(--text-muted)">${t('import_browser.size_label')}</span> <strong>${formatSize(data.total_size)}</strong></div>
+            </div>
+            ${data.new_files > 0 ? `
+                <button class="btn btn-primary" onclick="startImport('${escAttr(path)}')">
+                    🚀 ${t('import_browser.import_files_button', { count: data.new_files })} (${data.copy_mode ? t('import_browser.copy_mode') : t('import_browser.reference_mode')})
+                </button>
+            ` : `<p style="color:var(--text-muted)">${t('import_browser.no_new_files')}</p>`}
+        </div>
+    `;
+}
 
 async function scanImportPath() {
     const path = $('browse-path').value.trim();
@@ -187,7 +213,7 @@ async function scanImportPath() {
 
     const copyFiles = $('import-copy').checked;
     const recursive = $('import-recursive').checked;
-    const sr = $('scan-results');
+    const sr = $('scan-preview-slot');
     // Same reasoning as browsePath's Go button - a recursive scan over a
     // real external drive can take a while, and a static skeleton with no
     // further change for that whole stretch reads as frozen, not busy.
@@ -195,40 +221,21 @@ async function scanImportPath() {
     const scanBtn = $('scan-import-btn');
     const prevScanText = scanBtn ? scanBtn.textContent : null;
     if (scanBtn) { scanBtn.disabled = true; scanBtn.textContent = t('import_browser.scanning_btn'); }
-    localStorage.setItem(ACTIVE_SCAN_STORAGE_KEY, JSON.stringify({ path, copyFiles, recursive }));
+    localStorage.setItem(ACTIVE_SCAN_STORAGE_KEY, JSON.stringify({ path, copyFiles, recursive, result: null }));
 
     try {
         const data = await API.scanFolder(path, copyFiles, recursive);
-        sr.innerHTML = `
-            <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:10px;padding:16px">
-                <h4 style="margin-bottom:8px">${t('import_browser.scan_result_title')}</h4>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px">
-                    <div><span style="color:var(--text-muted)">${t('import_browser.total_label')}</span> <strong>${data.total_found}</strong></div>
-                    <div><span style="color:var(--text-muted)">${t('import_browser.new_label')}</span> <strong style="color:var(--success)">${data.new_files}</strong></div>
-                    <div><span style="color:var(--text-muted)">${t('import_browser.existing_label')}</span> <strong>${data.already_imported}</strong></div>
-                    <div><span style="color:var(--text-muted)">${t('import_browser.photos_label')}</span> <strong>${data.images}</strong></div>
-                    <div><span style="color:var(--text-muted)">${t('import_browser.video_label')}</span> <strong>${data.videos}</strong></div>
-                    <div><span style="color:var(--text-muted)">${t('import_browser.size_label')}</span> <strong>${formatSize(data.total_size)}</strong></div>
-                </div>
-                ${data.new_files > 0 ? `
-                    <button class="btn btn-primary" onclick="startImport('${escAttr(path)}')">
-                        🚀 ${t('import_browser.import_files_button', { count: data.new_files })} (${data.copy_mode ? t('import_browser.copy_mode') : t('import_browser.reference_mode')})
-                    </button>
-                ` : `<p style="color:var(--text-muted)">${t('import_browser.no_new_files')}</p>`}
-            </div>
-        `;
+        _renderScanResult(path, data);
+        localStorage.setItem(ACTIVE_SCAN_STORAGE_KEY, JSON.stringify({ path, copyFiles, recursive, result: data }));
     } catch (e) {
         sr.innerHTML = `<div style="padding:12px;color:var(--danger)">${e.message}</div>`;
+        localStorage.removeItem(ACTIVE_SCAN_STORAGE_KEY); // nothing worth restoring after a failed scan
     } finally {
         if (scanBtn) { scanBtn.disabled = false; scanBtn.textContent = prevScanText; }
-        localStorage.removeItem(ACTIVE_SCAN_STORAGE_KEY);
     }
 }
 
-// Called once when the admin page mounts, alongside resumeImportProgressIfActive() -
-// if the page was refreshed while a scan's request was still in flight, redo
-// it instead of leaving the panel blank with no indication anything was ever
-// happening.
+// Called once when the admin page mounts, alongside resumeImportProgressIfActive().
 function resumeScanIfActive() {
     let saved;
     try {
@@ -247,7 +254,15 @@ function resumeScanIfActive() {
     $('browse-path').value = saved.path;
     $('import-copy').checked = saved.copyFiles;
     $('import-recursive').checked = saved.recursive;
-    scanImportPath();
+    if (saved.result) {
+        // The scan had already finished before the refresh - redraw
+        // instantly from the cached result, no need to hit the server again.
+        _renderScanResult(saved.path, saved.result);
+    } else {
+        // Refreshed while the request was still genuinely in flight - the
+        // only option is to redo it.
+        scanImportPath();
+    }
     return true;
 }
 
@@ -273,7 +288,7 @@ function _setActiveImports(entries) {
 }
 
 function _renderActiveImportsList(entries) {
-    const sr = $('scan-results');
+    const sr = $('active-imports-slot');
     if (!sr) return;
     sr.innerHTML = entries.map(({ jobId, path }) => `
         <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:16px;margin-bottom:8px">
@@ -296,6 +311,10 @@ async function startImport(path) {
     try {
         const result = await API.startImport(path, copyFiles, recursive, destPath);
         toast(t('import_browser.import_started'), 'success');
+        // The scan result that led here is now stale (some/all of it is
+        // about to be imported) - stop offering to restore it on the next
+        // refresh, the import job's own progress tracking takes over from here.
+        localStorage.removeItem(ACTIVE_SCAN_STORAGE_KEY);
         const entries = _getActiveImports();
         entries.push({ jobId: result.job_id, path });
         _setActiveImports(entries);

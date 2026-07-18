@@ -582,7 +582,10 @@ async function renderAdmin() {
                                     <label class="checkbox-label" style="margin-left:16px"><input type="checkbox" id="import-recursive" checked> ${t('admin_render.import_recursive_label')}</label>
                                 </div>
                                 <div id="browse-results" style="max-height:220px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px"></div>
-                                <div id="scan-results" style="margin-top:12px"></div>
+                                <div id="scan-results" style="margin-top:12px">
+                                    <div id="active-imports-slot"></div>
+                                    <div id="scan-preview-slot"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
