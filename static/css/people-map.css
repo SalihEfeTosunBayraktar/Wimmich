@@ -46,7 +46,24 @@
     font-size: 13px;
 }
 
-.person-card:hover .person-hide-btn { opacity: 1; }
+.person-dissolve-btn {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: rgba(239, 68, 68, 0.5);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 3;
+    font-size: 13px;
+}
+
+.person-card:hover .person-hide-btn,
+.person-card:hover .person-dissolve-btn { opacity: 1; }
 
 .hidden-people-section {
     margin-top: var(--space-xl);

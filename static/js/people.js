@@ -34,6 +34,9 @@ registerTranslations({
         'people.hidden_success': 'Person hidden',
         'people.unhidden_success': 'Person unhidden',
         'people.hidden_people_title': 'Hidden People ({count})',
+        'people.dissolve_title': 'Dissolve this group (wrongly clustered faces)',
+        'people.confirm_dissolve': 'Dissolve this group? Its faces go back to the unclustered pool - the group itself is deleted, nothing else is touched.',
+        'people.dissolved_success': 'Group dissolved',
     },
     tr: {
         'people.photo_count': '{count} fotoğraf',
@@ -67,6 +70,9 @@ registerTranslations({
         'people.hidden_success': 'Kişi gizlendi',
         'people.unhidden_success': 'Kişi tekrar görünür yapıldı',
         'people.hidden_people_title': 'Gizli Kişiler ({count})',
+        'people.dissolve_title': 'Bu grubu dağıt (yanlış gruplanmış yüzler)',
+        'people.confirm_dissolve': 'Bu grup dağıtılsın mı? İçindeki yüzler gruplanmamış havuza geri döner - sadece grup silinir, başka bir şeye dokunulmaz.',
+        'people.dissolved_success': 'Grup dağıtıldı',
     },
     fr: {
         'people.photo_count': '{count} photos',
@@ -100,6 +106,9 @@ registerTranslations({
         'people.hidden_success': 'Personne masquée',
         'people.unhidden_success': 'Personne affichée à nouveau',
         'people.hidden_people_title': 'Personnes masquées ({count})',
+        'people.dissolve_title': 'Dissoudre ce groupe (visages mal regroupés)',
+        'people.confirm_dissolve': 'Dissoudre ce groupe ? Ses visages retournent dans le pool non groupé - seul le groupe est supprimé, rien d\'autre n\'est touché.',
+        'people.dissolved_success': 'Groupe dissous',
     },
     de: {
         'people.photo_count': '{count} Fotos',
@@ -133,12 +142,16 @@ registerTranslations({
         'people.hidden_success': 'Person ausgeblendet',
         'people.unhidden_success': 'Person wieder eingeblendet',
         'people.hidden_people_title': 'Ausgeblendete Personen ({count})',
+        'people.dissolve_title': 'Diese Gruppe auflösen (falsch gruppierte Gesichter)',
+        'people.confirm_dissolve': 'Diese Gruppe auflösen? Ihre Gesichter kommen zurück in den nicht gruppierten Pool - nur die Gruppe wird gelöscht, sonst nichts.',
+        'people.dissolved_success': 'Gruppe aufgelöst',
     },
 });
 
-function _renderPersonCard(p, { hidden = false } = {}) {
+function _renderPersonCard(p, { hidden = false, showDissolve = false } = {}) {
     return `
         <div class="person-card" onclick="openPerson('${p.id}')">
+            ${showDissolve ? `<button class="person-dissolve-btn" onclick="event.stopPropagation(); dissolvePersonAction('${p.id}')" title="${t('people.dissolve_title')}">💥</button>` : ''}
             <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? '🙈' : '👁️'}</button>
             <div class="person-avatar">
                 ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : '<span style="font-size:2rem">👤</span>'}
@@ -147,6 +160,15 @@ function _renderPersonCard(p, { hidden = false } = {}) {
             <div class="person-count">${t('people.photo_count', { count: p.face_count })}</div>
         </div>
     `;
+}
+
+async function dissolvePersonAction(personId) {
+    if (!confirm(t('people.confirm_dissolve'))) return;
+    try {
+        await API.dissolvePerson(personId);
+        toast(t('people.dissolved_success'), 'success');
+        renderPeople();
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 async function togglePersonHidden(id, hide) {
@@ -174,7 +196,7 @@ async function renderPeople() {
             ${unknownPool.length ? `
                 <div class="unknown-pool-section">
                     <h3 class="unknown-pool-title">❓ ${t('people.unknown_pool_title', { count: unknownPool.length })}</h3>
-                    <div class="people-grid">${unknownPool.map(p => _renderPersonCard(p)).join('')}</div>
+                    <div class="people-grid">${unknownPool.map(p => _renderPersonCard(p, { showDissolve: true })).join('')}</div>
                 </div>
             ` : ''}
             ${hiddenPeople.length ? `
@@ -274,7 +296,6 @@ async function reassignFaceAction(personId, faceId, targetPersonId) {
 }
 
 async function deleteFaceAction(personId, faceId) {
-    if (!confirm(t('people.confirm_delete_face'))) return;
     try {
         await API.deleteFace(faceId);
         toast(t('people.face_deleted_success'), 'success');
