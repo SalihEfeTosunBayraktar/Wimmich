@@ -216,22 +216,41 @@ async function scanImportPath() {
     }
 }
 
+// Holds a JSON array of {jobId, path} - not a single job ID - so more than
+// one folder can be imported without the second one clobbering the first's
+// tracked progress. Each entry gets its own card + its own polling
+// interval; they run independently regardless of how many are active.
 const IMPORT_JOB_STORAGE_KEY = 'wimmich_active_import_job';
 
-function _renderImportProgressBar(jobId, path) {
+function _getActiveImports() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(IMPORT_JOB_STORAGE_KEY) || '[]');
+        return Array.isArray(raw) ? raw : [];
+    } catch {
+        // Leftover pre-multi-import value (a bare job ID string) or corrupt
+        // JSON - either way, nothing salvageable, start clean.
+        return [];
+    }
+}
+
+function _setActiveImports(entries) {
+    localStorage.setItem(IMPORT_JOB_STORAGE_KEY, JSON.stringify(entries));
+}
+
+function _renderActiveImportsList(entries) {
     const sr = $('scan-results');
     if (!sr) return;
-    sr.innerHTML = `
-        <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:16px">
+    sr.innerHTML = entries.map(({ jobId, path }) => `
+        <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:16px;margin-bottom:8px">
             <p style="color:var(--success);font-weight:600">${t('import_browser.import_in_progress')}</p>
             <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px">${t('import_browser.job_id_label', { id: jobId })}</p>
             ${path ? `<p style="color:var(--text-secondary);font-size:0.85rem;margin-top:2px">${t('import_browser.import_path_label', { path: escHtml(path) })}</p>` : ''}
-            <div id="import-progress-bar" style="margin-top:8px">
-                <div class="upload-progress-bar"><div class="upload-progress-fill" id="import-fill" style="width:0%"></div></div>
-                <span id="import-percent" style="font-size:0.8rem;color:var(--text-muted)">0%</span>
+            <div style="margin-top:8px">
+                <div class="upload-progress-bar"><div class="upload-progress-fill" id="import-fill-${jobId}" style="width:0%"></div></div>
+                <span id="import-percent-${jobId}" style="font-size:0.8rem;color:var(--text-muted)">0%</span>
             </div>
         </div>
-    `;
+    `).join('');
 }
 
 async function startImport(path) {
@@ -242,49 +261,57 @@ async function startImport(path) {
     try {
         const result = await API.startImport(path, copyFiles, recursive, destPath);
         toast(t('import_browser.import_started'), 'success');
-        localStorage.setItem(IMPORT_JOB_STORAGE_KEY, result.job_id);
-        _renderImportProgressBar(result.job_id, path);
+        const entries = _getActiveImports();
+        entries.push({ jobId: result.job_id, path });
+        _setActiveImports(entries);
+        _renderActiveImportsList(entries);
         pollImportProgress(result.job_id);
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// The admin page (and its progress bar) is fully re-rendered from scratch on
-// every navigation, so without this an in-progress import "loses" its
-// progress bar the moment you leave the page and come back - the job is
-// still running server-side, the UI just forgot about it. Called once when
-// the admin page mounts.
+// The admin page (and its progress cards) is fully re-rendered from scratch
+// on every navigation, so without this in-progress imports "lose" their
+// progress bars the moment you leave the page and come back - the jobs are
+// still running server-side, the UI just forgot about them. Called once
+// when the admin page mounts.
 async function resumeImportProgressIfActive() {
-    const jobId = localStorage.getItem(IMPORT_JOB_STORAGE_KEY);
-    if (!jobId) return;
+    const entries = _getActiveImports();
+    if (!entries.length) return;
 
-    try {
-        const s = await API.getImportStatus(jobId);
-        if (s.status === 'PENDING' || s.status === 'RUNNING') {
-            _renderImportProgressBar(jobId, s.path);
-            pollImportProgress(jobId);
-        } else {
-            localStorage.removeItem(IMPORT_JOB_STORAGE_KEY);
+    const stillActive = [];
+    for (const entry of entries) {
+        try {
+            const s = await API.getImportStatus(entry.jobId);
+            if (s.status === 'PENDING' || s.status === 'RUNNING') {
+                stillActive.push({ jobId: entry.jobId, path: entry.path || s.path });
+            }
+        } catch {
+            // Job no longer exists / request failed - drop it, same as a
+            // completed one falling out of the tracked list below.
         }
-    } catch {
-        localStorage.removeItem(IMPORT_JOB_STORAGE_KEY);
     }
+    _setActiveImports(stillActive);
+    if (!stillActive.length) return;
+    _renderActiveImportsList(stillActive);
+    stillActive.forEach(({ jobId }) => pollImportProgress(jobId));
 }
 
 async function pollImportProgress(jobId) {
     const interval = setInterval(async () => {
         try {
             const s = await API.getImportStatus(jobId);
-            const fill = $('import-fill');
-            const pct = $('import-percent');
+            const fill = $(`import-fill-${jobId}`);
+            const pct = $(`import-percent-${jobId}`);
             if (fill) fill.style.width = s.progress + '%';
             if (pct) pct.textContent = s.progress + '%';
 
             if (s.status === 'COMPLETED' || s.status === 'FAILED') {
                 clearInterval(interval);
-                localStorage.removeItem(IMPORT_JOB_STORAGE_KEY);
+                const remaining = _getActiveImports().filter(e => e.jobId !== jobId);
+                _setActiveImports(remaining);
+                _renderActiveImportsList(remaining);
                 if (s.status === 'COMPLETED') {
                     toast(t('import_browser.import_completed'), 'success');
-                    if (pct) pct.textContent = t('import_browser.completed_label');
                     refreshReferenceRootsList();
                 } else {
                     toast(t('import_browser.import_failed_prefix') + (s.error || ''), 'error');

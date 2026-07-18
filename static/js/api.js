@@ -65,13 +65,13 @@ const API = {
         return this.request('/api/assets/upload', { method: 'POST', body: fd });
     },
     getGallery(page = 1, perPage = 60, sortBy = 'date_desc', groupBy = 'none', filterBy = 'all') {
-        return this.request(`/api/assets/gallery?page=${page}&per_page=${perPage}&sort_by=${sortBy}&group_by=${groupBy}&filter_by=${filterBy}`);
+        return this.request(`/api/assets/gallery?page=${page}&per_page=${perPage}&sort_by=${sortBy}&group_by=${groupBy}&filter_by=${encodeURIComponent(filterBy)}`);
     },
     getMonthAssets(year, month, sortBy = 'date_desc', filterBy = 'all') {
-        return this.request(`/api/assets/gallery/month?year=${year}&month=${month}&sort_by=${sortBy}&filter_by=${filterBy}`);
+        return this.request(`/api/assets/gallery/month?year=${year}&month=${month}&sort_by=${sortBy}&filter_by=${encodeURIComponent(filterBy)}`);
     },
     getYearAssets(year, sortBy = 'date_desc', filterBy = 'all') {
-        return this.request(`/api/assets/gallery/year?year=${year}&sort_by=${sortBy}&filter_by=${filterBy}`);
+        return this.request(`/api/assets/gallery/year?year=${year}&sort_by=${sortBy}&filter_by=${encodeURIComponent(filterBy)}`);
     },
     getAsset(id) { return this.request(`/api/assets/${id}`); },
     getSimilarAssets(id) { return this.request(`/api/assets/${id}/similar`); },
@@ -160,6 +160,7 @@ const API = {
 
     // Map
     getMapMarkers() { return this.request('/api/map/markers'); },
+    getCityStats() { return this.request('/api/map/cities'); },
 
     // Shares
     getShares() { return this.request('/api/shares'); },

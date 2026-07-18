@@ -49,22 +49,45 @@ async def create_job(
     import queuing one CLIP+FACE job per asset turned into O(n^2) total,
     blocking the event loop - every request on the server, not just the
     import - for however long that JSON-parsing loop took.
+
+    IMPORT jobs are the one exception: they never target a single asset
+    (asset_id is always None for a whole-folder job), so the check above
+    would treat any already-active import as a "duplicate" of a new one for
+    a completely different folder - wrong, since multiple folders can be
+    queued at once. Only the exact same path is rejected as a real
+    duplicate, checked against just the currently-active IMPORT jobs' own
+    data_json - that set is always small (one user, clicking "start import"
+    a handful of times), not the whole-table scan the asset_id index above
+    exists to avoid for the per-asset bulk-creation case.
     """
     target_asset_id = data.get("asset_id") if data else None
 
-    existing = await db.execute(
-        select(Job.id).where(
-            and_(
-                Job.job_type == job_type,
-                Job.asset_id == target_asset_id,
-                or_(Job.status == "PENDING", Job.status == "RUNNING"),
+    if job_type == "IMPORT" and data and data.get("path"):
+        existing_imports = await db.execute(
+            select(Job.data_json).where(
+                and_(Job.job_type == "IMPORT", or_(Job.status == "PENDING", Job.status == "RUNNING"))
             )
-        ).limit(1)
-    )
-    if existing.first():
-        raise JobAlreadyExistsException(
-            f"Zaten devam eden veya sıraya alınmış bir '{job_type}' işlemi var."
         )
+        for (existing_json,) in existing_imports:
+            try:
+                if existing_json and json.loads(existing_json).get("path") == data["path"]:
+                    raise JobAlreadyExistsException("Bu klasör için zaten devam eden bir içe aktarma var.")
+            except (json.JSONDecodeError, TypeError):
+                continue
+    else:
+        existing = await db.execute(
+            select(Job.id).where(
+                and_(
+                    Job.job_type == job_type,
+                    Job.asset_id == target_asset_id,
+                    or_(Job.status == "PENDING", Job.status == "RUNNING"),
+                )
+            ).limit(1)
+        )
+        if existing.first():
+            raise JobAlreadyExistsException(
+                f"Zaten devam eden veya sıraya alınmış bir '{job_type}' işlemi var."
+            )
 
     job = Job(
         job_type=job_type,

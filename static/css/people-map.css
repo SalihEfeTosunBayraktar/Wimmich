@@ -92,6 +92,7 @@
 
 /* ─── Map ───────────────────────────────────────────────── */
 .map-container {
+    display: flex;
     width: 100%;
     height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2);
     border-radius: var(--radius-lg);
@@ -101,7 +102,7 @@
 
 .map-container .leaflet-container {
     height: 100%;
-    width: 100%;
+    flex: 1;
     background: var(--bg-tertiary);
 }
 
@@ -110,6 +111,44 @@
     height: 90px;
     object-fit: cover;
     border-radius: var(--radius-sm);
+}
+
+.map-cities-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    padding: var(--space-lg);
+}
+
+.map-cities-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.map-city-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.map-city-row:hover {
+    background: var(--bg-tertiary);
+}
+
+.map-city-name {
+    font-weight: 500;
+}
+
+.map-city-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 .map-photo-marker img {

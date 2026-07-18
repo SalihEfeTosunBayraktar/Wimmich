@@ -55,6 +55,8 @@ def _apply_filter(conditions: list, filter_by: str) -> None:
         category = filter_by[len("category_"):]
         if category in SMART_CATEGORIES:
             conditions.append(Asset.smart_category == category)
+    elif filter_by.startswith("city_"):
+        conditions.append(Asset.city == filter_by[len("city_"):])
     # "all" (default): no extra condition - includes archived, unlike Timeline
 
 
