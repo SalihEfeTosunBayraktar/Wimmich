@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from models import Asset, Job
 from services.job_core import check_job_cancelled
-from utils.log import error
+from utils.log import warn, error
 
 
 async def handle_job_clip(db: AsyncSession, job: Job):
@@ -18,6 +18,11 @@ async def handle_job_clip(db: AsyncSession, job: Job):
         # processed even without CLIP - that polluted search with meaningless
         # matches and permanently marked assets as processed (clip_embedding_path
         # set), so they'd never be retried even after installing CLIP later.
+        # This used to also be a silent no-op - since CATEGORIZE only ever
+        # auto-triggers after a successful CLIP batch below, a CLIP outage
+        # here means smart search AND every category filter stay silently
+        # empty forever with zero indication why.
+        warn("JOB", "CLIP job skipped - open_clip is not installed/available (smart search and categories will stay empty).")
         return
 
     data = job.data or {}

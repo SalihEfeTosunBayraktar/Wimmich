@@ -10,6 +10,7 @@ from services.clip_service import (
     compute_clip_embedding,
     compute_text_embedding,
     search_by_text,
+    is_clip_loaded,
 )
 from services.face_service import (
     FACE_AVAILABLE,
@@ -26,6 +27,7 @@ __all__ = [
     "CLIP_AVAILABLE",
     "FACE_AVAILABLE",
     "ML_AVAILABLE",
+    "is_clip_loaded",
     "compute_clip_embedding",
     "compute_text_embedding",
     "search_by_text",

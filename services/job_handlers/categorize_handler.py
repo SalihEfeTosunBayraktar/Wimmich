@@ -2,7 +2,7 @@
 document/nature/pet/...) for assets that already have a CLIP embedding.
 """
 import asyncio
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
@@ -11,7 +11,7 @@ from services.job_core import check_job_cancelled
 from services.smart_category_service import classify_embedding, NO_CATEGORY
 from services.category_correction_service import load_correction_embeddings
 from utils.embedding_utils import load_embedding
-from utils.log import success
+from utils.log import info, warn, success
 
 
 async def handle_job_categorize(db: AsyncSession, job: Job):
@@ -46,6 +46,27 @@ async def handle_job_categorize(db: AsyncSession, job: Job):
 
     total = len(assets)
     processed = 0
+
+    if total == 0:
+        # "0/0 classified" alone doesn't say whether there was genuinely
+        # nothing left to do, or nothing has ever been CLIP-embedded yet
+        # (e.g. CLIP failed to load, or the CLIP job hasn't run/finished) -
+        # those look identical from the job's own result but mean very
+        # different things, and the second one is a real problem worth a
+        # clear message instead of a silent, unremarkable "0/0".
+        no_embedding_conditions = [Asset.clip_embedding_path.is_(None), Asset.is_trashed == False]
+        if scoped_user_id:
+            no_embedding_conditions.append(Asset.user_id == scoped_user_id)
+        pending_clip = (await db.execute(
+            select(func.count(Asset.id)).where(and_(*no_embedding_conditions))
+        )).scalar_one()
+        if pending_clip:
+            warn("JOB", f"Categorize: nothing to classify yet - {pending_clip} asset(s) still have no CLIP embedding (run/wait for the CLIP job first).")
+        else:
+            info("JOB", "Categorize: nothing to classify - every CLIP-embedded asset already has a category.")
+        return
+
+    info("JOB", f"Categorizing {total} asset(s)...")
 
     # Corrections are per-user, so this can't load them once for the whole
     # batch - a job with no scoped_user_id processes every user's assets

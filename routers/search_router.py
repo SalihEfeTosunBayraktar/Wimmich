@@ -7,9 +7,19 @@ from database import get_db
 from models import User
 from auth import get_current_user
 from services.search_service import search_metadata, search_smart
+from services.ml_service import CLIP_AVAILABLE, is_clip_loaded
 from utils.serializers import asset_to_dict
 
 router = APIRouter(prefix="/api/search", tags=["search"])
+
+
+@router.get("/status")
+async def search_status(user: User = Depends(get_current_user)):
+    """Whether smart search is ready to answer instantly right now, or the
+    first query still needs to load the CLIP model first (a real,
+    noticeable delay for a ~4-5GB model) - lets the search box warn about
+    that up front instead of just looking frozen on someone's first query."""
+    return {"clip_available": CLIP_AVAILABLE, "clip_loaded": is_clip_loaded()}
 
 
 @router.get("")
@@ -27,6 +37,7 @@ async def search(
 ):
     """Search assets by text or metadata."""
     if search_type == "smart":
+        clip_was_cold = CLIP_AVAILABLE and not is_clip_loaded()
         results = await search_smart(db, user.id, q, limit=limit)
         return {
             "results": [
@@ -35,6 +46,7 @@ async def search(
             ],
             "total": len(results),
             "search_type": "smart",
+            "clip_was_cold": clip_was_cold,
         }
     else:
         assets = await search_metadata(

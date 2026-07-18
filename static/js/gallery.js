@@ -7,6 +7,7 @@
 registerTranslations({
     en: {
         'gallery.sort_date_desc': 'Date (Newest → Oldest)',
+        'gallery.sort_uploaded_desc': 'Recently Added',
         'gallery.sort_date_asc': 'Date (Oldest → Newest)',
         'gallery.sort_name_asc': 'Name (A-Z)',
         'gallery.sort_name_desc': 'Name (Z-A)',
@@ -37,6 +38,8 @@ registerTranslations({
         'gallery.no_results': 'No results found',
         'gallery.try_different_search': 'Try a different search.',
         'gallery.results_count': '{count} results found',
+        'gallery.clip_warming_hint': '🧠 Preparing the smart search model - this first search may take a little longer.',
+        'gallery.clip_ready_toast': '🧠 Smart search model ready - future searches will be instant.',
         'gallery.no_photos_for_filter': 'No photos match this filter',
         'gallery.try_different_filters': 'Try changing the filters.',
         'gallery.item_count': '{count} items',
@@ -46,6 +49,7 @@ registerTranslations({
     },
     tr: {
         'gallery.sort_date_desc': 'Tarih (Yeni → Eski)',
+        'gallery.sort_uploaded_desc': 'En Son Eklenenler',
         'gallery.sort_date_asc': 'Tarih (Eski → Yeni)',
         'gallery.sort_name_asc': 'İsim (A-Z)',
         'gallery.sort_name_desc': 'İsim (Z-A)',
@@ -76,6 +80,8 @@ registerTranslations({
         'gallery.no_results': 'Sonuç bulunamadı',
         'gallery.try_different_search': 'Farklı bir arama deneyin.',
         'gallery.results_count': '{count} sonuç bulundu',
+        'gallery.clip_warming_hint': '🧠 Akıllı arama modeli hazırlanıyor - bu ilk arama biraz daha uzun sürebilir.',
+        'gallery.clip_ready_toast': '🧠 Akıllı arama modeli hazır - sonraki aramalar artık anında olacak.',
         'gallery.no_photos_for_filter': 'Bu filtreyle eşleşen fotoğraf yok',
         'gallery.try_different_filters': 'Filtreleri değiştirmeyi deneyin.',
         'gallery.item_count': '{count} öğe',
@@ -85,6 +91,7 @@ registerTranslations({
     },
     fr: {
         'gallery.sort_date_desc': 'Date (Récent → Ancien)',
+        'gallery.sort_uploaded_desc': 'Ajoutés récemment',
         'gallery.sort_date_asc': 'Date (Ancien → Récent)',
         'gallery.sort_name_asc': 'Nom (A-Z)',
         'gallery.sort_name_desc': 'Nom (Z-A)',
@@ -115,6 +122,8 @@ registerTranslations({
         'gallery.no_results': 'Aucun résultat trouvé',
         'gallery.try_different_search': 'Essayez une autre recherche.',
         'gallery.results_count': '{count} résultats trouvés',
+        'gallery.clip_warming_hint': '🧠 Préparation du modèle de recherche intelligente - cette première recherche peut prendre un peu plus de temps.',
+        'gallery.clip_ready_toast': '🧠 Modèle de recherche intelligente prêt - les prochaines recherches seront instantanées.',
         'gallery.no_photos_for_filter': 'Aucune photo ne correspond à ce filtre',
         'gallery.try_different_filters': 'Essayez de modifier les filtres.',
         'gallery.item_count': '{count} éléments',
@@ -124,6 +133,7 @@ registerTranslations({
     },
     de: {
         'gallery.sort_date_desc': 'Datum (Neu → Alt)',
+        'gallery.sort_uploaded_desc': 'Kürzlich hinzugefügt',
         'gallery.sort_date_asc': 'Datum (Alt → Neu)',
         'gallery.sort_name_asc': 'Name (A-Z)',
         'gallery.sort_name_desc': 'Name (Z-A)',
@@ -154,6 +164,8 @@ registerTranslations({
         'gallery.no_results': 'Keine Ergebnisse gefunden',
         'gallery.try_different_search': 'Versuchen Sie eine andere Suche.',
         'gallery.results_count': '{count} Ergebnisse gefunden',
+        'gallery.clip_warming_hint': '🧠 Das Modell für die intelligente Suche wird vorbereitet - diese erste Suche kann etwas länger dauern.',
+        'gallery.clip_ready_toast': '🧠 Modell für intelligente Suche bereit - zukünftige Suchen sind sofort da.',
         'gallery.no_photos_for_filter': 'Keine Fotos entsprechen diesem Filter',
         'gallery.try_different_filters': 'Versuchen Sie, die Filter zu ändern.',
         'gallery.item_count': '{count} Elemente',
@@ -166,6 +178,7 @@ registerTranslations({
 const GALLERY_SORT_OPTIONS = [
     ['date_desc', t('gallery.sort_date_desc')],
     ['date_asc', t('gallery.sort_date_asc')],
+    ['uploaded_desc', t('gallery.sort_uploaded_desc')],
     ['name_asc', t('gallery.sort_name_asc')],
     ['name_desc', t('gallery.sort_name_desc')],
     ['size_desc', t('gallery.sort_size_desc')],
@@ -395,6 +408,21 @@ function _renderSearchSuggestions(query) {
     });
 }
 
+// Cached after the first check so every debounced keystroke doesn't cost
+// its own round-trip - refreshed to "loaded" locally the moment a search
+// response confirms it (clip_was_cold), no need to re-ask the server.
+let _clipStatusCache = null;
+
+async function _getClipStatus() {
+    if (_clipStatusCache) return _clipStatusCache;
+    try {
+        _clipStatusCache = await API.getSearchStatus();
+    } catch (e) {
+        _clipStatusCache = { clip_available: false, clip_loaded: false };
+    }
+    return _clipStatusCache;
+}
+
 async function _runGallerySearch(query) {
     const g = state.gallery;
     g.searchQuery = query;
@@ -407,8 +435,22 @@ async function _runGallerySearch(query) {
     }
 
     const container = $('gallery-grid-container');
+    // The CLIP model is loaded lazily on first use (a real, multi-second
+    // multi-GB load onto the GPU) - without this, someone's very first
+    // search just sat on a blank grid with no clue why it was slower than
+    // every search after it.
+    const clipStatus = await _getClipStatus();
+    container.innerHTML = (clipStatus.clip_available && !clipStatus.clip_loaded)
+        ? `<div class="skeleton" style="height:200px;border-radius:12px;margin-bottom:10px"></div>
+           <p class="text-muted" style="text-align:center">${t('gallery.clip_warming_hint')}</p>`
+        : `<div class="skeleton" style="height:200px;border-radius:12px"></div>`;
+
     try {
         const data = await API.search(query, 'smart');
+        if (data.clip_was_cold) {
+            _clipStatusCache = { clip_available: true, clip_loaded: true };
+            toast(t('gallery.clip_ready_toast'), 'success');
+        }
         if (!data.results.length) {
             container.innerHTML = renderEmptyState(t('gallery.no_results'), t('gallery.try_different_search'));
             return;
@@ -419,7 +461,10 @@ async function _runGallerySearch(query) {
         `;
         bindPhotoCards(container);
         state.viewerList = data.results.map(a => a.id);
-    } catch (e) { toast(e.message, 'error'); }
+    } catch (e) {
+        container.innerHTML = renderEmptyState(t('common.error'), e.message);
+        toast(e.message, 'error');
+    }
 }
 
 async function loadGalleryPage() {

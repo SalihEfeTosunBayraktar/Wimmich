@@ -28,6 +28,15 @@ except ImportError:
     CLIP_AVAILABLE = False
 
 
+def is_clip_loaded() -> bool:
+    """Whether the (~4-5GB) model is actually resident on the GPU/CPU right
+    now, not just installed - _load_clip() only runs on the first CLIP job
+    or the first search, so there's a real, multi-second-to-a-minute delay
+    the very first time either happens that this makes visible to callers
+    instead of leaving it silent."""
+    return _model is not None
+
+
 def _load_clip():
     """Lazy-load the CLIP model (image + text share one checkpoint).
 

@@ -136,6 +136,7 @@ const API = {
         if (opts.limit) url += `&limit=${opts.limit}`;
         return this.request(url);
     },
+    getSearchStatus() { return this.request('/api/search/status'); },
 
     // People
     getPeople() { return this.request('/api/people'); },
