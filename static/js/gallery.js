@@ -392,7 +392,13 @@ function _renderSearchSuggestions(query) {
         return;
     }
 
-    suggestions.innerHTML = matches.map(([v, label]) => `<button type="button" class="search-suggestion-row" data-filter="${v}">${label}</button>`).join('');
+    _ensureSmartCategoryCounts();
+    suggestions.innerHTML = matches.map(([v, label]) => {
+        const countSuffix = (_smartCategoryCounts && v.startsWith('category_'))
+            ? ` (${_smartCategoryCounts[v.slice('category_'.length)] ?? 0})`
+            : '';
+        return `<button type="button" class="search-suggestion-row" data-filter="${v}">${label}${countSuffix}</button>`;
+    }).join('');
     suggestions.classList.remove('hidden');
     suggestions.querySelectorAll('.search-suggestion-row').forEach(row => {
         row.onclick = () => {
@@ -406,6 +412,29 @@ function _renderSearchSuggestions(query) {
             renderGallery();
         };
     });
+}
+
+// Counts shown next to each category_* suggestion row (e.g. "Pets (12)").
+// Fetched once and cached like _clipStatusCache below - _renderSearchSuggestions
+// is called synchronously from several sync event handlers, so this fires the
+// fetch in the background and re-renders the (still-open) dropdown once it
+// resolves, rather than blocking the first render on a round-trip.
+let _smartCategoryCounts = null;
+let _smartCategoryCountsPromise = null;
+
+function _ensureSmartCategoryCounts() {
+    if (_smartCategoryCounts || _smartCategoryCountsPromise) return _smartCategoryCountsPromise;
+    _smartCategoryCountsPromise = API.getSmartCategories()
+        .then(data => { _smartCategoryCounts = data.categories; })
+        .catch(() => { _smartCategoryCounts = {}; })
+        .then(() => {
+            const searchInput = $('gallery-search-input');
+            const suggestions = $('gallery-search-suggestions');
+            if (searchInput && suggestions && !suggestions.classList.contains('hidden')) {
+                _renderSearchSuggestions(searchInput.value);
+            }
+        });
+    return _smartCategoryCountsPromise;
 }
 
 // Cached after the first check so every debounced keystroke doesn't cost

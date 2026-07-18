@@ -37,6 +37,7 @@ def asset_to_dict(asset: Asset) -> dict:
         "is_favorite": asset.is_favorite,
         "is_archived": asset.is_archived,
         "is_trashed": asset.is_trashed,
+        "smart_category": asset.smart_category,
         "has_faces": False,
         "exif": asset.exif_dict if asset.exif_data else None,
         "thumb_small": f"/api/assets/{asset.id}/thumbnail?size=small" if asset.thumb_small_path else None,

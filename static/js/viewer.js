@@ -33,6 +33,11 @@ registerTranslations({
         'viewer.regenerating_btn': 'Regenerating...',
         'viewer.retranscode_video_btn': '🎬 Retranscode Video',
         'viewer.retranscoding_btn': 'Retranscoding...',
+        'viewer.category_title': 'Category',
+        'viewer.category_wrong_title': "Wrong? Remove from this category",
+        'viewer.label_category': 'Category',
+        'viewer.category_corrected': 'Category correction applied',
+        'viewer.category_corrected_with_reclassified': 'Category corrected · {count} similar photos also reclassified',
     },
     tr: {
         'viewer.moved_to_trash': 'Çöp kutusuna taşındı',
@@ -65,6 +70,11 @@ registerTranslations({
         'viewer.regenerating_btn': 'Yeniden oluşturuluyor...',
         'viewer.retranscode_video_btn': '🎬 Videoyu Yeniden Dönüştür',
         'viewer.retranscoding_btn': 'Yeniden dönüştürülüyor...',
+        'viewer.category_title': 'Kategori',
+        'viewer.category_wrong_title': 'Yanlış mı? Bu kategoriden çıkar',
+        'viewer.label_category': 'Kategori',
+        'viewer.category_corrected': 'Kategori düzeltmesi uygulandı',
+        'viewer.category_corrected_with_reclassified': 'Kategori düzeltildi · {count} benzer fotoğraf da yeniden sınıflandırıldı',
     },
     fr: {
         'viewer.moved_to_trash': 'Déplacé vers la corbeille',
@@ -97,6 +107,11 @@ registerTranslations({
         'viewer.regenerating_btn': 'Régénération...',
         'viewer.retranscode_video_btn': '🎬 Retranscoder la vidéo',
         'viewer.retranscoding_btn': 'Retranscodage...',
+        'viewer.category_title': 'Catégorie',
+        'viewer.category_wrong_title': 'Incorrect ? Retirer de cette catégorie',
+        'viewer.label_category': 'Catégorie',
+        'viewer.category_corrected': 'Correction de catégorie appliquée',
+        'viewer.category_corrected_with_reclassified': 'Catégorie corrigée · {count} photos similaires également reclassées',
     },
     de: {
         'viewer.moved_to_trash': 'In den Papierkorb verschoben',
@@ -129,6 +144,11 @@ registerTranslations({
         'viewer.regenerating_btn': 'Wird neu erstellt...',
         'viewer.retranscode_video_btn': '🎬 Video neu transkodieren',
         'viewer.retranscoding_btn': 'Wird neu transkodiert...',
+        'viewer.category_title': 'Kategorie',
+        'viewer.category_wrong_title': 'Falsch? Aus dieser Kategorie entfernen',
+        'viewer.label_category': 'Kategorie',
+        'viewer.category_corrected': 'Kategorie-Korrektur angewendet',
+        'viewer.category_corrected_with_reclassified': 'Kategorie korrigiert · {count} ähnliche Fotos ebenfalls neu eingestuft',
     },
 });
 
@@ -341,6 +361,14 @@ function renderViewerInfo(asset) {
             ${asset.width ? `<div class="viewer-info-row"><span class="label">${t('viewer.label_resolution')}</span><span class="value">${asset.width} × ${asset.height}</span></div>` : ''}
             ${asset.duration_seconds ? `<div class="viewer-info-row"><span class="label">${t('viewer.label_duration')}</span><span class="value">${formatDuration(asset.duration_seconds)}</span></div>` : ''}
         </div>
+        ${asset.smart_category && asset.smart_category !== 'none' ? `
+        <div class="viewer-info-section">
+            <div class="viewer-info-section-header">
+                <h4>${t('viewer.category_title')}</h4>
+                <button class="btn-icon" id="viewer-category-wrong-btn" title="${t('viewer.category_wrong_title')}">✕</button>
+            </div>
+            <div class="viewer-info-row"><span class="label">${t('viewer.label_category')}</span><span class="value">${t('gallery.suggestion_category_' + asset.smart_category)}</span></div>
+        </div>` : ''}
         <div class="viewer-info-section">
             <h4>${t('viewer.maintenance_title')}</h4>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -378,6 +406,8 @@ function renderViewerInfo(asset) {
         </div>
     `;
     $('viewer-exif-edit-btn').onclick = () => renderViewerExifEditForm(asset);
+    const categoryWrongBtn = $('viewer-category-wrong-btn');
+    if (categoryWrongBtn) categoryWrongBtn.onclick = () => correctCategoryAction(asset);
     $('viewer-regen-thumb-btn').onclick = () => _runViewerReprocess(
         $('viewer-regen-thumb-btn'), () => API.regenerateThumbnail(asset.id),
         t('viewer.regenerate_thumbnail_btn'), t('viewer.regenerating_btn'),
@@ -393,6 +423,22 @@ function renderViewerInfo(asset) {
     // _loadSimilarForViewer, triggered from openViewer) - not a new fetch,
     // this just renders it if/when the sidebar happens to be open.
     _renderSimilarStrip(_viewerSimilarAssets);
+}
+
+async function correctCategoryAction(asset) {
+    try {
+        const r = await API.correctCategory(asset.id, asset.smart_category);
+        asset.smart_category = 'none';
+        toast(
+            r.also_reclassified > 0
+                ? t('viewer.category_corrected_with_reclassified', { count: r.also_reclassified })
+                : t('viewer.category_corrected'),
+            'success',
+        );
+        renderViewerInfo(asset);
+    } catch (e) {
+        toast(e.message, 'error');
+    }
 }
 
 // Purely a "what else looks like this?" browsing aid (precomputed CLIP

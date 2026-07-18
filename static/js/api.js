@@ -107,6 +107,10 @@ const API = {
     getArchived() { return this.request('/api/assets/archived'); },
     getStatistics() { return this.request('/api/assets/statistics'); },
     getMemories() { return this.request('/api/assets/memories/today'); },
+    getSmartCategories() { return this.request('/api/assets/smart-categories'); },
+    correctCategory(assetId, category) {
+        return this.request(`/api/assets/${assetId}/category-correction`, { method: 'POST', body: { category } });
+    },
 
     // Albums
     getAlbums() { return this.request('/api/albums'); },
