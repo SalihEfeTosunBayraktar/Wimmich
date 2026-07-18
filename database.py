@@ -116,3 +116,18 @@ async def init_db():
             await conn.execute(text("ALTER TABLE assets ADD COLUMN reference_root VARCHAR(1000)"))
         except Exception:
             pass
+
+        # Automatic column migration for the jobs table's denormalized
+        # asset_id (see models/job.py) - backfilled from the still-active
+        # jobs' data_json in the same pass, via SQLite's own JSON1
+        # extension, so any job already PENDING/RUNNING at upgrade time is
+        # immediately covered by the new indexed duplicate check too,
+        # rather than only new jobs created after this point.
+        try:
+            await conn.execute(text("ALTER TABLE jobs ADD COLUMN asset_id VARCHAR(36)"))
+            await conn.execute(text(
+                "UPDATE jobs SET asset_id = json_extract(data_json, '$.asset_id') "
+                "WHERE status IN ('PENDING', 'RUNNING') AND data_json IS NOT NULL"
+            ))
+        except Exception:
+            pass
