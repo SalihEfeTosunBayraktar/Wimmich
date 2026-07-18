@@ -19,6 +19,8 @@ registerTranslations({
         'selection.restored': 'Restored',
         'selection.confirm_delete_permanent': 'Are you sure you want to PERMANENTLY delete {count} items? This action cannot be undone.',
         'selection.permanently_deleted': '{count} items permanently deleted',
+        'selection.remove_from_album': 'Remove from Album',
+        'selection.removed_from_album': 'Removed from album',
     },
     tr: {
         'selection.restore': 'Geri Yükle',
@@ -37,6 +39,8 @@ registerTranslations({
         'selection.restored': 'Geri yüklendi',
         'selection.confirm_delete_permanent': '{count} öğeyi KALICI OLARAK silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
         'selection.permanently_deleted': '{count} öğe kalıcı olarak silindi',
+        'selection.remove_from_album': 'Albümden Çıkar',
+        'selection.removed_from_album': 'Albümden çıkarıldı',
     },
     fr: {
         'selection.restore': 'Restaurer',
@@ -55,6 +59,8 @@ registerTranslations({
         'selection.restored': 'Restauré',
         'selection.confirm_delete_permanent': 'Voulez-vous vraiment supprimer DÉFINITIVEMENT {count} éléments ? Cette action est irréversible.',
         'selection.permanently_deleted': '{count} éléments supprimés définitivement',
+        'selection.remove_from_album': "Retirer de l'album",
+        'selection.removed_from_album': "Retiré de l'album",
     },
     de: {
         'selection.restore': 'Wiederherstellen',
@@ -73,6 +79,8 @@ registerTranslations({
         'selection.restored': 'Wiederhergestellt',
         'selection.confirm_delete_permanent': 'Möchten Sie {count} Elemente wirklich ENDGÜLTIG löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
         'selection.permanently_deleted': '{count} Elemente endgültig gelöscht',
+        'selection.remove_from_album': 'Aus Album entfernen',
+        'selection.removed_from_album': 'Aus Album entfernt',
     },
 });
 
@@ -101,6 +109,17 @@ function _selectionBarActions() {
             <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">⬇ <span>${t('selection.download')}</span></button>
             <button class="btn btn-sm btn-secondary" onclick="bulkUnarchive()">📤 <span>${t('selection.unarchive')}</span></button>
             <button class="btn btn-sm btn-danger" onclick="bulkDelete()">🗑 <span>${t('common.delete')}</span></button>
+        `;
+    }
+    // Only when actually inside an opened album (state.currentAlbum is set
+    // by albums.js's openAlbum()) - the top-level album-cover-grid list
+    // falls through to the generic case below, where "remove from album"
+    // is meaningless (there's no single album to remove anything from).
+    if (state.currentPage === 'albums' && state.currentAlbum) {
+        return `
+            <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">🔗 <span>${t('selection.share')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">⬇ <span>${t('selection.download')}</span></button>
+            <button class="btn btn-sm btn-danger" onclick="bulkRemoveFromAlbum()">➖ <span>${t('selection.remove_from_album')}</span></button>
         `;
     }
     return `
@@ -175,6 +194,18 @@ async function bulkRestore() {
     toast(t('selection.restored'), 'success');
     clearSelection();
     navigateTo(state.currentPage);
+}
+
+async function bulkRemoveFromAlbum() {
+    const albumId = state.currentAlbum.id;
+    await API.removeFromAlbum(albumId, [...state.selectedAssets]);
+    toast(t('selection.removed_from_album'), 'success');
+    clearSelection();
+    // navigateTo(state.currentPage) would land back on the album cover-grid
+    // list, not this album's detail view - openAlbum() is the actual
+    // "refresh what I'm looking at" here, same as albums.js's own re-fetch
+    // pattern after a mutation.
+    openAlbum(albumId);
 }
 
 async function bulkDeletePermanent() {
