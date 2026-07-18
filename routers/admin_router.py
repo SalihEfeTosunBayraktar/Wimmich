@@ -7,6 +7,7 @@ from database import get_db
 from models import User, Asset, Album, Job, Person, SharedLink
 from auth import get_admin_user
 from services.ml_service import get_ml_status
+from services.job_service import job_worker
 from utils.video_utils import is_ffmpeg_available
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -48,9 +49,7 @@ async def get_server_stats(
     running_jobs = (await db.execute(
         select(func.count(Job.id)).where(Job.status == "RUNNING")
     )).scalar()
-    failed_jobs = (await db.execute(
-        select(func.count(Job.id)).where(Job.status == "FAILED")
-    )).scalar()
+    session_stats = job_worker.get_session_stats()
 
     return {
         "users": user_count,
@@ -64,7 +63,8 @@ async def get_server_stats(
         "jobs": {
             "pending": pending_jobs,
             "running": running_jobs,
-            "failed": failed_jobs,
+            "completed": session_stats["completed"],
+            "failed": session_stats["failed"],
         },
         "ml": get_ml_status(),
         "ffmpeg_available": is_ffmpeg_available(),

@@ -32,7 +32,7 @@ def _collect_import_files(path: str, recursive: bool) -> list:
     return list(iter_media_files(path, recursive))
 
 
-async def _process_one(file_path: str, user_id: str, copy_files: bool, source_root: str):
+async def _process_one(file_path: str, user_id: str, copy_files: bool, source_root: str, dest_path: str = None):
     """Hash/EXIF/thumbnail work for one file - no DB access, safe to run
     concurrently with other files via asyncio.gather."""
     import asyncio
@@ -54,7 +54,10 @@ async def _process_one(file_path: str, user_id: str, copy_files: bool, source_ro
             mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
             return data, mtime
         file_data, fallback_taken_at = await asyncio.to_thread(read_file_and_mtime)
-        attrs = await process_upload(file_data, filename, user_id, fallback_taken_at)
+        attrs = await process_upload(
+            file_data, filename, user_id, fallback_taken_at,
+            dest_dir=Path(dest_path) if dest_path else None,
+        )
         return ("copy", attrs)
     else:
         asset = await build_reference_asset(file_path, filename, user_id, source_root)
@@ -71,6 +74,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
     user_id = data.get("user_id")
     copy_files = data.get("copy_files", True)
     recursive = data.get("recursive", True)
+    dest_path = data.get("dest_path")
 
     if not path or not user_id:
         raise ValueError("Missing path or user_id")
@@ -140,7 +144,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
             to_process.append(file_path)
 
         results = await asyncio.gather(
-            *[_process_one(fp, user_id, copy_files, path) for fp in to_process],
+            *[_process_one(fp, user_id, copy_files, path, dest_path) for fp in to_process],
             return_exceptions=True,
         )
 

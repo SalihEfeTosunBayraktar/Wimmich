@@ -35,6 +35,7 @@ async def process_upload(
     original_filename: str,
     user_id: str,
     fallback_taken_at: Optional[datetime] = None,
+    dest_dir: Optional[Path] = None,
 ) -> dict:
     """
     Process an uploaded file:
@@ -50,6 +51,11 @@ async def process_upload(
     silently sort by upload time instead of something closer to their actual
     date.
 
+    `dest_dir` overrides where the file is stored (config.UPLOAD_DIR by
+    default) - only Folder Import's copy mode ever passes this, to let a
+    copy land on a different drive than the app's default storage; the
+    regular browser Upload button always omits it.
+
     Returns a dict of asset attributes.
     """
     file_type = get_file_type(original_filename)
@@ -59,9 +65,9 @@ async def process_upload(
     # Generate unique filename
     ext = Path(original_filename).suffix.lower()
     unique_name = f"{uuid.uuid4().hex}{ext}"
-    
+
     # Create user directory
-    user_upload_dir = config.UPLOAD_DIR / user_id
+    user_upload_dir = (dest_dir or config.UPLOAD_DIR) / user_id
     user_upload_dir.mkdir(parents=True, exist_ok=True)
     
     # Date-based subdirectory

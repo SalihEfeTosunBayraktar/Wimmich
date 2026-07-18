@@ -21,6 +21,7 @@ class ImportRequest(BaseModel):
     path: str  # Local folder or file path
     copy_files: bool = True  # True=copy, False=reference (external library)
     recursive: bool = True
+    dest_path: Optional[str] = None  # Copy mode only: where copies land (defaults to the app's storage)
 
 
 class BrowseRequest(BaseModel):
@@ -62,11 +63,15 @@ async def start_import(
     if not target.exists():
         raise HTTPException(status_code=404, detail="Yol bulunamadı")
 
+    if req.dest_path and Path(req.dest_path).exists() and not Path(req.dest_path).is_dir():
+        raise HTTPException(status_code=400, detail="Hedef yol bir klasör değil")
+
     job = await create_job(db, "IMPORT", {
         "path": str(target),
         "user_id": user.id,
         "copy_files": req.copy_files,
         "recursive": req.recursive,
+        "dest_path": req.dest_path,
     })
 
     return {"message": "İçe aktarma başlatıldı", "job_id": job.id}

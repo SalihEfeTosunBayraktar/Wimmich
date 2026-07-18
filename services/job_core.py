@@ -67,6 +67,13 @@ class JobWorker:
         self.running = False
         self._task = None
         self._job_task = None  # the currently executing job's Task, if any
+        # "Since this server started" success/failure tallies for the admin
+        # panel's job badges - plain instance attributes rather than a DB
+        # count so they reset to 0 on every restart instead of accumulating
+        # forever, unlike pending/running (which stay live DB counts since
+        # PENDING rows genuinely persist across a restart).
+        self._session_completed = 0
+        self._session_failed = 0
 
     async def start(self):
         """Start the background worker."""
@@ -200,6 +207,7 @@ class JobWorker:
                     job.status = "COMPLETED"
                     job.progress = 100
                     job.completed_at = datetime.now(timezone.utc)
+                    self._session_completed += 1
 
                 except JobCancelledException as e:
                     job.status = "CANCELLED"
@@ -210,6 +218,7 @@ class JobWorker:
                     job.status = "FAILED"
                     job.error_message = str(e)
                     job.completed_at = datetime.now(timezone.utc)
+                    self._session_failed += 1
                     error("JOB", f"Job {job_id} failed: {e}")
                     traceback.print_exc()
 
@@ -221,6 +230,9 @@ class JobWorker:
     async def _process_job(self, db: AsyncSession, job: Job):
         """Legacy shim - kept for compatibility, delegates to _run_job_task."""
         await self._run_job_task(job.id, job.job_type)
+
+    def get_session_stats(self) -> dict:
+        return {"completed": self._session_completed, "failed": self._session_failed}
 
 
 # Global worker instance

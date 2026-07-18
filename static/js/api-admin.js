@@ -32,8 +32,8 @@ Object.assign(API, {
     scanFolder(path, copyFiles = true, recursive = true) {
         return this.request('/api/import/scan', { method: 'POST', body: { path, copy_files: copyFiles, recursive } });
     },
-    startImport(path, copyFiles = true, recursive = true) {
-        return this.request('/api/import/start', { method: 'POST', body: { path, copy_files: copyFiles, recursive } });
+    startImport(path, copyFiles = true, recursive = true, destPath = null) {
+        return this.request('/api/import/start', { method: 'POST', body: { path, copy_files: copyFiles, recursive, dest_path: destPath } });
     },
     getImportStatus(jobId) { return this.request(`/api/import/status/${jobId}`); },
     getReferenceRoots() { return this.request('/api/import/references'); },

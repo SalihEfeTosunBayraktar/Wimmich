@@ -237,9 +237,10 @@ function _renderImportProgressBar(jobId, path) {
 async function startImport(path) {
     const copyFiles = $('import-copy')?.checked ?? true;
     const recursive = $('import-recursive')?.checked ?? true;
+    const destPath = $('import-dest-path')?.value.trim() || null;
 
     try {
-        const result = await API.startImport(path, copyFiles, recursive);
+        const result = await API.startImport(path, copyFiles, recursive, destPath);
         toast(t('import_browser.import_started'), 'success');
         localStorage.setItem(IMPORT_JOB_STORAGE_KEY, result.job_id);
         _renderImportProgressBar(result.job_id, path);

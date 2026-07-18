@@ -44,6 +44,8 @@ registerTranslations({
         'admin_render.scan_btn': 'Scan',
         'admin_render.import_copy_label': 'Copy files (move)',
         'admin_render.import_recursive_label': 'Include subfolders',
+        'admin_render.import_dest_path_placeholder': "Destination folder (optional - leave blank for the app's default storage)",
+        'admin_render.import_dest_path_hint': 'Only used in Copy mode - lets copies land on a different drive/folder than the app default. Ignored in Reference mode.',
         'admin_render.ml_status_heading': 'ML Status',
         'admin_render.status_active': 'Active',
         'admin_render.status_active_opencv': 'Active (OpenCV)',
@@ -57,7 +59,9 @@ registerTranslations({
         'admin_render.background_jobs_heading': 'Background Jobs',
         'admin_render.jobs_pending_badge': '{count} Pending',
         'admin_render.jobs_running_badge': '{count} Running',
+        'admin_render.jobs_completed_badge': '{count} Completed',
         'admin_render.jobs_failed_badge': '{count} Failed',
+        'admin_render.jobs_session_stats_hint': 'Completed/Failed counts reset every time the server restarts; Pending reflects the actual queue and persists.',
         'admin_render.job_clip_btn': 'CLIP Index',
         'admin_render.job_face_btn': 'Face Recognition',
         'admin_render.job_thumbnail_btn': 'Thumbnails',
@@ -135,6 +139,8 @@ registerTranslations({
         'admin_render.scan_btn': 'Tara',
         'admin_render.import_copy_label': 'Dosyaları kopyala (taşı)',
         'admin_render.import_recursive_label': 'Alt klasörleri dahil et',
+        'admin_render.import_dest_path_placeholder': 'Hedef klasör (opsiyonel - boş bırakılırsa uygulamanın varsayılan depolama alanı kullanılır)',
+        'admin_render.import_dest_path_hint': 'Sadece Kopyalama modunda kullanılır - kopyaların uygulamanın varsayılanından farklı bir disk/klasöre gitmesini sağlar. Referans modunda göz ardı edilir.',
         'admin_render.ml_status_heading': 'ML Durumu',
         'admin_render.status_active': 'Aktif',
         'admin_render.status_active_opencv': 'Aktif (OpenCV)',
@@ -148,7 +154,9 @@ registerTranslations({
         'admin_render.background_jobs_heading': 'Arka Plan İşleri',
         'admin_render.jobs_pending_badge': '{count} Bekliyor',
         'admin_render.jobs_running_badge': '{count} Çalışıyor',
+        'admin_render.jobs_completed_badge': '{count} Tamamlandı',
         'admin_render.jobs_failed_badge': '{count} Başarısız',
+        'admin_render.jobs_session_stats_hint': 'Tamamlanan/Başarısız sayıları sunucu her yeniden başladığında sıfırlanır; Bekleyen sayısı gerçek kuyruğu yansıtır ve kalıcıdır.',
         'admin_render.job_clip_btn': 'CLIP İndexle',
         'admin_render.job_face_btn': 'Yüz Tanıma',
         'admin_render.job_thumbnail_btn': 'Thumbnail',
@@ -226,6 +234,8 @@ registerTranslations({
         'admin_render.scan_btn': 'Analyser',
         'admin_render.import_copy_label': 'Copier les fichiers (déplacer)',
         'admin_render.import_recursive_label': 'Inclure les sous-dossiers',
+        'admin_render.import_dest_path_placeholder': "Dossier de destination (facultatif - laissez vide pour le stockage par défaut de l'application)",
+        'admin_render.import_dest_path_hint': "Utilisé uniquement en mode Copie - permet aux copies d'atterrir sur un autre disque/dossier que celui par défaut. Ignoré en mode Référence.",
         'admin_render.ml_status_heading': 'État du ML',
         'admin_render.status_active': 'Actif',
         'admin_render.status_active_opencv': 'Actif (OpenCV)',
@@ -239,7 +249,9 @@ registerTranslations({
         'admin_render.background_jobs_heading': 'Tâches en arrière-plan',
         'admin_render.jobs_pending_badge': '{count} en attente',
         'admin_render.jobs_running_badge': '{count} en cours',
+        'admin_render.jobs_completed_badge': '{count} terminée(s)',
         'admin_render.jobs_failed_badge': '{count} échouée(s)',
+        'admin_render.jobs_session_stats_hint': "Les compteurs Terminées/Échouées sont réinitialisés à chaque redémarrage du serveur ; En attente reflète la file réelle et persiste.",
         'admin_render.job_clip_btn': 'Indexer CLIP',
         'admin_render.job_face_btn': 'Reconnaissance faciale',
         'admin_render.job_thumbnail_btn': 'Vignettes',
@@ -317,6 +329,8 @@ registerTranslations({
         'admin_render.scan_btn': 'Scannen',
         'admin_render.import_copy_label': 'Dateien kopieren (verschieben)',
         'admin_render.import_recursive_label': 'Unterordner einschließen',
+        'admin_render.import_dest_path_placeholder': 'Zielordner (optional - leer lassen für den Standardspeicher der App)',
+        'admin_render.import_dest_path_hint': 'Nur im Kopiermodus verwendet - lässt Kopien auf einem anderen Laufwerk/Ordner als dem App-Standard landen. Im Referenzmodus ignoriert.',
         'admin_render.ml_status_heading': 'ML-Status',
         'admin_render.status_active': 'Aktiv',
         'admin_render.status_active_opencv': 'Aktiv (OpenCV)',
@@ -330,7 +344,9 @@ registerTranslations({
         'admin_render.background_jobs_heading': 'Hintergrundaufgaben',
         'admin_render.jobs_pending_badge': '{count} ausstehend',
         'admin_render.jobs_running_badge': '{count} laufend',
+        'admin_render.jobs_completed_badge': '{count} abgeschlossen',
         'admin_render.jobs_failed_badge': '{count} fehlgeschlagen',
+        'admin_render.jobs_session_stats_hint': 'Abgeschlossen/Fehlgeschlagen wird bei jedem Serverneustart zurückgesetzt; Ausstehend spiegelt die tatsächliche Warteschlange wider und bleibt erhalten.',
         'admin_render.job_clip_btn': 'CLIP indizieren',
         'admin_render.job_face_btn': 'Gesichtserkennung',
         'admin_render.job_thumbnail_btn': 'Miniaturansichten',
@@ -409,6 +425,13 @@ async function renderAdmin() {
 
                 <div class="admin-status-card admin-status-card--jobs">
                     <h4>⚙️ ${t('admin_render.jobs_status_card_heading')}</h4>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+                        <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
+                        <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
+                        <span class="badge badge-success">${t('admin_render.jobs_completed_badge', { count: stats.jobs.completed })}</span>
+                        <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
+                    </div>
+                    <p class="text-muted admin-field-hint" style="margin-bottom:8px">${t('admin_render.jobs_session_stats_hint')}</p>
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">🧠 ${t('admin_render.job_clip_btn')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">👤 ${t('admin_render.job_face_btn')}</button>
@@ -532,6 +555,8 @@ async function renderAdmin() {
                                     <label class="checkbox-label"><input type="checkbox" id="import-copy" checked> ${t('admin_render.import_copy_label')}</label>
                                     <label class="checkbox-label" style="margin-left:16px"><input type="checkbox" id="import-recursive" checked> ${t('admin_render.import_recursive_label')}</label>
                                 </div>
+                                <input type="text" id="import-dest-path" placeholder="${t('admin_render.import_dest_path_placeholder')}" style="width:100%;margin-bottom:4px">
+                                <p class="text-muted admin-field-hint" style="margin-bottom:12px">${t('admin_render.import_dest_path_hint')}</p>
                                 <div id="browse-results" style="max-height:220px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px"></div>
                                 <div id="scan-results" style="margin-top:12px"></div>
                             </div>
