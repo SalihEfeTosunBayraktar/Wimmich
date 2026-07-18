@@ -14,6 +14,12 @@ from utils.serializers import asset_to_dict
 SORT_COLUMNS = {
     "date_desc": func.coalesce(Asset.taken_at, Asset.created_at).desc(),
     "date_asc": func.coalesce(Asset.taken_at, Asset.created_at).asc(),
+    # Distinct from date_desc - taken_at (the photo's own EXIF/capture
+    # date) is what date_desc sorts by, which is not the same photo order
+    # as "what did I add to Wimmich most recently" for reference/import
+    # mode assets and scans of an old archive, where taken_at can be years
+    # in the past while created_at (upload/index time) is today.
+    "uploaded_desc": Asset.created_at.desc(),
     "name_asc": Asset.original_file_name.asc(),
     "name_desc": Asset.original_file_name.desc(),
     "size_desc": Asset.file_size.desc(),
