@@ -108,15 +108,24 @@ async def scan_folder_preview(
     # the walk took, which matters a lot right before a big import.
     found_files = await asyncio.to_thread(_collect_scan_candidates, path, recursive)
 
+    # One query for every already-imported path this user has, not one query
+    # PER FILE FOUND - a 400GB/hundred-thousand-file folder was doing that
+    # many sequential awaited round-trips here before (each one a full ORM
+    # load just to check existence), which alone accounted for 30+ minutes
+    # on a real report. Same fix shape as the job-queue O(n^2) bug fixed
+    # earlier this session: one indexed column-only SELECT, then a plain
+    # Python set membership check per file - no DB access in the loop at all.
+    existing_result = await db.execute(
+        select(Asset.external_path).where(
+            and_(Asset.user_id == user_id, Asset.external_path.isnot(None))
+        )
+    )
+    existing_paths = {row[0] for row in existing_result.all()}
+
     already_imported = 0
     new_files = []
     for fp in found_files:
-        result = await db.execute(
-            select(Asset).where(
-                and_(Asset.user_id == user_id, Asset.external_path == fp)
-            ).limit(1)
-        )
-        if result.scalar_one_or_none():
+        if fp in existing_paths:
             already_imported += 1
         else:
             new_files.append(fp)

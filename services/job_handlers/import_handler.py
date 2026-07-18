@@ -84,6 +84,20 @@ async def handle_job_import(db: AsyncSession, job: Job):
     user_res = await db.execute(select(User).where(User.id == user_id))
     user = user_res.scalar_one_or_none()
 
+    # One query for every path this user has already imported, not one
+    # query PER FILE FOUND (see filesystem_browse_service.py's scan preview
+    # for the identical bug this mirrors, and the O(n^2) job-queue fix
+    # earlier this session for the same class of problem) - found_files
+    # comes from a single iter_media_files() pass and never repeats a path,
+    # so a fetch taken once up front (before any of this run's own imports
+    # have committed) can't go stale mid-run.
+    existing_result = await db.execute(
+        select(Asset.external_path).where(
+            and_(Asset.user_id == user_id, Asset.external_path.isnot(None))
+        )
+    )
+    existing_paths = {row[0] for row in existing_result.all()}
+
     total = len(found_files)
     imported = 0
     skipped = 0
@@ -128,15 +142,7 @@ async def handle_job_import(db: AsyncSession, job: Job):
                 processed += 1
                 continue
 
-            # Column-only select - a plain existence check has no business
-            # loading a full Asset ORM object into the session's identity
-            # map for the rest of this (potentially huge) import job's run.
-            existing = await db.execute(
-                select(Asset.id).where(
-                    and_(Asset.user_id == user_id, Asset.external_path == file_path)
-                ).limit(1)
-            )
-            if existing.first():
+            if file_path in existing_paths:
                 skipped += 1
                 processed += 1
                 continue
