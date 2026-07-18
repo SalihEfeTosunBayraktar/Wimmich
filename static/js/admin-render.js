@@ -405,12 +405,12 @@ async function renderAdmin() {
 
         pc.innerHTML = `
             <div class="stats-grid">
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_photos')}</div><div class="stat-card-value">${stats.photos}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_videos')}</div><div class="stat-card-value">${stats.videos}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_total_size')}</div><div class="stat-card-value">${formatSize(stats.total_size)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_people')}</div><div class="stat-card-value">${stats.people}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_albums')}</div><div class="stat-card-value">${stats.albums}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_users')}</div><div class="stat-card-value">${stats.users}</div></div>
+                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_photos')}</div><div class="stat-card-value" id="stat-photos">${stats.photos}</div></div>
+                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_videos')}</div><div class="stat-card-value" id="stat-videos">${stats.videos}</div></div>
+                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_total_size')}</div><div class="stat-card-value" id="stat-total-size">${formatSize(stats.total_size)}</div></div>
+                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_people')}</div><div class="stat-card-value" id="stat-people">${stats.people}</div></div>
+                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_albums')}</div><div class="stat-card-value" id="stat-albums">${stats.albums}</div></div>
+                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_users')}</div><div class="stat-card-value" id="stat-users">${stats.users}</div></div>
             </div>
 
             <div class="admin-status-matrix">
@@ -616,8 +616,37 @@ async function renderAdmin() {
         if (!adminPollInterval) {
             adminPollInterval = setInterval(pollAdminJobs, ADMIN_POLL_INTERVAL_MS);
         }
+        if (!adminStatsPollInterval) {
+            adminStatsPollInterval = setInterval(refreshAdminStats, ADMIN_STATS_POLL_INTERVAL_MS);
+        }
 
     } catch (e) { toast(e.message, 'error'); }
+}
+
+// Updates just the 6 dashboard stat-card values in place (not a full
+// renderAdmin() re-run - that would wipe out any in-progress form edits,
+// open tabs, scroll position, etc. every 15s) so they stay live without
+// needing an F5. Self-clears exactly like pollAdminJobs() does if the
+// user has since navigated away from the admin page.
+async function refreshAdminStats() {
+    if (state.currentPage !== 'admin') {
+        if (adminStatsPollInterval) {
+            clearInterval(adminStatsPollInterval);
+            adminStatsPollInterval = null;
+        }
+        return;
+    }
+    if (!$('stat-photos')) return;
+
+    try {
+        const stats = await API.getAdminStats();
+        $('stat-photos').textContent = stats.photos;
+        $('stat-videos').textContent = stats.videos;
+        $('stat-total-size').textContent = formatSize(stats.total_size);
+        $('stat-people').textContent = stats.people;
+        $('stat-albums').textContent = stats.albums;
+        $('stat-users').textContent = stats.users;
+    } catch (e) { /* non-critical - next tick tries again */ }
 }
 
 let activeAdminTab = 'genel';

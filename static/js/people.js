@@ -37,9 +37,7 @@ registerTranslations({
         'people.dissolve_title': 'Dissolve this group (wrongly clustered faces)',
         'people.confirm_dissolve': 'Dissolve this group? Its faces go back to the unclustered pool - the group itself is deleted, nothing else is touched.',
         'people.dissolved_success': 'Group dissolved',
-        'people.delete_person_title': 'Delete this person (photos are kept - only the identity is removed)',
-        'people.delete_person_button': 'Delete Person',
-        'people.person_deleted_success': 'Person deleted',
+        'people.dissolve_button': 'Dissolve Group',
         'people.blacklist_button': '🚫 Select Photos to Review/Delete',
         'people.photos_selected_for_review': '{count} photos selected - review and delete the ones you don\'t want',
         'people.no_photos_to_select': 'This person has no photos',
@@ -79,9 +77,7 @@ registerTranslations({
         'people.dissolve_title': 'Bu grubu dağıt (yanlış gruplanmış yüzler)',
         'people.confirm_dissolve': 'Bu grup dağıtılsın mı? İçindeki yüzler gruplanmamış havuza geri döner - sadece grup silinir, başka bir şeye dokunulmaz.',
         'people.dissolved_success': 'Grup dağıtıldı',
-        'people.delete_person_title': 'Bu kişiyi sil (fotoğraflar kalır - sadece kimlik/tanım silinir)',
-        'people.delete_person_button': 'Kişiyi Sil',
-        'people.person_deleted_success': 'Kişi silindi',
+        'people.dissolve_button': 'Grubu Dağıt',
         'people.blacklist_button': '🚫 Fotoğrafları Seç (İncele/Sil)',
         'people.photos_selected_for_review': '{count} fotoğraf seçildi - istemediklerinizi inceleyip silebilirsiniz',
         'people.no_photos_to_select': 'Bu kişiye ait fotoğraf yok',
@@ -121,9 +117,7 @@ registerTranslations({
         'people.dissolve_title': 'Dissoudre ce groupe (visages mal regroupés)',
         'people.confirm_dissolve': 'Dissoudre ce groupe ? Ses visages retournent dans le pool non groupé - seul le groupe est supprimé, rien d\'autre n\'est touché.',
         'people.dissolved_success': 'Groupe dissous',
-        'people.delete_person_title': 'Supprimer cette personne (les photos sont conservées - seule l\'identité est supprimée)',
-        'people.delete_person_button': 'Supprimer la personne',
-        'people.person_deleted_success': 'Personne supprimée',
+        'people.dissolve_button': 'Dissoudre le groupe',
         'people.blacklist_button': '🚫 Sélectionner les photos à examiner/supprimer',
         'people.photos_selected_for_review': '{count} photos sélectionnées - examinez et supprimez celles que vous ne voulez pas',
         'people.no_photos_to_select': 'Cette personne n\'a aucune photo',
@@ -163,20 +157,17 @@ registerTranslations({
         'people.dissolve_title': 'Diese Gruppe auflösen (falsch gruppierte Gesichter)',
         'people.confirm_dissolve': 'Diese Gruppe auflösen? Ihre Gesichter kommen zurück in den nicht gruppierten Pool - nur die Gruppe wird gelöscht, sonst nichts.',
         'people.dissolved_success': 'Gruppe aufgelöst',
-        'people.delete_person_title': 'Diese Person löschen (Fotos bleiben erhalten - nur die Identität wird entfernt)',
-        'people.delete_person_button': 'Person löschen',
-        'people.person_deleted_success': 'Person gelöscht',
+        'people.dissolve_button': 'Gruppe auflösen',
         'people.blacklist_button': '🚫 Fotos zur Prüfung/Löschung auswählen',
         'people.photos_selected_for_review': '{count} Fotos ausgewählt - prüfen und löschen Sie die unerwünschten',
         'people.no_photos_to_select': 'Diese Person hat keine Fotos',
     },
 });
 
-function _renderPersonCard(p, { hidden = false, showDissolve = false, showDelete = false } = {}) {
+function _renderPersonCard(p, { hidden = false, showDissolve = false } = {}) {
     return `
         <div class="person-card" onclick="openPerson('${p.id}')">
             ${showDissolve ? `<button class="person-dissolve-btn" onclick="event.stopPropagation(); dissolvePersonAction('${p.id}')" title="${t('people.dissolve_title')}">💥</button>` : ''}
-            ${showDelete ? `<button class="person-dissolve-btn" onclick="event.stopPropagation(); deletePersonAction('${p.id}').then(ok => ok && renderPeople())" title="${t('people.delete_person_title')}">🗑️</button>` : ''}
             <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? '🙈' : '👁️'}</button>
             <div class="person-avatar">
                 ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : '<span style="font-size:2rem">👤</span>'}
@@ -193,23 +184,6 @@ async function dissolvePersonAction(personId) {
         toast(t('people.dissolved_success'), 'success');
         renderPeople();
     } catch (e) { toast(e.message, 'error'); }
-}
-
-// Same backend operation as dissolve (unassign faces, delete the Person
-// record, never touch the underlying assets) - this is just the
-// named-person-facing entry point with its own wording, since "dissolve a
-// wrongly-clustered group" doesn't read right for a person you deliberately
-// named. Returns true/false so callers (grid card vs. detail page) can
-// each decide how to navigate away afterward.
-async function deletePersonAction(personId) {
-    try {
-        await API.dissolvePerson(personId);
-        toast(t('people.person_deleted_success'), 'success');
-        return true;
-    } catch (e) {
-        toast(e.message, 'error');
-        return false;
-    }
 }
 
 // Gathers every photo of this person into the existing multi-select
@@ -259,7 +233,7 @@ async function renderPeople() {
         }
         pc.innerHTML = `
             <div id="naming-queue-container"></div>
-            <div class="people-grid">${data.people.map(p => _renderPersonCard(p, { showDelete: true })).join('')}</div>
+            <div class="people-grid">${data.people.map(p => _renderPersonCard(p, { showDissolve: true })).join('')}</div>
             ${unknownPool.length ? `
                 <div class="unknown-pool-section">
                     <h3 class="unknown-pool-title">❓ ${t('people.unknown_pool_title', { count: unknownPool.length })}</h3>
@@ -298,7 +272,7 @@ async function openPerson(id) {
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button class="btn btn-secondary btn-sm" onclick="navigateTo('people')">${t('people.back_to_list')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="blacklistPersonAction('${id}')">${t('people.blacklist_button')}</button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePersonAction('${id}').then(ok => ok && navigateTo('people'))" title="${t('people.delete_person_title')}">🗑️ ${t('people.delete_person_button')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="dissolvePersonAction('${id}')" title="${t('people.dissolve_title')}">💥 ${t('people.dissolve_button')}</button>
                     </div>
                 </div>
             </div>

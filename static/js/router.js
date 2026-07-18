@@ -10,6 +10,10 @@ function navigateTo(page) {
         clearInterval(adminPollInterval);
         adminPollInterval = null;
     }
+    if (page !== 'admin' && adminStatsPollInterval) {
+        clearInterval(adminStatsPollInterval);
+        adminStatsPollInterval = null;
+    }
 
     qsa('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
     $('topbar-title').textContent = pages[page].title;
