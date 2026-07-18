@@ -73,6 +73,10 @@ async def upload_files(
             ]
             if asset.file_type == "VIDEO":
                 jobs_to_queue.append(("TRANSCODE", {"asset_id": asset.id}))
+            # EXIF GPS but no resolved city yet - see import_handler.py's
+            # identical comment.
+            if asset.latitude is not None and asset.longitude is not None:
+                jobs_to_queue.append(("GEOCODE", {"asset_id": asset.id}))
 
             for job_type, job_data in jobs_to_queue:
                 try:

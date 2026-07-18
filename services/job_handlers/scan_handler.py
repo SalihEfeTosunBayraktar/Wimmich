@@ -88,6 +88,14 @@ async def handle_job_scan(db: AsyncSession, job: Job):
                 except JobAlreadyExistsException:
                     pass
 
+            # EXIF GPS but no resolved city yet - see import_handler.py's
+            # identical comment.
+            if asset.latitude is not None and asset.longitude is not None:
+                try:
+                    await create_job(db, "GEOCODE", {"asset_id": asset.id})
+                except JobAlreadyExistsException:
+                    pass
+
             await db.commit()
             # See clip_handler.py's identical expunge - a big external
             # library scan can create thousands of assets in this one

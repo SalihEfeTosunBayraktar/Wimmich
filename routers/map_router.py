@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models import User, Asset
 from auth import get_current_user
+from services.job_service import create_job, JobAlreadyExistsException
 
 router = APIRouter(prefix="/api/map", tags=["map"])
 
@@ -75,8 +76,14 @@ async def get_city_stats(
 
     # Assets with coordinates but no resolved city yet (geocoding pending -
     # see geocode_handler.py) - excluded from the ranking itself rather than
-    # dumped into a meaningless "Unknown" bucket, but surfaced here so the
-    # UI can point at running Tag Locations instead of silently omitting them.
+    # dumped into a meaningless "Unknown" bucket. New assets get an
+    # automatic per-asset GEOCODE job at import/upload/scan time (see
+    # import_handler.py's identical comment), but this covers the backlog
+    # of anything imported before that existed: queue one bulk catch-up
+    # GEOCODE run rather than leaving it to sit until someone remembers to
+    # click "Tag Locations" - create_job's own dedup means this is a no-op
+    # once a run is already queued/in progress, so revisiting the Map page
+    # repeatedly doesn't pile up duplicate jobs.
     unresolved = (await db.execute(
         select(func.count(Asset.id)).where(
             and_(
@@ -87,6 +94,12 @@ async def get_city_stats(
             )
         )
     )).scalar()
+
+    if unresolved:
+        try:
+            await create_job(db, "GEOCODE", None)
+        except JobAlreadyExistsException:
+            pass
 
     return {
         "cities": [{"city": c, "country": co, "count": n} for c, co, n in rows],

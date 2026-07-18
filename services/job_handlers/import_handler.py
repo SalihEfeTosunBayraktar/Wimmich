@@ -202,6 +202,17 @@ async def handle_job_import(db: AsyncSession, job: Job):
                     except JobAlreadyExistsException:
                         pass
 
+                # EXIF GPS but no resolved city yet - auto-queue the same
+                # offline reverse-geocode GEOCODE already does manually via
+                # "Tag Locations", so a city name is there by the time the
+                # user looks at the Map page instead of only after they
+                # remember to click that button themselves.
+                if asset.latitude is not None and asset.longitude is not None:
+                    try:
+                        await create_job(db, "GEOCODE", {"asset_id": asset.id})
+                    except JobAlreadyExistsException:
+                        pass
+
                 imported += 1
 
             except Exception as e:
