@@ -1,6 +1,53 @@
 /**
  * Wimmich - Login/register forms and session bootstrap.
  */
+registerTranslations({
+    en: {
+        'profile.settings_title': 'Profile Settings',
+        'profile.title': 'Profile Settings',
+        'profile.name_label': 'Name',
+        'profile.email_label': 'Email',
+        'profile.current_password_label': 'Current Password',
+        'profile.new_password_label': 'New Password',
+        'profile.password_leave_blank': 'Leave blank to keep unchanged',
+        'profile.updated': 'Profile updated',
+        'profile.name_email_required': 'Name and email cannot be empty',
+    },
+    tr: {
+        'profile.settings_title': 'Profil Ayarları',
+        'profile.title': 'Profil Ayarları',
+        'profile.name_label': 'İsim',
+        'profile.email_label': 'E-posta',
+        'profile.current_password_label': 'Mevcut Şifre',
+        'profile.new_password_label': 'Yeni Şifre',
+        'profile.password_leave_blank': 'Değiştirmemek için boş bırakın',
+        'profile.updated': 'Profil güncellendi',
+        'profile.name_email_required': 'İsim ve e-posta boş olamaz',
+    },
+    fr: {
+        'profile.settings_title': 'Paramètres du profil',
+        'profile.title': 'Paramètres du profil',
+        'profile.name_label': 'Nom',
+        'profile.email_label': 'E-mail',
+        'profile.current_password_label': 'Mot de passe actuel',
+        'profile.new_password_label': 'Nouveau mot de passe',
+        'profile.password_leave_blank': 'Laisser vide pour ne pas changer',
+        'profile.updated': 'Profil mis à jour',
+        'profile.name_email_required': "Le nom et l'e-mail ne peuvent pas être vides",
+    },
+    de: {
+        'profile.settings_title': 'Profileinstellungen',
+        'profile.title': 'Profileinstellungen',
+        'profile.name_label': 'Name',
+        'profile.email_label': 'E-Mail',
+        'profile.current_password_label': 'Aktuelles Passwort',
+        'profile.new_password_label': 'Neues Passwort',
+        'profile.password_leave_blank': 'Leer lassen, um unverändert zu lassen',
+        'profile.updated': 'Profil aktualisiert',
+        'profile.name_email_required': 'Name und E-Mail dürfen nicht leer sein',
+    },
+});
+
 function initAuth() {
     $('login-form').onsubmit = async (e) => {
         e.preventDefault();
@@ -49,6 +96,52 @@ function initAuth() {
         API.clearToken();
         location.reload();
     };
+
+    $('profile-settings-btn').onclick = showProfileModal;
+}
+
+function showProfileModal() {
+    $('profile-name').value = state.user.name;
+    $('profile-email').value = state.user.email;
+    $('profile-current-password').value = '';
+    $('profile-new-password').value = '';
+    $('profile-modal').classList.remove('hidden');
+    $('profile-name').focus();
+}
+
+function initProfileModal() {
+    const close = () => $('profile-modal').classList.add('hidden');
+    $('profile-modal-close').onclick = close;
+    $('profile-modal-cancel').onclick = close;
+
+    $('profile-modal-save').onclick = async () => {
+        const name = $('profile-name').value.trim();
+        const email = $('profile-email').value.trim();
+        const currentPassword = $('profile-current-password').value;
+        const newPassword = $('profile-new-password').value;
+
+        if (!name || !email) {
+            toast(t('profile.name_email_required'), 'warning');
+            return;
+        }
+
+        const payload = { name, email };
+        if (newPassword) {
+            payload.current_password = currentPassword;
+            payload.new_password = newPassword;
+        }
+
+        try {
+            const r = await API.updateMe(payload);
+            state.user.name = r.user.name;
+            state.user.email = r.user.email;
+            _updateSidebarUserInfo();
+            close();
+            toast(t('profile.updated'), 'success');
+        } catch (e) {
+            toast(e.message, 'error');
+        }
+    };
 }
 
 async function checkAuth() {
@@ -66,12 +159,16 @@ function showAuth() {
     $('app').classList.add('hidden');
 }
 
-function showApp() {
-    $('auth-screen').classList.add('hidden');
-    $('app').classList.remove('hidden');
+function _updateSidebarUserInfo() {
     $('user-name').textContent = state.user.name;
     $('user-email').textContent = state.user.email;
     $('user-avatar').textContent = state.user.name.charAt(0).toUpperCase();
+}
+
+function showApp() {
+    $('auth-screen').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    _updateSidebarUserInfo();
     if (!state.user.is_admin) $('nav-admin').classList.add('hidden');
     else $('nav-admin').classList.remove('hidden');
     updateSidebarStorage();

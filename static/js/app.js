@@ -12,5 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initAddToAlbumModal();
     initShareModal();
     initAlbumShareModal();
+    initProfileModal();
     checkAuth();
 });

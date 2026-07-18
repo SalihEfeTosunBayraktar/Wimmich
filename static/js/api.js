@@ -55,6 +55,7 @@ const API = {
         return this.request('/api/auth/login', { method: 'POST', body: { email, password } });
     },
     getMe() { return this.request('/api/auth/me'); },
+    updateMe(data) { return this.request('/api/auth/me', { method: 'PUT', body: data }); },
     logout() { return this.request('/api/auth/logout', { method: 'POST' }); },
 
     // Assets
