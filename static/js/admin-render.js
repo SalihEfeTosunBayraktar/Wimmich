@@ -442,12 +442,6 @@ async function renderAdmin() {
                     <h4>📡 ${t('admin_render.server_status_heading')}</h4>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <span class="badge" id="server-ping-badge">${t('admin_render.ping_checking')}</span>
-                    </div>
-                </div>
-
-                <div class="admin-status-card">
-                    <h4>🤖 ${t('admin_render.ml_status_heading')}</h4>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
                         <span class="badge ${stats.ml.face_detection_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_face_detection', { status: stats.ml.face_detection_available ? t('admin_render.status_active_opencv') : t('admin_render.status_unavailable') })}</span>
                         <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
