@@ -338,10 +338,21 @@ async function resumeImportProgressIfActive() {
             const s = await API.getImportStatus(entry.jobId);
             if (s.status === 'PENDING' || s.status === 'RUNNING') {
                 stillActive.push({ jobId: entry.jobId, path: entry.path || s.path });
+            } else if (s.status === 'FAILED' && s.retried_as) {
+                // The hang watchdog abandoned this exact attempt and
+                // auto-requeued it under a new id - follow the chain
+                // instead of treating a still-running import as failed.
+                stillActive.push({ jobId: s.retried_as, path: entry.path });
             }
+            // COMPLETED / CANCELLED / a real FAILED (no retry) - confirmed
+            // terminal, correctly falls out of tracking here.
         } catch {
-            // Job no longer exists / request failed - drop it, same as a
-            // completed one falling out of the tracked list below.
+            // Request failed (network blip, brief server hiccup, SQLite
+            // briefly busy mid-commit) - NOT confirmed evidence the job is
+            // gone. Keep tracking it optimistically instead of silently
+            // forgetting a real, still-running import; the next poll tick
+            // or page mount reconciles once the request actually succeeds.
+            stillActive.push(entry);
         }
     }
     _setActiveImports(stillActive);
@@ -354,6 +365,19 @@ async function pollImportProgress(jobId) {
     const interval = setInterval(async () => {
         try {
             const s = await API.getImportStatus(jobId);
+
+            if (s.status === 'FAILED' && s.retried_as) {
+                // Same chain-following as resumeImportProgressIfActive()
+                // above - swap to the new id, same card/slot, no
+                // interruption visible to the user.
+                clearInterval(interval);
+                const entries = _getActiveImports().map(e => e.jobId === jobId ? { ...e, jobId: s.retried_as } : e);
+                _setActiveImports(entries);
+                _renderActiveImportsList(entries);
+                pollImportProgress(s.retried_as);
+                return;
+            }
+
             const fill = $(`import-fill-${jobId}`);
             const pct = $(`import-percent-${jobId}`);
             if (fill) fill.style.width = s.progress + '%';
@@ -371,7 +395,14 @@ async function pollImportProgress(jobId) {
                     toast(t('import_browser.import_failed_prefix') + (s.error || ''), 'error');
                 }
             }
-        } catch { clearInterval(interval); }
+        } catch {
+            // Transient failure, not confirmed evidence the job is done or
+            // gone - leave the interval running and the card as-is, the
+            // next tick retries. Previously this cleared the interval on
+            // ANY error, silently freezing (and effectively abandoning)
+            // the progress bar even for a perfectly healthy import that
+            // just hit one bad request.
+        }
     }, IMPORT_POLL_INTERVAL_MS);
 }
 

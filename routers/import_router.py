@@ -97,6 +97,11 @@ async def import_status(
         "path": job.data.get("path"),
         "created_at": job.created_at.isoformat() if job.created_at else None,
         "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+        # Set by the hang watchdog (job_core.py) when this exact job was
+        # abandoned and automatically re-queued under a new id - lets a
+        # client still polling this id follow the chain instead of seeing
+        # FAILED and giving up on an import that's actually still running.
+        "retried_as": job.data.get("_retried_as"),
     }
 
 

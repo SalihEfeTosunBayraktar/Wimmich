@@ -80,6 +80,12 @@ class JobWorker:
         # the moment busy becomes true.
         self._current_job_id = None
         self._current_job_started_at = None
+        # Last-seen progress value and when it last changed - the watchdog
+        # fires on STALE progress, not on total job age, so a large-but-
+        # healthy bulk job (a 460GB scan/import can legitimately run for
+        # hours) never gets falsely killed just for taking a while.
+        self._current_job_last_progress = None
+        self._current_job_progress_updated_at = None
         # Job ids the watchdog has already given up on - checked by
         # _run_job_task so a straggler task that finishes (or fails) late
         # can never overwrite what the watchdog already recorded for it.
@@ -157,6 +163,8 @@ class JobWorker:
                             found_pending = True
                             self._current_job_id = job_id
                             self._current_job_started_at = job.started_at
+                            self._current_job_last_progress = job.progress
+                            self._current_job_progress_updated_at = job.started_at
                         else:
                             await handle_cleanup_trash(db)
                             await self._maybe_schedule_backup(db, create_job)
@@ -184,18 +192,25 @@ class JobWorker:
 
     async def _check_hang_watchdog(self, create_job) -> None:
         """Runs once per loop iteration while busy=True (every
-        JOB_BUSY_CHECK_INTERVAL_SECONDS, ~0.2s - cheap, a no-op datetime
+        JOB_BUSY_CHECK_INTERVAL_SECONDS, ~0.2s - cheap, a no-op query/
         comparison until the threshold is actually exceeded).
 
         Most handlers have no per-call timeout at all; even the two known
         ML model-download hangs (CLIP/face model first load) are only
         bounded by ML_MODEL_LOAD_TIMEOUT_SECONDS inside clip_service.py/
         face_service.py, not by anything here. This is the general
-        backstop: past JOB_HANG_TIMEOUT_MINUTES of wall-clock time since
-        dispatch, give up regardless of *why* it's stuck, so one hung job
-        can't block the entire queue behind it forever - only one job runs
-        at a time by design (see _worker_loop's docstring), so without this
-        a single wedged job means nothing else ever runs again.
+        backstop: past JOB_HANG_TIMEOUT_MINUTES with NO progress movement,
+        give up regardless of *why* it's stuck, so one hung job can't block
+        the entire queue behind it forever - only one job runs at a time by
+        design (see _worker_loop's docstring), so without this a single
+        wedged job means nothing else ever runs again.
+
+        Keyed on progress staleness, not total job age - a bulk SCAN/IMPORT
+        over a large library can legitimately run for many hours while
+        still making steady progress; the earlier elapsed-time-only version
+        would falsely kill (and silently orphan - see import_router.py's
+        retried_as) a perfectly healthy multi-hour import for no reason
+        other than having been running a while.
 
         Python cannot forcibly kill a thread blocked in a synchronous call
         (asyncio.to_thread) - the old task is abandoned in place, not
@@ -207,12 +222,25 @@ class JobWorker:
         if not self._current_job_id or not self._current_job_started_at:
             return
 
-        elapsed_min = (datetime.now(timezone.utc) - self._current_job_started_at).total_seconds() / 60
-        if elapsed_min < config.JOB_HANG_TIMEOUT_MINUTES:
+        job_id = self._current_job_id
+        now = datetime.now(timezone.utc)
+
+        async with AsyncSessionLocal() as db:
+            current_progress = (await db.execute(
+                select(Job.progress).where(Job.id == job_id)
+            )).scalar_one_or_none()
+
+        if current_progress != self._current_job_last_progress:
+            self._current_job_last_progress = current_progress
+            self._current_job_progress_updated_at = now
             return
 
-        job_id = self._current_job_id
-        warn("JOB", f"Job {job_id} exceeded the {config.JOB_HANG_TIMEOUT_MINUTES}min hang watchdog - abandoning it.")
+        stale_since = self._current_job_progress_updated_at or self._current_job_started_at
+        stale_min = (now - stale_since).total_seconds() / 60
+        if stale_min < config.JOB_HANG_TIMEOUT_MINUTES:
+            return
+
+        warn("JOB", f"Job {job_id} made no progress for {config.JOB_HANG_TIMEOUT_MINUTES}min (stuck at {current_progress}%) - abandoning it.")
 
         # Recorded synchronously, before any await in this method - by the
         # time any other coroutine (including a resuming straggler) gets
@@ -239,19 +267,24 @@ class JobWorker:
 
                 if retries < config.JOB_HANG_MAX_RETRIES:
                     job.error_message = (
-                        f"İşlem {config.JOB_HANG_TIMEOUT_MINUTES} dakikadır yanıt vermediği için "
+                        f"İşlem {config.JOB_HANG_TIMEOUT_MINUTES} dakikadır ilerleme kaydetmediği için "
                         f"zaman aşımına uğradı, yeniden deneniyor ({retries + 1}/{config.JOB_HANG_MAX_RETRIES})."
                     )
                     retry_data = dict(job.data or {})
                     retry_data["_watchdog_retries"] = retries + 1
                     try:
                         new_job = await create_job(db, job.job_type, retry_data)
+                        # Lets a client still polling the OLD job id (e.g.
+                        # import-browser.js's dedicated progress card) follow
+                        # the chain to the new one instead of seeing FAILED
+                        # and giving up on a job that's actually still going.
+                        job.data = {**(job.data or {}), "_retried_as": new_job.id}
                         info("JOB", f"Job {job_id} re-queued as {new_job.id} (retry {retries + 1}).")
                     except JobAlreadyExistsException:
                         pass  # an equivalent job is already queued - fine
                 else:
                     job.error_message = (
-                        f"İşlem {config.JOB_HANG_TIMEOUT_MINUTES} dakikadır yanıt vermediği için "
+                        f"İşlem {config.JOB_HANG_TIMEOUT_MINUTES} dakikadır ilerleme kaydetmediği için "
                         f"zaman aşımına uğradı. {config.JOB_HANG_MAX_RETRIES} deneme sonrası vazgeçildi."
                     )
                     error("JOB", f"Job {job_id} ({job.job_type}) exceeded the retry limit after repeated timeouts - giving up.")
@@ -262,6 +295,8 @@ class JobWorker:
         self._job_task = None
         self._current_job_id = None
         self._current_job_started_at = None
+        self._current_job_last_progress = None
+        self._current_job_progress_updated_at = None
 
     async def _maybe_schedule_backup(self, db: AsyncSession, create_job) -> None:
         """Auto-queues a BACKUP job once the configured interval has
