@@ -2,6 +2,24 @@
  * Wimmich API Client
  * Handles all HTTP communication with the backend
  */
+// Web Crypto's subtle.digest only works in a secure context (HTTPS, or
+// localhost) - a plain-HTTP LAN address (very common for a self-hosted
+// setup) doesn't qualify, where crypto.subtle is simply undefined. Returns
+// null in that case rather than throwing, so upload just silently skips
+// the integrity check exactly like an older client would - see
+// asset_router.py's upload endpoint, which already treats a missing
+// checksum as "nothing to verify against".
+async function _computeFileChecksum(file) {
+    if (!window.crypto?.subtle) return null;
+    try {
+        const buf = await file.arrayBuffer();
+        const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+        return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+        return null; // never let a hashing failure block the actual upload
+    }
+}
+
 const API = {
     token: localStorage.getItem('wimmich_token') || sessionStorage.getItem('wimmich_token'),
 
@@ -59,10 +77,12 @@ const API = {
     logout() { return this.request('/api/auth/logout', { method: 'POST' }); },
 
     // Assets
-    uploadFile(file) {
+    async uploadFile(file) {
         const fd = new FormData();
         fd.append('files', file);
         if (file.lastModified) fd.append('last_modified', String(file.lastModified));
+        const checksum = await _computeFileChecksum(file);
+        if (checksum) fd.append('checksums', checksum);
         return this.request('/api/assets/upload', { method: 'POST', body: fd });
     },
     getGallery(page = 1, perPage = 60, sortBy = 'date_desc', groupBy = 'none', filterBy = 'all') {

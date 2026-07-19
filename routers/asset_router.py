@@ -36,6 +36,7 @@ class VisualIgnoreRequest(BaseModel):
 async def upload_assets(
     files: List[UploadFile] = File(...),
     last_modified: Optional[List[str]] = Form(None),
+    checksums: Optional[List[str]] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -44,8 +45,12 @@ async def upload_assets(
     `last_modified` (browser File API lastModified, ms since epoch) is used as
     a taken_at fallback when a file has no EXIF/embedded date - aligned by
     index with `files`.
+
+    `checksums` (SHA-256 hex the client computed from each file before
+    sending, aligned by index with `files`) is optional - older clients that
+    don't send it just skip the integrity check, same as before this existed.
     """
-    return await asset_mutation_service.upload_files(db, user, files, last_modified)
+    return await asset_mutation_service.upload_files(db, user, files, last_modified, checksums)
 
 @router.get("/timeline")
 async def get_timeline(

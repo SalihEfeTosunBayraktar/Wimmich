@@ -137,19 +137,31 @@ function setUploadItemStatus(idx, status, errorMsg) {
     }
 }
 
+// A checksum mismatch or truncated-write error (see UploadIntegrityError,
+// media_service.py) means the transfer itself was the problem, not the
+// file or the account - worth a couple of automatic retries (flaky mobile
+// network mid-backup is exactly the case this exists for) before making
+// the user do it manually.
+const MAX_UPLOAD_RETRIES = 2;
+
 async function runUploadWorker() {
     uploadWorkerRunning = true;
     await acquireWakeLock();
 
     while (uploadQueue.length > 0) {
-        const { file, idx } = uploadQueue.shift();
+        const { file, idx, retries = 0 } = uploadQueue.shift();
         try {
             const r = await API.uploadFile(file);
             if (!r) {
                 setUploadItemStatus(idx, 'error', t('upload.session_expired'));
                 break; // API.request() is already reloading the page on 401
             } else if (r.errors && r.errors.length > 0) {
-                setUploadItemStatus(idx, 'error', r.errors[0].error || t('upload.error_generic'));
+                const err = r.errors[0];
+                if (err.retryable && retries < MAX_UPLOAD_RETRIES) {
+                    uploadQueue.unshift({ file, idx, retries: retries + 1 });
+                    continue;
+                }
+                setUploadItemStatus(idx, 'error', err.error || t('upload.error_generic'));
             } else if (r.results && r.results[0] && r.results[0].status === 'duplicate') {
                 setUploadItemStatus(idx, 'duplicate');
             } else {

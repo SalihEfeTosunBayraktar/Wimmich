@@ -5,7 +5,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Asset, User
-from services.media_service import process_upload, delete_asset_files
+from services.media_service import process_upload, delete_asset_files, UploadIntegrityError
 from services.job_service import create_job, JobAlreadyExistsException
 from services.quota_service import check_all_quotas
 from services.asset_query_service import get_asset_or_404
@@ -23,7 +23,8 @@ def _parse_client_timestamp(raw: Optional[str]) -> Optional[datetime]:
 
 
 async def upload_files(
-    db: AsyncSession, user: User, files: List, last_modified: Optional[List[Optional[str]]] = None
+    db: AsyncSession, user: User, files: List, last_modified: Optional[List[Optional[str]]] = None,
+    checksums: Optional[List[Optional[str]]] = None,
 ) -> dict:
     """Process a batch of uploaded files: quota checks, dedup, storage, ML job queuing."""
     results = []
@@ -42,7 +43,8 @@ async def upload_files(
             fallback_taken_at = _parse_client_timestamp(
                 last_modified[i] if last_modified and i < len(last_modified) else None
             )
-            attrs = await process_upload(file_data, file.filename, user.id, fallback_taken_at)
+            expected_checksum = checksums[i] if checksums and i < len(checksums) else None
+            attrs = await process_upload(file_data, file.filename, user.id, fallback_taken_at, expected_checksum=expected_checksum)
 
             if attrs.get("checksum"):
                 dup_result = await db.execute(
@@ -90,6 +92,11 @@ async def upload_files(
                 "asset": asset_to_dict(asset),
             })
 
+        except UploadIntegrityError as e:
+            # Distinct from the generic branch below so the client can tell
+            # "transfer looked incomplete/corrupted, safe to just retry this
+            # one file" apart from a permanent rejection (bad format, quota).
+            errors.append({"file_name": file.filename, "error": str(e), "retryable": True})
         except Exception as e:
             errors.append({"file_name": file.filename, "error": str(e)})
 

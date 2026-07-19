@@ -20,6 +20,13 @@ def compute_file_hash(file_path: str) -> str:
     return compute_sha256(file_path)
 
 
+def compute_bytes_hash(data: bytes) -> str:
+    """SHA-256 of an in-memory buffer - used for upload bytes already held
+    in memory, so callers don't need to write to disk first just to hash
+    what they already have."""
+    return hashlib.sha256(data).hexdigest()
+
+
 def get_file_size(file_path: str) -> int:
     """Get file size in bytes."""
     return Path(file_path).stat().st_size

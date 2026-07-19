@@ -9,9 +9,16 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import config
-from utils.hash_utils import compute_file_hash, get_file_size
+from utils.hash_utils import compute_bytes_hash
 from utils.log import warn
 from services.media_processing import _process_image, _process_video
+
+
+class UploadIntegrityError(ValueError):
+    """A transfer/write completeness check failed (checksum mismatch or a
+    truncated write) - distinct from other process_upload() failures
+    (unsupported format, corrupt-enough-to-fail-processing) so callers can
+    tell a caller-visible client to retry apart from a permanent rejection."""
 
 
 def get_file_type(filename: str) -> Optional[str]:
@@ -36,11 +43,12 @@ async def process_upload(
     user_id: str,
     fallback_taken_at: Optional[datetime] = None,
     dest_dir: Optional[Path] = None,
+    expected_checksum: Optional[str] = None,
 ) -> dict:
     """
     Process an uploaded file:
-    1. Save to disk
-    2. Compute hash
+    1. Compute hash, optionally verify it
+    2. Save to disk, verify the write landed completely
     3. Extract EXIF/metadata
     4. Generate thumbnails
 
@@ -56,11 +64,31 @@ async def process_upload(
     copy land on a different drive than the app's default storage; the
     regular browser Upload button always omits it.
 
+    `expected_checksum` (SHA-256 hex, optional): only the browser/mobile
+    upload flow passes this - a hash the client computed from the same bytes
+    before sending. A mismatch here means the transfer "completed" at the
+    HTTP layer but silently delivered truncated/corrupted bytes (seen on
+    some flaky mobile networks/carrier proxies), caught before anything is
+    written to disk rather than only surfacing later as an EXIF/thumbnail
+    processing failure - or not surfacing at all, for a truncation subtle
+    enough that the file still opens. Raises ValueError on mismatch so the
+    caller's existing per-file error handling can report it and the client
+    can retry.
+
     Returns a dict of asset attributes.
     """
     file_type = get_file_type(original_filename)
     if not file_type:
         raise ValueError(f"Unsupported file type: {original_filename}")
+
+    # Hashed from the in-memory bytes rather than reading the file back from
+    # disk after writing (the old approach) - one fewer full-file disk read,
+    # and lets a checksum mismatch be caught before writing anything at all.
+    checksum = await asyncio.to_thread(compute_bytes_hash, file_data)
+    if expected_checksum and checksum != expected_checksum:
+        raise UploadIntegrityError(
+            f"{original_filename}: yükleme eksik veya bozuk geldi (checksum uyuşmadı) - lütfen tekrar deneyin"
+        )
 
     # Generate unique filename
     ext = Path(original_filename).suffix.lower()
@@ -69,12 +97,12 @@ async def process_upload(
     # Create user directory
     user_upload_dir = (dest_dir or config.UPLOAD_DIR) / user_id
     user_upload_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Date-based subdirectory
     now = datetime.now()
     date_dir = user_upload_dir / str(now.year) / f"{now.month:02d}"
     date_dir.mkdir(parents=True, exist_ok=True)
-    
+
     file_path = date_dir / unique_name
 
     # Save file in thread
@@ -83,9 +111,17 @@ async def process_upload(
             f.write(file_data)
     await asyncio.to_thread(save_file)
 
-    # Compute hash and stats in thread
-    checksum = await asyncio.to_thread(compute_file_hash, str(file_path))
-    file_size = await asyncio.to_thread(get_file_size, str(file_path))
+    # Confirms the write actually landed completely - catches a destination-
+    # disk problem (full, disconnected mid-write, permission hiccup) during
+    # a regular upload or a Folder Import copy, both of which write through
+    # this same save_file(). Cheap (a stat() call, not a re-read+re-hash)
+    # and applies regardless of whether expected_checksum was given at all.
+    file_size = await asyncio.to_thread(lambda: file_path.stat().st_size)
+    if file_size != len(file_data):
+        raise UploadIntegrityError(
+            f"{original_filename}: dosya diske yazılırken eksik kaldı ({file_size}/{len(file_data)} bayt) - lütfen tekrar deneyin"
+        )
+
     mime_type = get_mime_type(original_filename)
 
     result = {
