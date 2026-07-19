@@ -11,6 +11,12 @@ registerTranslations({
         'admin_jobs.thumbnail_desc': 'Generating preview images in various sizes for all photos',
         'admin_jobs.scan_title': 'Folder Scan',
         'admin_jobs.scan_desc': 'Scanning new and changed files in the archive folder',
+        'admin_jobs.import_copy_title': 'Import (Copy)',
+        'admin_jobs.import_reference_title': 'Reference Creation',
+        'admin_jobs.import_desc': 'Importing files from a local folder',
+        'admin_jobs.eta_label': '~{time} left',
+        'admin_jobs.eta_minutes': '{count}m',
+        'admin_jobs.eta_hours': '{hours}h {minutes}m',
         'admin_jobs.cleanup_title': 'Trash Cleanup',
         'admin_jobs.cleanup_desc': 'Permanently deleting files whose retention period in trash has expired',
         'admin_jobs.backup_title': 'Backup',
@@ -50,6 +56,12 @@ registerTranslations({
         'admin_jobs.thumbnail_desc': 'Tüm fotoğraflar için farklı boyutlarda önizleme görselleri oluşturuluyor',
         'admin_jobs.scan_title': 'Klasör Tarama',
         'admin_jobs.scan_desc': 'Arşiv klasöründeki yeni ve değişen dosyalar taranıyor',
+        'admin_jobs.import_copy_title': 'İçe Aktarma (Kopya)',
+        'admin_jobs.import_reference_title': 'Referans Oluşturma',
+        'admin_jobs.import_desc': 'Yerel klasörden dosyalar içe aktarılıyor',
+        'admin_jobs.eta_label': '~{time} kaldı',
+        'admin_jobs.eta_minutes': '{count}dk',
+        'admin_jobs.eta_hours': '{hours}sa {minutes}dk',
         'admin_jobs.cleanup_title': 'Çöp Kutusu Temizliği',
         'admin_jobs.cleanup_desc': 'Çöp kutusunda bekleme süresi dolan dosyalar kalıcı olarak siliniyor',
         'admin_jobs.backup_title': 'Yedekleme',
@@ -89,6 +101,12 @@ registerTranslations({
         'admin_jobs.thumbnail_desc': "Génération d'images d'aperçu de différentes tailles pour toutes les photos",
         'admin_jobs.scan_title': 'Analyse du dossier',
         'admin_jobs.scan_desc': "Analyse des fichiers nouveaux et modifiés dans le dossier d'archive",
+        'admin_jobs.import_copy_title': 'Importation (copie)',
+        'admin_jobs.import_reference_title': 'Création de référence',
+        'admin_jobs.import_desc': "Importation de fichiers depuis un dossier local",
+        'admin_jobs.eta_label': '~{time} restant',
+        'admin_jobs.eta_minutes': '{count}min',
+        'admin_jobs.eta_hours': '{hours}h {minutes}min',
         'admin_jobs.cleanup_title': 'Nettoyage de la corbeille',
         'admin_jobs.cleanup_desc': 'Suppression définitive des fichiers dont la période de rétention dans la corbeille a expiré',
         'admin_jobs.backup_title': 'Sauvegarde',
@@ -128,6 +146,12 @@ registerTranslations({
         'admin_jobs.thumbnail_desc': 'Vorschaubilder in verschiedenen Größen werden für alle Fotos erstellt',
         'admin_jobs.scan_title': 'Ordner-Scan',
         'admin_jobs.scan_desc': 'Neue und geänderte Dateien im Archivordner werden gescannt',
+        'admin_jobs.import_copy_title': 'Import (Kopie)',
+        'admin_jobs.import_reference_title': 'Referenzerstellung',
+        'admin_jobs.import_desc': 'Dateien werden aus einem lokalen Ordner importiert',
+        'admin_jobs.eta_label': '~{time} verbleibend',
+        'admin_jobs.eta_minutes': '{count}Min',
+        'admin_jobs.eta_hours': '{hours}Std {minutes}Min',
         'admin_jobs.cleanup_title': 'Papierkorb-Bereinigung',
         'admin_jobs.cleanup_desc': 'Dateien, deren Aufbewahrungsfrist im Papierkorb abgelaufen ist, werden dauerhaft gelöscht',
         'admin_jobs.backup_title': 'Sicherung',
@@ -179,12 +203,49 @@ const JOB_STATUS_INFO = {
     CANCELLED: { badgeClass: 'job-status--warning', text: t('admin_jobs.status_cancelled') },
 };
 
+// IMPORT covers two very different operations under one job_type (copy vs
+// reference-in-place, see admin_jobs_router.py's copy_files field) - a
+// plain lookup table can't tell them apart, so this is a function instead
+// of another JOB_TYPE_INFO entry.
+function _jobTypeInfo(j) {
+    if (j.type === 'IMPORT') {
+        return {
+            title: j.copy_files === false ? t('admin_jobs.import_reference_title') : t('admin_jobs.import_copy_title'),
+            icon: j.copy_files === false ? '🔗' : '📥',
+            desc: t('admin_jobs.import_desc'),
+        };
+    }
+    return JOB_TYPE_INFO[j.type] || { title: j.type || t('admin_jobs.unknown_job_title'), icon: '⚙️', desc: t('admin_jobs.unknown_job_desc') };
+}
+
+// Simple linear extrapolation from elapsed-time-so-far / progress-so-far -
+// good enough for "roughly how much longer", not meant to be precise.
+// Skipped below 5% progress or 10s elapsed: extrapolating from a tiny
+// sample swings wildly (a job at 1% after 2s would "estimate" ~200s total
+// off one noisy data point), more misleading than no estimate at all.
+function _estimateRemainingMs(j) {
+    if (!j.started_at || !j.progress || j.progress < 5 || j.progress >= 100) return null;
+    const elapsedMs = Date.now() - new Date(j.started_at).getTime();
+    if (elapsedMs < 10000) return null;
+    const totalEstimateMs = elapsedMs / (j.progress / 100);
+    return Math.max(0, totalEstimateMs - elapsedMs);
+}
+
+function _formatEta(ms) {
+    const totalMinutes = Math.round(ms / 60000);
+    if (totalMinutes < 1) return null; // "0m left" reads as broken, not "almost done"
+    if (totalMinutes < 60) return t('admin_jobs.eta_minutes', { count: totalMinutes });
+    return t('admin_jobs.eta_hours', { hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 });
+}
+
 function renderJobList(jobs) {
     return jobs.map(j => {
         const statusInfo = JOB_STATUS_INFO[j.status] || JOB_STATUS_INFO.COMPLETED;
-        const typeInfo = JOB_TYPE_INFO[j.type] || { title: j.type || t('admin_jobs.unknown_job_title'), icon: '⚙️', desc: t('admin_jobs.unknown_job_desc') };
+        const typeInfo = _jobTypeInfo(j);
         const progress = j.progress || 0;
         const isActive = j.status === 'RUNNING' || j.status === 'PENDING';
+        const etaMs = isActive ? _estimateRemainingMs(j) : null;
+        const etaText = etaMs !== null ? _formatEta(etaMs) : null;
 
         const errorSection = j.error ? `
             <div class="job-card-error">
@@ -211,7 +272,7 @@ function renderJobList(jobs) {
                             <div class="job-card-progress-fill" style="width:${progress}%"></div>
                         </div>
                         <div class="job-card-progress-label">
-                            <span>${t('admin_jobs.progress_status_label')}</span>
+                            <span>${t('admin_jobs.progress_status_label')}${etaText ? ` · ${t('admin_jobs.eta_label', { time: etaText })}` : ''}</span>
                             <span class="job-card-progress-percent">${t('admin_jobs.percent_value', { value: progress })}</span>
                         </div>
                     </div>

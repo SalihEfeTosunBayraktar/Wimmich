@@ -44,6 +44,11 @@ async def list_jobs(
                 "created_at": j.created_at.isoformat() if j.created_at else None,
                 "started_at": j.started_at.isoformat() if j.started_at else None,
                 "completed_at": j.completed_at.isoformat() if j.completed_at else None,
+                # IMPORT covers two very different operations sharing one
+                # job_type (copy vs reference-in-place) - surfaced here so
+                # the job list can label them distinctly instead of just
+                # "Import" for both.
+                "copy_files": j.data.get("copy_files") if j.job_type == "IMPORT" else None,
             }
             for j in jobs
         ]
