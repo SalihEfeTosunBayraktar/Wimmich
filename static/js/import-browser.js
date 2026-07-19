@@ -30,6 +30,10 @@ registerTranslations({
         'import_browser.scanning_btn': 'Scanning...',
         'import_browser.scanning_hint': '🔍 Scanning the folder... this can take a while for a large drive.',
         'import_browser.starting_btn': 'Starting...',
+        'import_browser.reference_risky_warning': '⚠️ This folder is on a {diskType} drive. In Reference mode, if this drive is ever disconnected or unavailable, those photos will eventually be moved to trash (see Repair Broken Files). Copy mode is recommended for drives like this.',
+        'import_browser.disk_type_removable': 'removable (USB/external)',
+        'import_browser.disk_type_network': 'network',
+        'import_browser.disk_type_cdrom': 'optical (CD/DVD)',
     },
     tr: {
         'import_browser.parent_folder': '⬆ Üst Klasör',
@@ -59,6 +63,10 @@ registerTranslations({
         'import_browser.scanning_btn': 'Taranıyor...',
         'import_browser.scanning_hint': '🔍 Klasör taranıyor... büyük bir disk için bu biraz sürebilir.',
         'import_browser.starting_btn': 'Başlatılıyor...',
+        'import_browser.reference_risky_warning': '⚠️ Bu klasör {diskType} bir sürücüde. Referans modunda, bu sürücü bir gün bağlantısı kesilir veya erişilemez hale gelirse bu fotoğraflar zamanla çöp kutusuna taşınır (bkz. Bozuk Dosyaları Onar). Bu tür sürücüler için Kopyala modu önerilir.',
+        'import_browser.disk_type_removable': 'çıkarılabilir (USB/harici)',
+        'import_browser.disk_type_network': 'ağ',
+        'import_browser.disk_type_cdrom': 'optik (CD/DVD)',
     },
     fr: {
         'import_browser.parent_folder': '⬆ Dossier parent',
@@ -88,6 +96,10 @@ registerTranslations({
         'import_browser.scanning_btn': 'Analyse...',
         'import_browser.scanning_hint': "🔍 Analyse du dossier en cours... cela peut prendre un moment pour un grand disque.",
         'import_browser.starting_btn': 'Démarrage...',
+        'import_browser.reference_risky_warning': "⚠️ Ce dossier se trouve sur un lecteur {diskType}. En mode Référence, si ce lecteur est un jour déconnecté ou indisponible, ces photos finiront par être déplacées vers la corbeille (voir Réparer les fichiers cassés). Le mode Copie est recommandé pour ce type de lecteur.",
+        'import_browser.disk_type_removable': 'amovible (USB/externe)',
+        'import_browser.disk_type_network': 'réseau',
+        'import_browser.disk_type_cdrom': 'optique (CD/DVD)',
     },
     de: {
         'import_browser.parent_folder': '⬆ Übergeordneter Ordner',
@@ -117,6 +129,10 @@ registerTranslations({
         'import_browser.scanning_btn': 'Wird gescannt...',
         'import_browser.scanning_hint': '🔍 Ordner wird gescannt... bei einem großen Laufwerk kann das etwas dauern.',
         'import_browser.starting_btn': 'Wird gestartet...',
+        'import_browser.reference_risky_warning': '⚠️ Dieser Ordner befindet sich auf einem {diskType} Laufwerk. Im Referenzmodus werden diese Fotos irgendwann in den Papierkorb verschoben, falls dieses Laufwerk jemals getrennt oder nicht verfügbar ist (siehe Defekte Dateien reparieren). Für solche Laufwerke wird der Kopiermodus empfohlen.',
+        'import_browser.disk_type_removable': 'Wechseldatenträger (USB/extern)',
+        'import_browser.disk_type_network': 'Netzwerk',
+        'import_browser.disk_type_cdrom': 'optisch (CD/DVD)',
     },
 });
 
@@ -184,9 +200,22 @@ async function browsePath(path) {
 // where redoing the request is the only option.
 const ACTIVE_SCAN_STORAGE_KEY = 'wimmich_active_scan';
 
+// disk_type from the scan response (see filesystem_browse_service.py) ->
+// the translated label used inside reference_risky_warning's {diskType}.
+// 'fixed'/'unknown'/'ramdisk' never reach this - only called when
+// reference_risky is already true, which is exactly the removable/
+// network/cdrom set.
+function _diskTypeLabel(diskType) {
+    return t(`import_browser.disk_type_${diskType}`) || diskType;
+}
+
 function _renderScanResult(path, data) {
     const sr = $('scan-preview-slot');
     if (!sr) return;
+    // Only worth warning about when Reference mode is what's actually
+    // selected - Copy mode already makes its own durable copy, so the
+    // source drive's reliability doesn't matter for it.
+    const showRiskyWarning = data.reference_risky && !data.copy_mode;
     sr.innerHTML = `
         <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:10px;padding:16px">
             <h4 style="margin-bottom:8px">${t('import_browser.scan_result_title')}</h4>
@@ -198,6 +227,11 @@ function _renderScanResult(path, data) {
                 <div><span style="color:var(--text-muted)">${t('import_browser.video_label')}</span> <strong>${data.videos}</strong></div>
                 <div><span style="color:var(--text-muted)">${t('import_browser.size_label')}</span> <strong>${formatSize(data.total_size)}</strong></div>
             </div>
+            ${showRiskyWarning ? `
+                <p style="color:var(--warning);font-size:0.85rem;margin-bottom:12px">
+                    ${t('import_browser.reference_risky_warning', { diskType: _diskTypeLabel(data.disk_type) })}
+                </p>
+            ` : ''}
             ${data.new_files > 0 ? `
                 <button class="btn btn-primary" onclick="startImport('${escAttr(path)}')">
                     🚀 ${t('import_browser.import_files_button', { count: data.new_files })} (${data.copy_mode ? t('import_browser.copy_mode') : t('import_browser.reference_mode')})

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from models import Asset
 from services.media_service import delete_asset_files
+from utils.disk_utils import get_drive_type, is_risky_for_reference
 from utils.media_scan_utils import iter_media_files, count_immediate_media
 
 
@@ -131,6 +132,8 @@ async def scan_folder_preview(
             new_files.append(fp)
 
     total_size, images_count, videos_count = await asyncio.to_thread(_compute_scan_stats, new_files)
+    disk_type = await asyncio.to_thread(get_drive_type, path)
+    reference_risky = await asyncio.to_thread(is_risky_for_reference, path)
 
     return {
         "path": str(target),
@@ -141,6 +144,12 @@ async def scan_folder_preview(
         "videos": videos_count,
         "total_size": total_size,
         "copy_mode": copy_files,
+        # Removable/network/optical drives can disappear independently of
+        # Wimmich at any time - Reference mode has nothing left to fall
+        # back on if that happens (see repair_handler.py), so this is
+        # surfaced to nudge toward Copy mode for those, not enforced.
+        "disk_type": disk_type,
+        "reference_risky": reference_risky,
     }
 
 
