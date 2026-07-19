@@ -25,6 +25,7 @@ registerTranslations({
         'duplicates_render.scan_trigger': 'Start Duplicate Scan',
         'duplicates_render.slideshow_start': 'Review with Slideshow',
         'duplicates_render.auto_clean_all': 'Auto-Clean All Duplicates',
+        'duplicates_render.auto_clean_all_count': 'Auto-Clean All Duplicates ({count})',
         'duplicates_render.similarity_label': 'Similarity:',
         'duplicates_render.hash_label': 'Hash:',
         'duplicates_render.group_number': 'Group #{num}',
@@ -64,6 +65,7 @@ registerTranslations({
         'duplicates_render.scan_trigger': 'Kopya Taraması Başlat',
         'duplicates_render.slideshow_start': 'Slayt ile Gözden Geçir',
         'duplicates_render.auto_clean_all': 'Tüm Kopyaları Otomatik Temizle',
+        'duplicates_render.auto_clean_all_count': 'Tüm Kopyaları Otomatik Temizle ({count})',
         'duplicates_render.similarity_label': 'Benzerlik:',
         'duplicates_render.hash_label': 'Hash:',
         'duplicates_render.group_number': 'Grup #{num}',
@@ -103,6 +105,7 @@ registerTranslations({
         'duplicates_render.scan_trigger': 'Démarrer la recherche de doublons',
         'duplicates_render.slideshow_start': 'Examiner en diaporama',
         'duplicates_render.auto_clean_all': 'Nettoyer automatiquement tous les doublons',
+        'duplicates_render.auto_clean_all_count': 'Nettoyer automatiquement tous les doublons ({count})',
         'duplicates_render.similarity_label': 'Similarité :',
         'duplicates_render.hash_label': 'Hash :',
         'duplicates_render.group_number': 'Groupe n°{num}',
@@ -142,6 +145,7 @@ registerTranslations({
         'duplicates_render.scan_trigger': 'Duplikatsuche starten',
         'duplicates_render.slideshow_start': 'Mit Diashow überprüfen',
         'duplicates_render.auto_clean_all': 'Alle Duplikate automatisch bereinigen',
+        'duplicates_render.auto_clean_all_count': 'Alle Duplikate automatisch bereinigen ({count})',
         'duplicates_render.similarity_label': 'Ähnlichkeit:',
         'duplicates_render.hash_label': 'Hash:',
         'duplicates_render.group_number': 'Gruppe #{num}',
@@ -176,7 +180,7 @@ async function renderDuplicates() {
             state.dupFilters.mode
         );
 
-        const controlsHtml = renderDupControlsBar();
+        const controlsHtml = renderDupControlsBar(data.groups || []);
         const emptyHint = state.dupFilters.mode === 'visual'
             ? t('duplicates_render.empty_hint_visual')
             : t('duplicates_render.empty_hint_exact');
@@ -202,8 +206,16 @@ async function renderDuplicates() {
     }
 }
 
-function renderDupControlsBar() {
+function renderDupControlsBar(groups) {
     const f = state.dupFilters;
+    // Same "keep the best-quality one, drop the rest" count auto-clean-all
+    // itself uses (see duplicates-actions.js's _bestQualityFirst) - shown
+    // up front so the count on the button matches exactly what clicking it
+    // is about to remove, not just the number of duplicate groups.
+    const removableCount = groups.reduce((sum, g) => sum + Math.max(0, g.assets.length - 1), 0);
+    const autoCleanLabel = removableCount > 0
+        ? t('duplicates_render.auto_clean_all_count', { count: removableCount })
+        : t('duplicates_render.auto_clean_all');
     return `
         <div class="dup-controls-bar">
             <div class="dup-mode-tabs">
@@ -240,7 +252,7 @@ function renderDupControlsBar() {
             <div class="dup-controls-actions">
                 <button id="dup-scan-trigger" class="btn btn-secondary"><span>🔍</span> ${t('duplicates_render.scan_trigger')}</button>
                 <button id="dup-slideshow-start" class="btn btn-secondary"><span>🎬</span> ${t('duplicates_render.slideshow_start')}</button>
-                <button id="dup-auto-clean-all" class="dup-auto-clean-all-btn"><span>🧹</span> ${t('duplicates_render.auto_clean_all')}</button>
+                <button id="dup-auto-clean-all" class="dup-auto-clean-all-btn"><span>🧹</span> ${autoCleanLabel}</button>
             </div>
         </div>
     `;
