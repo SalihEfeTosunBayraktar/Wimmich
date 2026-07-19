@@ -186,6 +186,12 @@ async function openAlbum(id) {
         state.currentAlbum = album;
         const pc = $('page-content');
         $('topbar-title').textContent = album.name;
+        // openAlbum() never calls navigateTo(), so router.js's own
+        // page-level toggle for this button never runs for this transition
+        // - shown here instead, and correctly hidden again by router.js
+        // once the user navigates anywhere else, including back to the
+        // plain album list.
+        $('slideshow-btn').classList.remove('hidden');
 
         const isOwner = album.is_owner !== false; // undefined (older cached response) treated as owner
         pc.innerHTML = `

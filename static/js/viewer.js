@@ -38,6 +38,9 @@ registerTranslations({
         'viewer.label_category': 'Category',
         'viewer.category_corrected': 'Category correction applied',
         'viewer.category_corrected_with_reclassified': 'Category corrected · {count} similar photos also reclassified',
+        'viewer.slideshow_start': 'Start slideshow (space)',
+        'viewer.slideshow_stop': 'Stop slideshow (space)',
+        'viewer.slideshow_no_photos': 'No photos here to start a slideshow with',
     },
     tr: {
         'viewer.moved_to_trash': 'Çöp kutusuna taşındı',
@@ -75,6 +78,9 @@ registerTranslations({
         'viewer.label_category': 'Kategori',
         'viewer.category_corrected': 'Kategori düzeltmesi uygulandı',
         'viewer.category_corrected_with_reclassified': 'Kategori düzeltildi · {count} benzer fotoğraf da yeniden sınıflandırıldı',
+        'viewer.slideshow_start': 'Slaytı başlat (boşluk)',
+        'viewer.slideshow_stop': 'Slaytı durdur (boşluk)',
+        'viewer.slideshow_no_photos': 'Slayt başlatmak için burada fotoğraf yok',
     },
     fr: {
         'viewer.moved_to_trash': 'Déplacé vers la corbeille',
@@ -112,6 +118,9 @@ registerTranslations({
         'viewer.label_category': 'Catégorie',
         'viewer.category_corrected': 'Correction de catégorie appliquée',
         'viewer.category_corrected_with_reclassified': 'Catégorie corrigée · {count} photos similaires également reclassées',
+        'viewer.slideshow_start': 'Démarrer le diaporama (espace)',
+        'viewer.slideshow_stop': 'Arrêter le diaporama (espace)',
+        'viewer.slideshow_no_photos': "Aucune photo ici pour démarrer un diaporama",
     },
     de: {
         'viewer.moved_to_trash': 'In den Papierkorb verschoben',
@@ -149,6 +158,9 @@ registerTranslations({
         'viewer.label_category': 'Kategorie',
         'viewer.category_corrected': 'Kategorie-Korrektur angewendet',
         'viewer.category_corrected_with_reclassified': 'Kategorie korrigiert · {count} ähnliche Fotos ebenfalls neu eingestuft',
+        'viewer.slideshow_start': 'Diashow starten (Leertaste)',
+        'viewer.slideshow_stop': 'Diashow stoppen (Leertaste)',
+        'viewer.slideshow_no_photos': 'Keine Fotos hier, um eine Diashow zu starten',
     },
 });
 
@@ -218,6 +230,7 @@ async function deleteCurrentViewerAsset() {
 }
 
 function closeViewer() {
+    stopSlideshow();
     $('viewer-overlay').classList.add('hidden');
     $('viewer-sidebar').classList.add('hidden');
     document.body.style.overflow = '';
@@ -237,10 +250,78 @@ function closeViewer() {
     $('viewer-media').innerHTML = '';
 }
 
+// Pages this can be launched from directly via the topbar button (see
+// router.js's navigateTo() and albums.js's openAlbum(), the one place that
+// bypasses navigateTo entirely and so has to show/hide this itself).
+const SLIDESHOW_PAGES = new Set(['gallery']);
+const SLIDESHOW_INTERVAL_MS = 4000;
+let _slideshowInterval = null;
+
+function _updateSlideshowButton() {
+    const btn = $('viewer-slideshow');
+    if (!btn) return;
+    btn.classList.toggle('active', !!_slideshowInterval);
+    btn.title = _slideshowInterval ? t('viewer.slideshow_stop') : t('viewer.slideshow_start');
+}
+
+function toggleSlideshow() {
+    if (_slideshowInterval) stopSlideshow();
+    else startSlideshow();
+}
+
+function startSlideshow() {
+    if (_slideshowInterval || !state.viewerList.length) return;
+    _slideshowInterval = setInterval(_slideshowAdvance, SLIDESHOW_INTERVAL_MS);
+    _updateSlideshowButton();
+}
+
+function stopSlideshow() {
+    if (!_slideshowInterval) return;
+    clearInterval(_slideshowInterval);
+    _slideshowInterval = null;
+    _updateSlideshowButton();
+}
+
+async function _slideshowAdvance() {
+    // Reached the end of what's loaded: the main gallery still has more on
+    // the server (navigateViewer already knows how to fetch the next page
+    // for that exact case), everywhere else just loops back to the start -
+    // a slideshow that quietly stopped advancing after one pass through the
+    // album would look broken, not "done".
+    const atEnd = state.viewerIndex + 1 >= state.viewerList.length;
+    const galleryHasMore = state.currentPage === 'gallery' && state.gallery.totalPages > state.gallery.page;
+    if (atEnd && !galleryHasMore) {
+        state.viewerIndex = -1; // navigateViewer(1) below lands on 0
+    }
+    await navigateViewer(1);
+}
+
+// Entry point for the topbar "▶️ Slideshow" button - builds the list from
+// whatever's actually rendered on the current page rather than trusting
+// state.viewerList to already be populated (right after a fresh page load,
+// before any card has been clicked, some pages haven't set it yet).
+function startSlideshowFromCurrentPage() {
+    const cards = Array.from(document.querySelectorAll('#page-content .photo-card'));
+    if (!cards.length) {
+        toast(t('viewer.slideshow_no_photos'), 'info');
+        return;
+    }
+    state.viewerList = cards.map(c => c.dataset.id);
+    state.viewerIndex = 0;
+    openViewer(state.viewerList[0]);
+    startSlideshow();
+}
+
 function initViewer() {
+    $('slideshow-btn').onclick = startSlideshowFromCurrentPage;
     $('viewer-close').onclick = closeViewer;
-    $('viewer-prev').onclick = () => navigateViewer(-1);
-    $('viewer-next').onclick = () => navigateViewer(1);
+    // Manual navigation pauses an active slideshow - jumping in "wait, go
+    // back" and having it just keep auto-advancing anyway would be
+    // surprising. _slideshowAdvance() calls navigateViewer() directly
+    // itself, bypassing these wrappers, so its own tick never stops itself.
+    $('viewer-prev').onclick = () => { stopSlideshow(); navigateViewer(-1); };
+    $('viewer-next').onclick = () => { stopSlideshow(); navigateViewer(1); };
+    $('viewer-slideshow').onclick = toggleSlideshow;
     $('viewer-favorite').onclick = async () => {
         if (!state.viewerAsset) return;
         const r = await API.toggleFavorite(state.viewerAsset.id);
@@ -275,9 +356,10 @@ function initViewer() {
     document.addEventListener('keydown', (e) => {
         if ($('viewer-overlay').classList.contains('hidden')) return;
         if (e.key === 'Escape') closeViewer();
-        if (e.key === 'ArrowLeft') navigateViewer(-1);
-        if (e.key === 'ArrowRight') navigateViewer(1);
+        if (e.key === 'ArrowLeft') { stopSlideshow(); navigateViewer(-1); }
+        if (e.key === 'ArrowRight') { stopSlideshow(); navigateViewer(1); }
         if (e.key === 'Delete') deleteCurrentViewerAsset();
+        if (e.key === ' ') { e.preventDefault(); toggleSlideshow(); }
     });
 
     _initViewerSwipe();
@@ -301,6 +383,7 @@ function _initViewerSwipe() {
         const dy = e.changedTouches[0].clientY - startY;
         const SWIPE_THRESHOLD = 50;
         if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            stopSlideshow();
             navigateViewer(dx < 0 ? 1 : -1);
         }
     }, { passive: true });

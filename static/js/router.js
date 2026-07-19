@@ -22,6 +22,11 @@ function navigateTo(page) {
     removeSelectionBar();
     $('sidebar').classList.remove('open');
     $('select-all-btn').classList.toggle('hidden', !SELECT_ALL_PAGES.has(page));
+    // Albums is also a slideshow-capable page, but only once an actual
+    // album is open (state.currentAlbum) - openAlbum() shows this itself
+    // since (like every "open a specific X" page) it never routes through
+    // here at all, see albums.js's own comment on that.
+    $('slideshow-btn').classList.toggle('hidden', !SLIDESHOW_PAGES.has(page));
 
     pages[page].render();
 }
