@@ -640,13 +640,26 @@ async function refreshAdminStats() {
 
     try {
         const stats = await API.getAdminStats();
-        $('stat-photos').textContent = stats.photos;
-        $('stat-videos').textContent = stats.videos;
-        $('stat-total-size').textContent = formatSize(stats.total_size);
-        $('stat-people').textContent = stats.people;
-        $('stat-albums').textContent = stats.albums;
-        $('stat-users').textContent = stats.users;
+        _setStatValue('stat-photos', stats.photos);
+        _setStatValue('stat-videos', stats.videos);
+        _setStatValue('stat-total-size', formatSize(stats.total_size));
+        _setStatValue('stat-people', stats.people);
+        _setStatValue('stat-albums', stats.albums);
+        _setStatValue('stat-users', stats.users);
     } catch (e) { /* non-critical - next tick tries again */ }
+}
+
+// Only touches (and pops) a value that actually changed since the last
+// poll - flashing all 6 cards every 15s regardless would be more
+// distracting than useful when only one number actually moved.
+function _setStatValue(id, value) {
+    const el = $(id);
+    const text = String(value);
+    if (el.textContent === text) return;
+    el.textContent = text;
+    el.classList.remove('stat-value-updated');
+    void el.offsetWidth; // force reflow so the animation restarts even if it's still mid-flash from the previous tick
+    el.classList.add('stat-value-updated');
 }
 
 let activeAdminTab = 'genel';

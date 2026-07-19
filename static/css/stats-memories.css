@@ -26,12 +26,17 @@
 }
 
 .stat-card-value {
+    display: inline-block;
     font-size: 1.4rem;
     font-weight: 800;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.stat-card-value.stat-value-updated {
+    animation: statValuePop 0.5s ease;
 }
 
 .stat-card-sub {

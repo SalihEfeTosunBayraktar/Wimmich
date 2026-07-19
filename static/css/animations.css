@@ -29,3 +29,14 @@
     50% { opacity: 0.5; }
 }
 
+/* Admin dashboard stat cards (see refreshAdminStats) - a brief pop + glow
+   when a value actually changes between polls. .stat-card-value renders as
+   gradient-clipped text (background-clip: text, transparent fill), so a
+   color/background flash wouldn't show - drop-shadow works on the
+   rendered glyph regardless and a scale pop doesn't depend on color at all. */
+@keyframes statValuePop {
+    0% { transform: scale(1); filter: none; }
+    35% { transform: scale(1.18); filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.7)); }
+    100% { transform: scale(1); filter: none; }
+}
+
