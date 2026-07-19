@@ -14,6 +14,10 @@ function navigateTo(page) {
         clearInterval(adminStatsPollInterval);
         adminStatsPollInterval = null;
     }
+    if (page !== 'admin' && serverPingInterval) {
+        clearInterval(serverPingInterval);
+        serverPingInterval = null;
+    }
 
     qsa('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
     $('topbar-title').textContent = pages[page].title;

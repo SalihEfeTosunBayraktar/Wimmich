@@ -38,3 +38,4 @@ const pages = {
 
 let adminPollInterval = null;
 let adminStatsPollInterval = null;
+let serverPingInterval = null;

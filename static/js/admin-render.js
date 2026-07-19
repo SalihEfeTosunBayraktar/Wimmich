@@ -47,6 +47,10 @@ registerTranslations({
         'admin_render.import_dest_path_label': 'Import Destination Folder',
         'admin_render.import_dest_path_placeholder': "Destination folder (optional - leave blank for the app's default storage)",
         'admin_render.import_dest_path_hint': 'Only used in Copy mode - lets copies land on a different drive/folder than the app default. Ignored in Reference mode.',
+        'admin_render.server_status_heading': 'Server Status',
+        'admin_render.ping_checking': 'Checking...',
+        'admin_render.ping_label': 'Ping: {ms}ms',
+        'admin_render.ping_offline': 'Unreachable',
         'admin_render.ml_status_heading': 'ML Status',
         'admin_render.status_active': 'Active',
         'admin_render.status_active_opencv': 'Active (OpenCV)',
@@ -145,6 +149,10 @@ registerTranslations({
         'admin_render.import_dest_path_label': 'İçe Aktarma Hedef Klasörü',
         'admin_render.import_dest_path_placeholder': 'Hedef klasör (opsiyonel - boş bırakılırsa uygulamanın varsayılan depolama alanı kullanılır)',
         'admin_render.import_dest_path_hint': 'Sadece Kopyalama modunda kullanılır - kopyaların uygulamanın varsayılanından farklı bir disk/klasöre gitmesini sağlar. Referans modunda göz ardı edilir.',
+        'admin_render.server_status_heading': 'Sunucu Durumu',
+        'admin_render.ping_checking': 'Kontrol ediliyor...',
+        'admin_render.ping_label': 'Ping: {ms}ms',
+        'admin_render.ping_offline': 'Erişilemiyor',
         'admin_render.ml_status_heading': 'ML Durumu',
         'admin_render.status_active': 'Aktif',
         'admin_render.status_active_opencv': 'Aktif (OpenCV)',
@@ -243,6 +251,10 @@ registerTranslations({
         'admin_render.import_dest_path_label': "Dossier de destination de l'import",
         'admin_render.import_dest_path_placeholder': "Dossier de destination (facultatif - laissez vide pour le stockage par défaut de l'application)",
         'admin_render.import_dest_path_hint': "Utilisé uniquement en mode Copie - permet aux copies d'atterrir sur un autre disque/dossier que celui par défaut. Ignoré en mode Référence.",
+        'admin_render.server_status_heading': 'État du serveur',
+        'admin_render.ping_checking': 'Vérification...',
+        'admin_render.ping_label': 'Ping : {ms}ms',
+        'admin_render.ping_offline': 'Injoignable',
         'admin_render.ml_status_heading': 'État du ML',
         'admin_render.status_active': 'Actif',
         'admin_render.status_active_opencv': 'Actif (OpenCV)',
@@ -341,6 +353,10 @@ registerTranslations({
         'admin_render.import_dest_path_label': 'Import-Zielordner',
         'admin_render.import_dest_path_placeholder': 'Zielordner (optional - leer lassen für den Standardspeicher der App)',
         'admin_render.import_dest_path_hint': 'Nur im Kopiermodus verwendet - lässt Kopien auf einem anderen Laufwerk/Ordner als dem App-Standard landen. Im Referenzmodus ignoriert.',
+        'admin_render.server_status_heading': 'Serverstatus',
+        'admin_render.ping_checking': 'Wird geprüft...',
+        'admin_render.ping_label': 'Ping: {ms}ms',
+        'admin_render.ping_offline': 'Nicht erreichbar',
         'admin_render.ml_status_heading': 'ML-Status',
         'admin_render.status_active': 'Aktiv',
         'admin_render.status_active_opencv': 'Aktiv (OpenCV)',
@@ -422,6 +438,13 @@ async function renderAdmin() {
             </div>
 
             <div class="admin-status-matrix">
+                <div class="admin-status-card">
+                    <h4>📡 ${t('admin_render.server_status_heading')}</h4>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <span class="badge" id="server-ping-badge">${t('admin_render.ping_checking')}</span>
+                    </div>
+                </div>
+
                 <div class="admin-status-card">
                     <h4>🤖 ${t('admin_render.ml_status_heading')}</h4>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -628,8 +651,39 @@ async function renderAdmin() {
         if (!adminStatsPollInterval) {
             adminStatsPollInterval = setInterval(refreshAdminStats, ADMIN_STATS_POLL_INTERVAL_MS);
         }
+        refreshServerPing();
+        if (!serverPingInterval) {
+            serverPingInterval = setInterval(refreshServerPing, SERVER_PING_INTERVAL_MS);
+        }
 
     } catch (e) { toast(e.message, 'error'); }
+}
+
+// Round-trip time to GET /api/health, measured client-side - not a "is the
+// backend logically healthy" check (that's what the endpoint's own 200
+// response already means), just "how long did this request take right
+// now", the closest thing to a ping the browser can do without raw ICMP.
+async function refreshServerPing() {
+    if (state.currentPage !== 'admin') {
+        if (serverPingInterval) {
+            clearInterval(serverPingInterval);
+            serverPingInterval = null;
+        }
+        return;
+    }
+    const badge = $('server-ping-badge');
+    if (!badge) return;
+
+    const start = performance.now();
+    try {
+        await API.getHealth();
+        const ms = Math.round(performance.now() - start);
+        badge.textContent = t('admin_render.ping_label', { ms });
+        badge.className = 'badge ' + (ms < 150 ? 'badge-success' : ms < 500 ? 'badge-warning' : 'badge-danger');
+    } catch (e) {
+        badge.textContent = t('admin_render.ping_offline');
+        badge.className = 'badge badge-danger';
+    }
 }
 
 // Updates just the 6 dashboard stat-card values in place (not a full

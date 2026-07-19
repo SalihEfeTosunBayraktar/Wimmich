@@ -41,6 +41,8 @@ registerTranslations({
         'viewer.slideshow_start': 'Start slideshow (space)',
         'viewer.slideshow_stop': 'Stop slideshow (space)',
         'viewer.slideshow_no_photos': 'No photos here to start a slideshow with',
+        'viewer.fullscreen_enter': 'Enter fullscreen',
+        'viewer.fullscreen_exit': 'Exit fullscreen',
     },
     tr: {
         'viewer.moved_to_trash': 'Çöp kutusuna taşındı',
@@ -81,6 +83,8 @@ registerTranslations({
         'viewer.slideshow_start': 'Slaytı başlat (boşluk)',
         'viewer.slideshow_stop': 'Slaytı durdur (boşluk)',
         'viewer.slideshow_no_photos': 'Slayt başlatmak için burada fotoğraf yok',
+        'viewer.fullscreen_enter': 'Tam ekran yap',
+        'viewer.fullscreen_exit': 'Tam ekrandan çık',
     },
     fr: {
         'viewer.moved_to_trash': 'Déplacé vers la corbeille',
@@ -121,6 +125,8 @@ registerTranslations({
         'viewer.slideshow_start': 'Démarrer le diaporama (espace)',
         'viewer.slideshow_stop': 'Arrêter le diaporama (espace)',
         'viewer.slideshow_no_photos': "Aucune photo ici pour démarrer un diaporama",
+        'viewer.fullscreen_enter': 'Plein écran',
+        'viewer.fullscreen_exit': 'Quitter le plein écran',
     },
     de: {
         'viewer.moved_to_trash': 'In den Papierkorb verschoben',
@@ -161,6 +167,8 @@ registerTranslations({
         'viewer.slideshow_start': 'Diashow starten (Leertaste)',
         'viewer.slideshow_stop': 'Diashow stoppen (Leertaste)',
         'viewer.slideshow_no_photos': 'Keine Fotos hier, um eine Diashow zu starten',
+        'viewer.fullscreen_enter': 'Vollbild',
+        'viewer.fullscreen_exit': 'Vollbild verlassen',
     },
 });
 
@@ -180,6 +188,11 @@ async function openViewer(assetId) {
         state.viewerAsset = asset;
         renderViewerMedia(asset);
         updateViewerControls(asset);
+        // A no-op when the slideshow isn't running (checks _slideshowActive
+        // itself) - covers slideshow advances AND manual navigation through
+        // this one shared path uniformly, rather than needing every caller
+        // to remember to call it.
+        _scheduleSlideshowAdvance();
         // The info sidebar (EXIF, people, similar photos...) otherwise kept
         // showing the previous photo's data after navigating via prev/next
         // or a similar-photos click while it was already open.
@@ -231,6 +244,7 @@ async function deleteCurrentViewerAsset() {
 
 function closeViewer() {
     stopSlideshow();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('viewer-overlay').classList.add('hidden');
     $('viewer-sidebar').classList.add('hidden');
     document.body.style.overflow = '';
@@ -255,34 +269,96 @@ function closeViewer() {
 // bypasses navigateTo entirely and so has to show/hide this itself).
 const SLIDESHOW_PAGES = new Set(['gallery']);
 const SLIDESHOW_INTERVAL_MS = 4000;
-let _slideshowInterval = null;
+// How long to wait for a video's own 'ended' event before giving up on it
+// and advancing anyway - a safety net for a video that errors or never
+// actually starts playing, not a normal-path timeout.
+const SLIDESHOW_VIDEO_FALLBACK_MS = 5 * 60 * 1000;
+let _slideshowActive = false;
+let _slideshowTimer = null;
+
+// Standard Fullscreen API - covers desktop and Android Chrome/Firefox/etc.
+// iOS Safari doesn't implement element-level requestFullscreen at all (only
+// a video-specific webkitEnterFullscreen()), so this silently no-ops there
+// rather than pretending to support it; every other target platform works.
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    } else {
+        $('viewer-overlay').requestFullscreen?.().catch(() => {});
+    }
+}
+
+function _updateFullscreenButton() {
+    const btn = $('viewer-fullscreen');
+    if (!btn) return;
+    const active = !!document.fullscreenElement;
+    btn.classList.toggle('active', active);
+    btn.title = active ? t('viewer.fullscreen_exit') : t('viewer.fullscreen_enter');
+}
 
 function _updateSlideshowButton() {
     const btn = $('viewer-slideshow');
     if (!btn) return;
-    btn.classList.toggle('active', !!_slideshowInterval);
-    btn.title = _slideshowInterval ? t('viewer.slideshow_stop') : t('viewer.slideshow_start');
+    btn.classList.toggle('active', _slideshowActive);
+    btn.title = _slideshowActive ? t('viewer.slideshow_stop') : t('viewer.slideshow_start');
 }
 
 function toggleSlideshow() {
-    if (_slideshowInterval) stopSlideshow();
+    if (_slideshowActive) stopSlideshow();
     else startSlideshow();
 }
 
 function startSlideshow() {
-    if (_slideshowInterval || !state.viewerList.length) return;
-    _slideshowInterval = setInterval(_slideshowAdvance, SLIDESHOW_INTERVAL_MS);
+    if (_slideshowActive || !state.viewerList.length) return;
+    _slideshowActive = true;
     _updateSlideshowButton();
+    _scheduleSlideshowAdvance();
 }
 
 function stopSlideshow() {
-    if (!_slideshowInterval) return;
-    clearInterval(_slideshowInterval);
-    _slideshowInterval = null;
+    if (!_slideshowActive) return;
+    _slideshowActive = false;
+    if (_slideshowTimer) {
+        clearTimeout(_slideshowTimer);
+        _slideshowTimer = null;
+    }
     _updateSlideshowButton();
 }
 
+// Called once each time a new asset finishes loading into the viewer while
+// the slideshow is running (see openViewer) - a video waits for its own
+// 'ended' event instead of the fixed image interval, so a 20s clip isn't
+// cut off after 4s and a 2s clip doesn't leave 2s of dead air before
+// advancing. Reproduced directly: the fixed interval was firing mid-
+// playback regardless of the video's actual length.
+function _scheduleSlideshowAdvance() {
+    if (_slideshowTimer) {
+        clearTimeout(_slideshowTimer);
+        _slideshowTimer = null;
+    }
+    if (!_slideshowActive) return;
+
+    const asset = state.viewerAsset;
+    const video = asset?.file_type === 'VIDEO' ? $('viewer-media').querySelector('video') : null;
+    if (video) {
+        video.addEventListener('ended', _slideshowAdvance, { once: true });
+        _slideshowTimer = setTimeout(_slideshowAdvance, SLIDESHOW_VIDEO_FALLBACK_MS);
+        return;
+    }
+    _slideshowTimer = setTimeout(_slideshowAdvance, SLIDESHOW_INTERVAL_MS);
+}
+
 async function _slideshowAdvance() {
+    // Guards a video's 'ended' listener firing after the slideshow was
+    // already stopped (e.g. the user paused it but let the video keep
+    // playing) - {once: true} still lets it fire once more harmlessly
+    // without this check.
+    if (!_slideshowActive) return;
+    if (_slideshowTimer) {
+        clearTimeout(_slideshowTimer);
+        _slideshowTimer = null;
+    }
+
     // Reached the end of what's loaded: the main gallery still has more on
     // the server (navigateViewer already knows how to fetch the next page
     // for that exact case), everywhere else just loops back to the start -
@@ -314,6 +390,10 @@ function startSlideshowFromCurrentPage() {
 
 function initViewer() {
     $('slideshow-btn').onclick = startSlideshowFromCurrentPage;
+    $('viewer-fullscreen').onclick = toggleFullscreen;
+    // Keeps the icon/title in sync when fullscreen is exited some way other
+    // than this button - Esc key, the browser/OS's own fullscreen exit UI.
+    document.addEventListener('fullscreenchange', _updateFullscreenButton);
     $('viewer-close').onclick = closeViewer;
     // Manual navigation pauses an active slideshow - jumping in "wait, go
     // back" and having it just keep auto-advancing anyway would be

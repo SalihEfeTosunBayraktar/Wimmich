@@ -12,6 +12,10 @@ const ADMIN_POLL_INTERVAL_MS = 2000;
 // far less often than job progress - a slower interval than the job poll
 // above avoids hammering the server for numbers that rarely move.
 const ADMIN_STATS_POLL_INTERVAL_MS = 15000;
+// Fast enough to feel "live" for a connectivity/latency indicator without
+// hammering the server - GET /api/health is a trivial no-DB-access route
+// built exactly for this kind of frequent lightweight check.
+const SERVER_PING_INTERVAL_MS = 5000;
 const IMPORT_POLL_INTERVAL_MS = 2000;
 const TOAST_DURATION_MS = 2200;
 const TOAST_REMOVE_DELAY_MS = 300;
