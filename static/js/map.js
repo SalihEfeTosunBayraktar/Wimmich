@@ -120,7 +120,12 @@ async function renderMap() {
 
     const sortBtn = $('map-city-sort-btn');
     const updateSortBtnLabel = () => {
-        sortBtn.textContent = _citySortDesc ? t('map.least_visited_btn') : t('map.most_visited_btn');
+        // Shows the currently active sort mode (matches its pill/chip
+        // styling - a selected-filter indicator, not a plain "switch to X"
+        // action button) - _citySortDesc=true is what actually produces
+        // b.count - a.count (highest first) in _renderCitiesSidebar below,
+        // so that's "most visited", not the other way around.
+        sortBtn.textContent = _citySortDesc ? t('map.most_visited_btn') : t('map.least_visited_btn');
     };
     updateSortBtnLabel();
     sortBtn.onclick = () => {
