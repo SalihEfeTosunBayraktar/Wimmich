@@ -184,7 +184,7 @@ async def restore_asset(db: AsyncSession, asset_id: str, user: User) -> dict:
 
 async def delete_permanently(db: AsyncSession, asset_id: str, user: User) -> dict:
     asset = await get_asset_or_404(db, asset_id, user.id)
-    delete_asset_files(asset)
+    delete_asset_files(asset, delete_reference_source=True)
     await db.delete(asset)
     await db.commit()
     return {"message": "Permanently deleted"}
@@ -213,7 +213,7 @@ async def bulk_action(db: AsyncSession, asset_ids: List[str], action: str, user:
             asset.is_trashed = False
             asset.trashed_at = None
         elif action == "delete_permanent":
-            delete_asset_files(asset)
+            delete_asset_files(asset, delete_reference_source=True)
             await db.delete(asset)
         count += 1
 

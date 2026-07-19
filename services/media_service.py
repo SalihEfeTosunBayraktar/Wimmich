@@ -141,16 +141,29 @@ async def process_upload(
     return result
 
 
-def delete_asset_files(asset) -> None:
+def delete_asset_files(asset, delete_reference_source: bool = False) -> None:
     """Delete all files associated with an asset.
 
     is_external assets (the "Reference" import mode, and external-library
     scans) point file_path directly at the user's own original file outside
-    Wimmich's data directory instead of an app-owned copy - deleting an
-    asset must never delete that original. Reproduced directly: permanently
-    deleting a reference-mode asset silently erased the source file on
-    disk. Everything else (thumbnails, encoded video, CLIP embedding) is
-    still an app-owned derivative and safe to remove either way."""
+    Wimmich's data directory instead of an app-owned copy. delete_reference_source
+    controls whether that original is included:
+
+    - False (default): never touch it - used by anything that's just
+      disconnecting/reorganizing (e.g. remove_reference_root un-linking a
+      whole folder, which explicitly leaves the files themselves alone so
+      the folder can be re-imported later).
+    - True: delete it too - used only by genuine, explicit permanent-delete
+      flows (delete_permanently, bulk delete_permanent, trash-retention
+      cleanup, account deletion), where "permanently delete this photo"
+      is understood to mean everywhere, not just Wimmich's own copy.
+      Explicitly requested: the earlier default (never delete) was itself
+      a fix for the previous behavior silently erasing source files on
+      every permanent delete with no way to opt out either direction -
+      this reintroduces it as an explicit choice at each call site instead.
+
+    Everything else (thumbnails, encoded video, CLIP embedding) is an
+    app-owned derivative and always safe to remove regardless."""
     paths_to_delete = [
         asset.thumb_small_path,
         asset.thumb_medium_path,
@@ -158,7 +171,7 @@ def delete_asset_files(asset) -> None:
         asset.encoded_video_path,
         asset.clip_embedding_path,
     ]
-    if not asset.is_external:
+    if not asset.is_external or delete_reference_source:
         paths_to_delete.append(asset.file_path)
 
     for path in paths_to_delete:

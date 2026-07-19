@@ -24,7 +24,13 @@ async def handle_cleanup_trash(db: AsyncSession):
     expired = list(result.scalars().all())
 
     for asset in expired:
-        delete_asset_files(asset)
+        # Reference-mode originals are deleted here too, same as any other
+        # permanent delete - including ones the user trashed manually
+        # (not just REPAIR's auto-trash-on-missing-source, where the file
+        # is already gone anyway). TRASH_DAYS is exactly the grace period
+        # meant to absorb that: restoring from trash before it expires is
+        # the only undo.
+        delete_asset_files(asset, delete_reference_source=True)
         await db.delete(asset)
 
     if expired:

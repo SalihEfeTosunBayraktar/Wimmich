@@ -74,7 +74,7 @@ async def delete_user(
     from services.media_service import delete_asset_files
     assets_result = await db.execute(select(Asset).where(Asset.user_id == user_id))
     for asset in assets_result.scalars().all():
-        delete_asset_files(asset)
+        delete_asset_files(asset, delete_reference_source=True)
 
     await db.delete(user)
     await db.commit()
