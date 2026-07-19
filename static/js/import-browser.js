@@ -332,6 +332,7 @@ function _renderActiveImportsList(entries) {
             <div style="margin-top:8px">
                 <div class="upload-progress-bar"><div class="upload-progress-fill" id="import-fill-${jobId}" style="width:0%"></div></div>
                 <span id="import-percent-${jobId}" style="font-size:0.8rem;color:var(--text-muted)">0%</span>
+                <span id="import-eta-${jobId}" style="font-size:0.8rem;color:var(--text-muted)"></span>
             </div>
         </div>
     `).join('');
@@ -414,8 +415,17 @@ async function pollImportProgress(jobId) {
 
             const fill = $(`import-fill-${jobId}`);
             const pct = $(`import-percent-${jobId}`);
+            const eta = $(`import-eta-${jobId}`);
             if (fill) fill.style.width = s.progress + '%';
             if (pct) pct.textContent = s.progress + '%';
+            if (eta) {
+                // Same estimator/formatter the admin jobs list uses
+                // (admin-jobs.js) - one ETA calculation, not two competing
+                // ones that could disagree with each other.
+                const etaMs = s.status === 'RUNNING' ? _estimateRemainingMs(s) : null;
+                const etaText = etaMs !== null ? _formatEta(etaMs) : null;
+                eta.textContent = etaText ? ` · ${t('admin_jobs.eta_label', { time: etaText })}` : '';
+            }
 
             if (s.status === 'COMPLETED' || s.status === 'FAILED') {
                 clearInterval(interval);

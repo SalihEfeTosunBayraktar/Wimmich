@@ -96,6 +96,7 @@ async def import_status(
         "error": job.error_message,
         "path": job.data.get("path"),
         "created_at": job.created_at.isoformat() if job.created_at else None,
+        "started_at": job.started_at.isoformat() if job.started_at else None,
         "completed_at": job.completed_at.isoformat() if job.completed_at else None,
         # Set by the hang watchdog (job_core.py) when this exact job was
         # abandoned and automatically re-queued under a new id - lets a
