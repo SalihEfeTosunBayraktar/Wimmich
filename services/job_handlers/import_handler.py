@@ -232,3 +232,12 @@ async def handle_job_import(db: AsyncSession, job: Job):
         "skipped": skipped,
     })
     success("JOB", f"Import completed: {imported} imported, {skipped} skipped from {total} files")
+
+    # Same reasoning as scan_handler.py's identical call - catches assets
+    # (from this import or any earlier one) whose file has since gone
+    # missing or broken, re-fixing what's recoverable from its original
+    # source and trashing what isn't.
+    try:
+        await create_job(db, "REPAIR", {"user_id": user_id})
+    except JobAlreadyExistsException:
+        pass

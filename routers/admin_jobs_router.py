@@ -15,7 +15,7 @@ from services import job_concurrency_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-VALID_JOB_TYPES = ["THUMBNAIL", "CLIP", "FACE", "SCAN", "CLEANUP", "GEOCODE", "TRANSCODE", "RECLUSTER", "CATEGORIZE", "BACKUP", "SIMILARITY"]
+VALID_JOB_TYPES = ["THUMBNAIL", "CLIP", "FACE", "SCAN", "CLEANUP", "GEOCODE", "TRANSCODE", "RECLUSTER", "CATEGORIZE", "BACKUP", "SIMILARITY", "REPAIR"]
 
 
 @router.get("/jobs")

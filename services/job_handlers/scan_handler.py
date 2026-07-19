@@ -108,3 +108,14 @@ async def handle_job_scan(db: AsyncSession, job: Job):
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()
+
+    # A rescan only ever looks for NEW files (existing_paths above skips
+    # anything already indexed) - it never revisits what's already in the
+    # library, so a source file deleted after being indexed would
+    # otherwise go unnoticed forever. Auto-queuing REPAIR after every scan
+    # is what actually catches that: it re-validates every reference/
+    # copy-imported asset's backing file, not just what this run touched.
+    try:
+        await create_job(db, "REPAIR", {"user_id": user_id})
+    except JobAlreadyExistsException:
+        pass

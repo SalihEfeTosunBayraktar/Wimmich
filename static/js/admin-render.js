@@ -72,6 +72,8 @@ registerTranslations({
         'admin_render.job_recluster_title': "Disbands unnamed person groups and re-clusters faces using the current threshold; people you've named are preserved.",
         'admin_render.job_categorize_btn': 'Auto-Categorize',
         'admin_render.job_categorize_title': 'Automatically sorts photos that have a CLIP embedding into categories like screenshot/document/nature/pet.',
+        'admin_render.job_repair_btn': 'Repair Broken Files',
+        'admin_render.job_repair_title': 'Checks every reference-linked and imported-copy photo/video for a missing or broken file - re-fixes it from the original source if still available, or moves it to trash if the source is gone too. Runs automatically after every scan/import as well.',
         'admin_render.cancel_all_jobs_btn': 'Cancel All Jobs',
         'admin_render.cancel_all_jobs_title': 'Cancels all pending/running jobs - use this if a stuck or unwanted job is blocking you.',
         'admin_render.recent_jobs_label': 'Recent Jobs',
@@ -168,6 +170,8 @@ registerTranslations({
         'admin_render.job_recluster_title': 'İsimsiz kişi gruplarını dağıtıp yüzleri güncel eşikle yeniden kümeler; isim verdiğiniz kişiler korunur',
         'admin_render.job_categorize_btn': 'Otomatik Kategorile',
         'admin_render.job_categorize_title': "CLIP embedding'i olan fotoğrafları ekran görüntüsü/belge/doğa/evcil hayvan gibi kategorilere otomatik ayırır",
+        'admin_render.job_repair_btn': 'Bozuk Dosyaları Onar',
+        'admin_render.job_repair_title': 'Referans bağlantılı ve içe aktarılan (kopya) her fotoğraf/videoyu eksik veya bozuk dosya için kontrol eder - kaynağı hâlâ mevcutsa yeniden düzeltir, kaynak da yoksa çöp kutusuna taşır. Her tarama/içe aktarma sonrası otomatik olarak da çalışır.',
         'admin_render.cancel_all_jobs_btn': 'Tüm İşlemleri İptal Et',
         'admin_render.cancel_all_jobs_title': 'Bekleyen/çalışan tüm işlemleri iptal eder - takılan veya istenmeyen bir işlem sizi engelliyorsa kullanın',
         'admin_render.recent_jobs_label': 'Son İşler',
@@ -264,6 +268,8 @@ registerTranslations({
         'admin_render.job_recluster_title': "Dissout les groupes de personnes sans nom et regroupe à nouveau les visages selon le seuil actuel ; les personnes que vous avez nommées sont conservées.",
         'admin_render.job_categorize_btn': 'Catégoriser automatiquement',
         'admin_render.job_categorize_title': "Trie automatiquement les photos disposant d'un embedding CLIP en catégories telles que capture d'écran/document/nature/animal.",
+        'admin_render.job_repair_btn': 'Réparer les fichiers cassés',
+        'admin_render.job_repair_title': "Vérifie chaque photo/vidéo en référence ou importée (copie) pour un fichier manquant ou cassé - le répare depuis la source d'origine si elle est encore disponible, ou le déplace vers la corbeille si la source a aussi disparu. S'exécute aussi automatiquement après chaque scan/import.",
         'admin_render.cancel_all_jobs_btn': 'Annuler toutes les tâches',
         'admin_render.cancel_all_jobs_title': 'Annule toutes les tâches en attente/en cours - utilisez ceci si une tâche bloquée ou indésirable vous gêne.',
         'admin_render.recent_jobs_label': 'Tâches récentes',
@@ -360,6 +366,8 @@ registerTranslations({
         'admin_render.job_recluster_title': "Löst unbenannte Personengruppen auf und gruppiert Gesichter mit dem aktuellen Schwellenwert neu; von Ihnen benannte Personen bleiben erhalten.",
         'admin_render.job_categorize_btn': 'Automatisch kategorisieren',
         'admin_render.job_categorize_title': 'Sortiert Fotos mit einem CLIP-Embedding automatisch in Kategorien wie Screenshot/Dokument/Natur/Haustier.',
+        'admin_render.job_repair_btn': 'Defekte Dateien reparieren',
+        'admin_render.job_repair_title': 'Prüft jedes referenzierte und importierte (kopierte) Foto/Video auf eine fehlende oder defekte Datei - repariert sie aus der Originalquelle, falls noch vorhanden, oder verschiebt sie in den Papierkorb, wenn die Quelle ebenfalls fehlt. Läuft auch automatisch nach jedem Scan/Import.',
         'admin_render.cancel_all_jobs_btn': 'Alle Aufgaben abbrechen',
         'admin_render.cancel_all_jobs_title': 'Bricht alle ausstehenden/laufenden Aufgaben ab - verwenden Sie dies, wenn eine feststeckende oder unerwünschte Aufgabe Sie blockiert.',
         'admin_render.recent_jobs_label': 'Letzte Aufgaben',
@@ -445,6 +453,7 @@ async function renderAdmin() {
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">🎬 ${t('admin_render.job_transcode_btn')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('REPAIR')" title="${t('admin_render.job_repair_title')}">🔧 ${t('admin_render.job_repair_btn')}</button>
                         <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
                     </div>
                     <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">

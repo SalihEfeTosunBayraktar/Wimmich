@@ -17,6 +17,8 @@ registerTranslations({
         'admin_jobs.backup_desc': 'Taking a database snapshot and archiving photos/videos not yet backed up',
         'admin_jobs.similarity_title': 'Similar Photo Matching',
         'admin_jobs.similarity_desc': 'Linking visually similar photos to each other',
+        'admin_jobs.repair_title': 'Broken File Repair',
+        'admin_jobs.repair_desc': 'Checking reference/imported files for missing or broken sources, fixing what it can',
         'admin_jobs.unknown_job_title': 'Unknown Job',
         'admin_jobs.unknown_job_desc': 'Running system operation',
         'admin_jobs.status_completed': 'Completed',
@@ -54,6 +56,8 @@ registerTranslations({
         'admin_jobs.backup_desc': 'Veritabanı anlık görüntüsü alınıyor ve henüz yedeklenmemiş fotoğraf/videolar arşivleniyor',
         'admin_jobs.similarity_title': 'Benzer Fotoğraf Eşleme',
         'admin_jobs.similarity_desc': 'Görsel olarak birbirine benzeyen fotoğraflar arasında bağlantı kuruluyor',
+        'admin_jobs.repair_title': 'Bozuk Dosya Onarımı',
+        'admin_jobs.repair_desc': 'Referans/içe aktarılan dosyalarda eksik veya bozuk kaynak kontrol ediliyor, yapılabilenler düzeltiliyor',
         'admin_jobs.unknown_job_title': 'Bilinmeyen İş',
         'admin_jobs.unknown_job_desc': 'Sistem işlemi yürütülüyor',
         'admin_jobs.status_completed': 'Tamamlandı',
@@ -91,6 +95,8 @@ registerTranslations({
         'admin_jobs.backup_desc': "Capture d'un instantané de la base de données et archivage des photos/vidéos non encore sauvegardées",
         'admin_jobs.similarity_title': 'Correspondance de photos similaires',
         'admin_jobs.similarity_desc': 'Établissement de liens entre les photos visuellement similaires',
+        'admin_jobs.repair_title': 'Réparation de fichiers cassés',
+        'admin_jobs.repair_desc': 'Vérification des fichiers référencés/importés pour une source manquante ou cassée, réparation de ce qui est possible',
         'admin_jobs.unknown_job_title': 'Tâche inconnue',
         'admin_jobs.unknown_job_desc': "Exécution d'une opération système",
         'admin_jobs.status_completed': 'Terminé',
@@ -128,6 +134,8 @@ registerTranslations({
         'admin_jobs.backup_desc': 'Ein Datenbank-Snapshot wird erstellt und noch nicht gesicherte Fotos/Videos werden archiviert',
         'admin_jobs.similarity_title': 'Ähnliche-Fotos-Abgleich',
         'admin_jobs.similarity_desc': 'Visuell ähnliche Fotos werden miteinander verknüpft',
+        'admin_jobs.repair_title': 'Reparatur defekter Dateien',
+        'admin_jobs.repair_desc': 'Referenzierte/importierte Dateien werden auf fehlende oder defekte Quellen geprüft, Behebbares wird repariert',
         'admin_jobs.unknown_job_title': 'Unbekannte Aufgabe',
         'admin_jobs.unknown_job_desc': 'Systemvorgang wird ausgeführt',
         'admin_jobs.status_completed': 'Abgeschlossen',
@@ -160,6 +168,7 @@ const JOB_TYPE_INFO = {
     CLEANUP: { title: t('admin_jobs.cleanup_title'), icon: '🧹', desc: t('admin_jobs.cleanup_desc') },
     BACKUP: { title: t('admin_jobs.backup_title'), icon: '💾', desc: t('admin_jobs.backup_desc') },
     SIMILARITY: { title: t('admin_jobs.similarity_title'), icon: '🔗', desc: t('admin_jobs.similarity_desc') },
+    REPAIR: { title: t('admin_jobs.repair_title'), icon: '🔧', desc: t('admin_jobs.repair_desc') },
 };
 
 const JOB_STATUS_INFO = {
