@@ -121,13 +121,21 @@
     .admin-status-card--jobs { grid-column: span 1; }
 }
 
-/* ─── Admin tabs (Genel / Depolama & Sistem) ─────────────── */
+/* ─── Admin tabs (Overview / Users / Storage / Import / System) ─── */
 .admin-tabs {
     display: flex;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     border-bottom: 1px solid var(--border-color);
     margin-bottom: var(--space-lg);
+    /* Five tabs can overflow a narrow/phone width - scroll them sideways
+       instead of wrapping onto a second row (which detaches the underline
+       from the row it belongs to). The row itself never triggers page-level
+       horizontal scroll. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox - the row is short, a scrollbar under it looks broken */
 }
+.admin-tabs::-webkit-scrollbar { display: none; }
 .admin-tab-btn {
     background: none;
     border: none;
@@ -137,6 +145,7 @@
     font-weight: 600;
     padding: var(--space-sm) var(--space-md);
     cursor: pointer;
+    white-space: nowrap; /* keep each tab label on one line while scrolling */
     transition: color 0.15s, border-color 0.15s;
 }
 .admin-tab-btn:hover { color: var(--text-primary); }

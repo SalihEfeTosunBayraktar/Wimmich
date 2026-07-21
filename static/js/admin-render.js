@@ -102,6 +102,11 @@ registerTranslations({
         'admin_render.git_pull_only_hint': 'Works on any install - a git clone pulls the latest commit, a zip download fetches and applies a fresh archive.',
         'admin_render.tab_general': 'General',
         'admin_render.tab_storage_system': 'Storage & System',
+        'admin_render.tab_overview': 'Overview',
+        'admin_render.tab_users': 'Users',
+        'admin_render.tab_storage_backup': 'Storage & Backup',
+        'admin_render.tab_import': 'Import',
+        'admin_render.tab_network_system': 'Network & System',
         'admin_render.jobs_status_card_heading': 'Jobs',
     },
     tr: {
@@ -204,6 +209,11 @@ registerTranslations({
         'admin_render.git_pull_only_hint': 'Her kurulumda çalışır - git clone kurulumu en son commit\'i çeker, zip ile indirilen kurulum ise güncel bir arşiv indirip uygular.',
         'admin_render.tab_general': 'Genel',
         'admin_render.tab_storage_system': 'Depolama & Sistem',
+        'admin_render.tab_overview': 'Genel Bakış',
+        'admin_render.tab_users': 'Kullanıcılar',
+        'admin_render.tab_storage_backup': 'Depolama & Yedekleme',
+        'admin_render.tab_import': 'İçe Aktarma',
+        'admin_render.tab_network_system': 'Ağ & Sistem',
         'admin_render.jobs_status_card_heading': 'İşler',
     },
     fr: {
@@ -306,6 +316,11 @@ registerTranslations({
         'admin_render.git_pull_only_hint': "Fonctionne avec toute installation - un git clone récupère le dernier commit, un téléchargement zip récupère et applique une archive à jour.",
         'admin_render.tab_general': 'Général',
         'admin_render.tab_storage_system': 'Stockage & Système',
+        'admin_render.tab_overview': "Vue d'ensemble",
+        'admin_render.tab_users': 'Utilisateurs',
+        'admin_render.tab_storage_backup': 'Stockage & Sauvegarde',
+        'admin_render.tab_import': 'Importation',
+        'admin_render.tab_network_system': 'Réseau & Système',
         'admin_render.jobs_status_card_heading': 'Tâches',
     },
     de: {
@@ -408,6 +423,11 @@ registerTranslations({
         'admin_render.git_pull_only_hint': 'Funktioniert bei jeder Installation - ein git clone zieht den neuesten Commit, ein Zip-Download lädt ein aktuelles Archiv herunter und wendet es an.',
         'admin_render.tab_general': 'Allgemein',
         'admin_render.tab_storage_system': 'Speicher & System',
+        'admin_render.tab_overview': 'Übersicht',
+        'admin_render.tab_users': 'Benutzer',
+        'admin_render.tab_storage_backup': 'Speicher & Sicherung',
+        'admin_render.tab_import': 'Import',
+        'admin_render.tab_network_system': 'Netzwerk & System',
         'admin_render.jobs_status_card_heading': 'Aufgaben',
     },
 });
@@ -437,7 +457,16 @@ async function renderAdmin() {
                 <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_users')}</div><div class="stat-card-value" id="stat-users">${stats.users}</div></div>
             </div>
 
-            <div class="admin-status-matrix">
+            <div class="admin-tabs">
+                <button class="admin-tab-btn ${activeAdminTab === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchAdminTab('overview')">📊 ${t('admin_render.tab_overview')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'users' ? 'active' : ''}" data-tab="users" onclick="switchAdminTab('users')">👥 ${t('admin_render.tab_users')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'storage' ? 'active' : ''}" data-tab="storage" onclick="switchAdminTab('storage')">📁 ${t('admin_render.tab_storage_backup')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'import' ? 'active' : ''}" data-tab="import" onclick="switchAdminTab('import')">📥 ${t('admin_render.tab_import')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">🌐 ${t('admin_render.tab_network_system')}</button>
+            </div>
+
+            <div id="admin-tab-overview" class="admin-tab-panel" ${activeAdminTab === 'overview' ? '' : 'hidden'}>
+              <div class="admin-status-matrix">
                 <div class="admin-status-card">
                     <h4>📡 ${t('admin_render.server_status_heading')}</h4>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -497,25 +526,10 @@ async function renderAdmin() {
                         <div id="job-list-content">${t('common.loading')}</div>
                     </div>
                 </div>
-
-                <div class="admin-status-card">
-                    <h4>🌐 ${t('admin_render.remote_access_heading')}</h4>
-                    <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
-                </div>
-
-                <div class="admin-status-card">
-                    <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
-                    <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
-                    <button class="btn btn-danger btn-sm" onclick="shutdownServer()">🛑 ${t('admin_render.shutdown_server_btn')}</button>
-                </div>
+              </div>
             </div>
 
-            <div class="admin-tabs">
-                <button class="admin-tab-btn ${activeAdminTab === 'genel' ? 'active' : ''}" data-tab="genel" onclick="switchAdminTab('genel')">👥 ${t('admin_render.tab_general')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'depolama' ? 'active' : ''}" data-tab="depolama" onclick="switchAdminTab('depolama')">📁 ${t('admin_render.tab_storage_system')}</button>
-            </div>
-
-            <div id="admin-tab-genel" class="admin-tab-panel" ${activeAdminTab === 'genel' ? '' : 'hidden'}>
+            <div id="admin-tab-users" class="admin-tab-panel" ${activeAdminTab === 'users' ? '' : 'hidden'}>
                 <div class="admin-section">
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <h3>👥 ${t('admin_render.stat_users')}</h3>
@@ -525,7 +539,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-depolama" class="admin-tab-panel" ${activeAdminTab === 'depolama' ? '' : 'hidden'}>
+            <div id="admin-tab-storage" class="admin-tab-panel" ${activeAdminTab === 'storage' ? '' : 'hidden'}>
                 <div class="admin-row">
                     <div class="admin-status-card">
                         <h4>📁 ${t('admin_render.storage_settings_heading')}</h4>
@@ -595,7 +609,11 @@ async function renderAdmin() {
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>
                         </div>
                     </div>
+                </div>
+            </div>
 
+            <div id="admin-tab-import" class="admin-tab-panel" ${activeAdminTab === 'import' ? '' : 'hidden'}>
+                <div class="admin-row">
                     <div class="admin-status-card">
                         <h4>📂 ${t('admin_render.folder_import_heading')}</h4>
                         <p class="admin-section-desc" style="margin:0">${t('admin_render.folder_import_desc')}</p>
@@ -624,12 +642,27 @@ async function renderAdmin() {
                         <p class="admin-section-desc" style="margin:0">${t('admin_render.reference_roots_desc')}</p>
                         <div id="reference-roots-list">${renderReferenceRootsList(referenceRootsData.references)}</div>
                     </div>
+                </div>
+            </div>
+
+            <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
+                <div class="admin-status-matrix">
+                    <div class="admin-status-card">
+                        <h4>🌐 ${t('admin_render.remote_access_heading')}</h4>
+                        <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
+                    </div>
 
                     <div class="admin-status-card">
                         <h4>⬆️ ${t('admin_render.updates_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
                         <div id="update-status-container"></div>
                         <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">🔍 ${t('admin_render.check_update_btn')}</button>
+                    </div>
+
+                    <div class="admin-status-card">
+                        <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
+                        <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
+                        <button class="btn btn-danger btn-sm" onclick="shutdownServer()">🛑 ${t('admin_render.shutdown_server_btn')}</button>
                     </div>
                 </div>
             </div>
@@ -719,7 +752,7 @@ function _setStatValue(id, value) {
     el.classList.add('stat-value-updated');
 }
 
-let activeAdminTab = 'genel';
+let activeAdminTab = 'overview';
 
 function switchAdminTab(tabName) {
     activeAdminTab = tabName;
