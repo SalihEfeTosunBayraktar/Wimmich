@@ -38,6 +38,11 @@ registerTranslations({
         'admin_users.create': 'Create',
         'admin_users.fields_required': 'Name, email and password are required',
         'admin_users.user_created': 'User created successfully',
+        'admin_users.reset_password': 'Password',
+        'admin_users.set_password_title': 'Set New Password',
+        'admin_users.new_password_label': 'New password (min 4 characters)',
+        'admin_users.password_too_short': 'Password must be at least 4 characters',
+        'admin_users.password_updated': "User's password updated",
     },
     tr: {
         'admin_users.badge_admin': 'Admin',
@@ -75,6 +80,11 @@ registerTranslations({
         'admin_users.create': 'Oluştur',
         'admin_users.fields_required': 'İsim, e-posta ve şifre zorunludur',
         'admin_users.user_created': 'Kullanıcı başarıyla oluşturuldu',
+        'admin_users.reset_password': 'Şifre',
+        'admin_users.set_password_title': 'Yeni Şifre Belirle',
+        'admin_users.new_password_label': 'Yeni şifre (en az 4 karakter)',
+        'admin_users.password_too_short': 'Şifre en az 4 karakter olmalı',
+        'admin_users.password_updated': 'Kullanıcının şifresi güncellendi',
     },
     fr: {
         'admin_users.badge_admin': 'Admin',
@@ -112,6 +122,11 @@ registerTranslations({
         'admin_users.create': 'Créer',
         'admin_users.fields_required': "Le nom, l'e-mail et le mot de passe sont requis",
         'admin_users.user_created': 'Utilisateur créé avec succès',
+        'admin_users.reset_password': 'Mot de passe',
+        'admin_users.set_password_title': 'Définir un nouveau mot de passe',
+        'admin_users.new_password_label': 'Nouveau mot de passe (min. 4 caractères)',
+        'admin_users.password_too_short': 'Le mot de passe doit comporter au moins 4 caractères',
+        'admin_users.password_updated': "Mot de passe de l'utilisateur mis à jour",
     },
     de: {
         'admin_users.badge_admin': 'Admin',
@@ -149,6 +164,11 @@ registerTranslations({
         'admin_users.create': 'Erstellen',
         'admin_users.fields_required': 'Name, E-Mail und Passwort sind erforderlich',
         'admin_users.user_created': 'Benutzer erfolgreich erstellt',
+        'admin_users.reset_password': 'Passwort',
+        'admin_users.set_password_title': 'Neues Passwort festlegen',
+        'admin_users.new_password_label': 'Neues Passwort (mind. 4 Zeichen)',
+        'admin_users.password_too_short': 'Passwort muss mindestens 4 Zeichen lang sein',
+        'admin_users.password_updated': 'Passwort des Benutzers aktualisiert',
     },
 });
 
@@ -178,6 +198,7 @@ function renderUserList(users) {
                     </button>
                 ` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="editUserQuota('${u.id}', ${u.storage_quota_mb})">⚙️ ${t('admin_users.quota_label')}</button>
+                <button class="btn btn-secondary btn-sm" onclick="showSetPasswordModal('${u.id}', '${escAttr(u.name)}')">🔑 ${t('admin_users.reset_password')}</button>
                 ${u.id !== state.user.id ? `
                     <button class="btn btn-secondary btn-sm" onclick="toggleUserAdmin('${u.id}', ${u.is_admin})">
                         👑 ${u.is_admin ? t('admin_users.remove_admin') : t('admin_users.make_admin')}
@@ -256,6 +277,46 @@ function editUserQuota(userId, currentQuota) {
     const close = () => modal.remove();
     $('quota-edit-cancel').onclick = close;
     $('quota-edit-save').onclick = () => saveUserQuota(userId, input.value, close);
+}
+
+function showSetPasswordModal(userId, userName) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'set-password-modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:340px;background:var(--bg-secondary);border:1px solid var(--border-color);padding:24px;border-radius:12px;color:var(--text-primary)">
+            <h3 style="margin-top:0">${t('admin_users.set_password_title')}</h3>
+            <p class="text-muted admin-field-hint" style="margin-top:0">${escHtml(userName)}</p>
+            <label class="admin-field-label" for="set-password-input">${t('admin_users.new_password_label')}</label>
+            <input type="password" id="set-password-input" style="width:100%;box-sizing:border-box">
+            <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px">
+                <button class="btn btn-secondary btn-sm" id="set-password-cancel">${t('common.cancel')}</button>
+                <button class="btn btn-primary btn-sm" id="set-password-save">${t('common.save')}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = $('set-password-input');
+    input.focus();
+    const close = () => modal.remove();
+    $('set-password-cancel').onclick = close;
+    $('set-password-save').onclick = () => saveUserPassword(userId, input.value, close);
+    input.onkeydown = (e) => { if (e.key === 'Enter') saveUserPassword(userId, input.value, close); };
+}
+
+async function saveUserPassword(userId, password, close) {
+    if (!password || password.length < 4) {
+        toast(t('admin_users.password_too_short'), 'warning');
+        return;
+    }
+    try {
+        await API.setUserPassword(userId, password);
+        close();
+        toast(t('admin_users.password_updated'), 'success');
+    } catch (e) {
+        toast(e.message, 'error');
+    }
 }
 
 function showCreateUserModal() {

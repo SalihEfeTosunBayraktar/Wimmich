@@ -11,6 +11,7 @@ Object.assign(API, {
     updateUserQuota(id, quota) { return this.request(`/api/admin/users/${id}/quota`, { method: 'PUT', body: { storage_quota_mb: quota } }); },
     approveUser(id, isApproved) { return this.request(`/api/admin/users/${id}/approve`, { method: 'PUT', body: { is_approved: isApproved } }); },
     updateUserAdmin(id, isAdmin) { return this.request(`/api/admin/users/${id}/admin`, { method: 'PUT', body: { is_admin: isAdmin } }); },
+    setUserPassword(id, newPassword) { return this.request(`/api/admin/users/${id}/password`, { method: 'PUT', body: { new_password: newPassword } }); },
     getJobs(status) { return this.request(`/api/admin/jobs${status ? '?status=' + status : ''}`); },
     runJob(type) { return this.request(`/api/admin/jobs/${type}/run`, { method: 'POST' }); },
     cancelJob(jobId) { return this.request(`/api/admin/jobs/${jobId}/cancel`, { method: 'POST' }); },

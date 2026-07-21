@@ -31,6 +31,10 @@ class UpdateAdminRequest(BaseModel):
     is_admin: bool
 
 
+class SetPasswordRequest(BaseModel):
+    new_password: str
+
+
 @router.post("/users")
 async def create_user(
     req: CreateUserRequest,
@@ -118,6 +122,29 @@ async def approve_user(
     user.is_approved = req.is_approved
     await db.commit()
     return {"message": "Kullanıcı onay durumu güncellendi", "is_approved": user.is_approved}
+
+
+@router.put("/users/{user_id}/password")
+async def set_user_password(
+    user_id: str,
+    req: SetPasswordRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Set a new password for any user (admin only) - for helping a user who
+    forgot theirs. No current-password check (that's the whole point of an
+    admin reset); the requester is already verified as an admin."""
+    if not req.new_password or len(req.new_password) < 4:
+        raise HTTPException(status_code=400, detail="Şifre en az 4 karakter olmalı")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+    user.password_hash = hash_password(req.new_password)
+    await db.commit()
+    return {"message": "Kullanıcı şifresi güncellendi"}
 
 
 @router.put("/users/{user_id}/admin")
