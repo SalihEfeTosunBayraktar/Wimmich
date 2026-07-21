@@ -52,6 +52,16 @@ async def upload_assets(
     """
     return await asset_mutation_service.upload_files(db, user, files, last_modified, checksums)
 
+@router.post("/process-pending")
+async def process_pending(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Queue bulk CLIP/FACE/GEOCODE/TRANSCODE for whatever this user still
+    has unprocessed - called once by the client after an upload batch, so
+    uploads don't create a follow-up job per file (see queue_pending_processing)."""
+    return await asset_mutation_service.queue_pending_processing(db, user)
+
 @router.get("/timeline")
 async def get_timeline(
     page: int = Query(1, ge=1),

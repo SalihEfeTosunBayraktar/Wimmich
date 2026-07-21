@@ -69,22 +69,12 @@ async def upload_files(
             db.add(asset)
             await db.flush()
 
-            jobs_to_queue = [
-                ("CLIP", {"asset_id": asset.id}),
-                ("FACE", {"asset_id": asset.id, "user_id": user.id}),
-            ]
-            if asset.file_type == "VIDEO":
-                jobs_to_queue.append(("TRANSCODE", {"asset_id": asset.id}))
-            # EXIF GPS but no resolved city yet - see import_handler.py's
-            # identical comment.
-            if asset.latitude is not None and asset.longitude is not None:
-                jobs_to_queue.append(("GEOCODE", {"asset_id": asset.id}))
-
-            for job_type, job_data in jobs_to_queue:
-                try:
-                    await create_job(db, job_type, job_data)
-                except JobAlreadyExistsException:
-                    pass
+            # No per-asset CLIP/FACE/etc. jobs here. The browser uploads one
+            # file per request, so creating follow-up jobs per file meant a
+            # 200-photo upload spawned ~600 job rows. Instead the client
+            # calls process-pending ONCE after the whole upload batch (see
+            # queue_pending_processing below), which queues one bulk job per
+            # needed type - the same shape as the import/scan handlers.
 
             results.append({
                 "file_name": file.filename,
@@ -101,6 +91,53 @@ async def upload_files(
             errors.append({"file_name": file.filename, "error": str(e)})
 
     return {"results": results, "errors": errors}
+
+
+async def queue_pending_processing(db: AsyncSession, user: User) -> dict:
+    """Queue one bulk follow-up job per type that still has unprocessed work
+    for this user - called once by the client after an upload batch finishes,
+    instead of a job per uploaded file. Each handler runs in "process
+    everything still missing" mode (no asset_id) and skips what's already
+    done, so a single bulk job covers every file the batch just added.
+
+    Only queues a type that actually has pending work, so an all-images
+    upload doesn't spawn an empty TRANSCODE job, etc. Safe against
+    double-queuing via create_job's own dedup (JobAlreadyExistsException).
+    """
+    async def _has(*conditions) -> bool:
+        row = (await db.execute(
+            select(Asset.id).where(and_(Asset.user_id == user.id, Asset.is_trashed == False, *conditions)).limit(1)
+        )).first()
+        return row is not None
+
+    queued = []
+
+    # New images (no CLIP embedding yet) also need face detection - tie the
+    # two together rather than trying to detect "face-pending" separately (a
+    # scanned-but-faceless image has no Face row, so there's no clean flag).
+    if await _has(Asset.file_type == "IMAGE", Asset.clip_embedding_path.is_(None)):
+        for job_type, jdata in (("CLIP", {}), ("FACE", {"user_id": user.id})):
+            try:
+                await create_job(db, job_type, jdata)
+                queued.append(job_type)
+            except JobAlreadyExistsException:
+                pass
+
+    if await _has(Asset.file_type == "VIDEO", Asset.encoded_video_path.is_(None)):
+        try:
+            await create_job(db, "TRANSCODE", {})
+            queued.append("TRANSCODE")
+        except JobAlreadyExistsException:
+            pass
+
+    if await _has(Asset.latitude.isnot(None), Asset.city.is_(None)):
+        try:
+            await create_job(db, "GEOCODE", {})
+            queued.append("GEOCODE")
+        except JobAlreadyExistsException:
+            pass
+
+    return {"queued": queued}
 
 
 async def update_asset(

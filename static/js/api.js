@@ -137,6 +137,7 @@ const API = {
     getArchived() { return this.request('/api/assets/archived'); },
     getStatistics() { return this.request('/api/assets/statistics'); },
     getMemories() { return this.request('/api/assets/memories/today'); },
+    queuePendingProcessing() { return this.request('/api/assets/process-pending', { method: 'POST' }); },
     getSmartCategories() { return this.request('/api/assets/smart-categories'); },
     correctCategory(assetId, category) {
         return this.request(`/api/assets/${assetId}/category-correction`, { method: 'POST', body: { category } });

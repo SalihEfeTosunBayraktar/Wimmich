@@ -176,6 +176,17 @@ async function runUploadWorker() {
     await releaseWakeLock();
     toast(t('upload.complete'), 'success');
 
+    // Queue follow-up processing (CLIP/face/geocode/transcode) ONCE for the
+    // whole batch now that every file is uploaded, instead of a job per
+    // file. Only reached when the queue is fully drained, so all the
+    // batch's assets exist before this runs - the single bulk job each
+    // handler creates then picks up exactly them.
+    try {
+        await API.queuePendingProcessing();
+    } catch (e) {
+        console.error('Error queuing post-upload processing:', e);
+    }
+
     try {
         state.user = await API.getMe();
         updateSidebarStorage();
