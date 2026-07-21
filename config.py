@@ -131,6 +131,13 @@ JWT_SECRET = JWT_SECRET_ENV
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.getenv("WIMMICH_JWT_EXPIRE_HOURS", "168"))  # 7 days
 
+# Login brute-force protection: after LOGIN_MAX_FAILURES failed attempts for
+# the same client IP or the same email within LOGIN_FAILURE_WINDOW_SECONDS,
+# further attempts are refused with 429 until the window rolls off. A
+# successful login clears that identity's counter. See services/login_rate_limit.py.
+LOGIN_MAX_FAILURES = int(os.getenv("WIMMICH_LOGIN_MAX_FAILURES", "10"))
+LOGIN_FAILURE_WINDOW_SECONDS = int(os.getenv("WIMMICH_LOGIN_FAILURE_WINDOW_SECONDS", "900"))
+
 # Thumbnails
 THUMB_SIZES = {
     "small": 200,
