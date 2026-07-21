@@ -102,6 +102,11 @@ async def handle_job_import(db: AsyncSession, job: Job):
     imported = 0
     skipped = 0
     processed = 0
+    # Which follow-up job types this import will need, decided by what kinds
+    # of assets actually got imported - see the single bulk enqueue at the end.
+    need_clip_face = False
+    need_transcode = False
+    need_geocode = False
 
     # Read once, not once per range()/slice reference below - the range()
     # step is evaluated once when the loop starts, so if an admin saves a
@@ -184,34 +189,15 @@ async def handle_job_import(db: AsyncSession, job: Job):
                 await db.flush()
                 new_assets.append(asset)
 
-                # CLIP/FACE only make sense for images - queuing them for
-                # videos too just produced a "cannot identify image file"
-                # error on every attempt.
+                # Note what KINDS of follow-up processing this import will
+                # need, but don't queue anything per-asset here - see the
+                # single bulk enqueue after the whole import finishes below.
                 if asset.file_type == "IMAGE":
-                    try:
-                        await create_job(db, "CLIP", {"asset_id": asset.id})
-                    except JobAlreadyExistsException:
-                        pass
-                    try:
-                        await create_job(db, "FACE", {"asset_id": asset.id, "user_id": user_id})
-                    except JobAlreadyExistsException:
-                        pass
+                    need_clip_face = True
                 elif asset.file_type == "VIDEO":
-                    try:
-                        await create_job(db, "TRANSCODE", {"asset_id": asset.id})
-                    except JobAlreadyExistsException:
-                        pass
-
-                # EXIF GPS but no resolved city yet - auto-queue the same
-                # offline reverse-geocode GEOCODE already does manually via
-                # "Tag Locations", so a city name is there by the time the
-                # user looks at the Map page instead of only after they
-                # remember to click that button themselves.
+                    need_transcode = True
                 if asset.latitude is not None and asset.longitude is not None:
-                    try:
-                        await create_job(db, "GEOCODE", {"asset_id": asset.id})
-                    except JobAlreadyExistsException:
-                        pass
+                    need_geocode = True
 
                 imported += 1
 
@@ -225,6 +211,34 @@ async def handle_job_import(db: AsyncSession, job: Job):
         # identity map holds every one of them for the whole job's run.
         for asset in new_assets:
             db.expunge(asset)
+
+    # One bulk job per needed type for the WHOLE import, instead of a
+    # CLIP+FACE+GEOCODE (or TRANSCODE) row per file - a 10k-image import
+    # was creating ~30k Job rows here, each its own commit interleaved with
+    # the import's own work. Every one of these handlers already runs in
+    # "process everything still missing" mode when given no asset_id (it
+    # scans for assets lacking an embedding / faces / city / encoded copy),
+    # so a single bulk job picks up exactly the assets this import just
+    # added - plus any other stragglers - and skips the rest. This is only
+    # safe because the worker runs one job at a time (see job_core.py): no
+    # bulk CLIP/FACE/etc. can be mid-run while this IMPORT job is, so the
+    # job queued here can't miss assets a still-running scan already passed.
+    if need_clip_face:
+        for job_type, jdata in (("CLIP", {}), ("FACE", {"user_id": user_id})):
+            try:
+                await create_job(db, job_type, jdata)
+            except JobAlreadyExistsException:
+                pass
+    if need_transcode:
+        try:
+            await create_job(db, "TRANSCODE", {})
+        except JobAlreadyExistsException:
+            pass
+    if need_geocode:
+        try:
+            await create_job(db, "GEOCODE", {})
+        except JobAlreadyExistsException:
+            pass
 
     job.result_json = json.dumps({
         "total_found": total,

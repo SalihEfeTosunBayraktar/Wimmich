@@ -24,6 +24,12 @@ async def handle_job_scan(db: AsyncSession, job: Job):
     import asyncio
     files = await asyncio.to_thread(scan_external_directory, directory, user_id)
     total = len(files)
+    # Which follow-up job types this scan will need - one bulk job each is
+    # queued after the whole scan finishes, not one per file (see the
+    # matching change and rationale in import_handler.py).
+    need_clip_face = False
+    need_transcode = False
+    need_geocode = False
 
     for i, file_path in enumerate(files):
         await check_job_cancelled(db, job.id)
@@ -69,32 +75,15 @@ async def handle_job_scan(db: AsyncSession, job: Job):
             db.add(asset)
             await db.flush()
 
-            # Unlike IMPORT, this never queued follow-up processing at all -
-            # externally-scanned assets got no CLIP embedding, no face
-            # detection, and (for video) no transcode, ever. CLIP/FACE only
-            # apply to images - queuing them for video just errors every time.
+            # Note what follow-up processing this asset needs; the actual
+            # (bulk, whole-scan) jobs are queued once after the loop, not
+            # per-file. CLIP/FACE only apply to images.
             if asset.file_type == "IMAGE":
-                try:
-                    await create_job(db, "CLIP", {"asset_id": asset.id})
-                except JobAlreadyExistsException:
-                    pass
-                try:
-                    await create_job(db, "FACE", {"asset_id": asset.id, "user_id": user_id})
-                except JobAlreadyExistsException:
-                    pass
+                need_clip_face = True
             elif asset.file_type == "VIDEO":
-                try:
-                    await create_job(db, "TRANSCODE", {"asset_id": asset.id})
-                except JobAlreadyExistsException:
-                    pass
-
-            # EXIF GPS but no resolved city yet - see import_handler.py's
-            # identical comment.
+                need_transcode = True
             if asset.latitude is not None and asset.longitude is not None:
-                try:
-                    await create_job(db, "GEOCODE", {"asset_id": asset.id})
-                except JobAlreadyExistsException:
-                    pass
+                need_geocode = True
 
             await db.commit()
             # See clip_handler.py's identical expunge - a big external
@@ -108,6 +97,27 @@ async def handle_job_scan(db: AsyncSession, job: Job):
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()
+
+    # One bulk job per needed type for the whole scan, not one per file -
+    # see import_handler.py for the full rationale (the handlers run in
+    # "process everything still missing" mode with no asset_id, and the
+    # single-worker model makes queuing them here race-free).
+    if need_clip_face:
+        for job_type, jdata in (("CLIP", {}), ("FACE", {"user_id": user_id})):
+            try:
+                await create_job(db, job_type, jdata)
+            except JobAlreadyExistsException:
+                pass
+    if need_transcode:
+        try:
+            await create_job(db, "TRANSCODE", {})
+        except JobAlreadyExistsException:
+            pass
+    if need_geocode:
+        try:
+            await create_job(db, "GEOCODE", {})
+        except JobAlreadyExistsException:
+            pass
 
     # A rescan only ever looks for NEW files (existing_paths above skips
     # anything already indexed) - it never revisits what's already in the
