@@ -56,8 +56,15 @@ function initAuth() {
             const r = await API.login($('login-email').value, $('login-password').value);
             API.setToken(r.token, remember);
             state.user = r.user;
+            toast(t('auth.login_success'), 'success');
             showApp();
-        } catch (e) { toast(e.message, 'error'); }
+        } catch (err) {
+            // 401 = wrong email/password: show a clear localized message
+            // rather than the raw English backend string. 403 (awaiting
+            // approval) and 429 (too many attempts) already carry meaningful
+            // localized backend messages, so surface those as-is.
+            toast(err.status === 401 ? t('auth.login_failed') : err.message, 'error');
+        }
     };
 
     $('register-form').onsubmit = async (e) => {

@@ -33,7 +33,14 @@ const API = {
             options.body = JSON.stringify(options.body);
         }
         const resp = await fetch(url, { ...options, headers });
-        if (resp.status === 401) {
+        // A 401 on a normal in-app request means the session expired mid-use
+        // -> clear it and reload to the login screen. But the login/register
+        // calls themselves also return 401 (wrong password), and reloading
+        // there swallowed the "wrong email or password" error entirely: the
+        // page just bounced back to the login screen with no message, looking
+        // like a broken login. skipAuthReload lets those callers get a normal
+        // thrown error to show instead.
+        if (resp.status === 401 && !options.skipAuthReload) {
             this.token = null;
             localStorage.removeItem('wimmich_token');
             sessionStorage.removeItem('wimmich_token');
@@ -42,7 +49,9 @@ const API = {
         }
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({ detail: resp.statusText }));
-            throw new Error(err.detail || 'API Error');
+            const error = new Error(err.detail || 'API Error');
+            error.status = resp.status; // lets callers distinguish 401/403/429
+            throw error;
         }
         return resp.json();
     },
@@ -65,12 +74,13 @@ const API = {
 
     getHealth() { return this.request('/api/health'); },
 
-    // Auth
+    // Auth - skipAuthReload so a 401 (wrong password) surfaces as a normal
+    // error to show, instead of the generic session-expired page reload.
     register(email, password, name) {
-        return this.request('/api/auth/register', { method: 'POST', body: { email, password, name } });
+        return this.request('/api/auth/register', { method: 'POST', body: { email, password, name }, skipAuthReload: true });
     },
     login(email, password) {
-        return this.request('/api/auth/login', { method: 'POST', body: { email, password } });
+        return this.request('/api/auth/login', { method: 'POST', body: { email, password }, skipAuthReload: true });
     },
     getMe() { return this.request('/api/auth/me'); },
     updateMe(data) { return this.request('/api/auth/me', { method: 'PUT', body: data }); },
