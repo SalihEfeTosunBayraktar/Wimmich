@@ -16,6 +16,9 @@ registerTranslations({
         'upload.session_expired': 'Session expired, refreshing page',
         'upload.error_generic': 'Upload error',
         'upload.complete': 'Upload complete!',
+        'upload.minimize': 'Minimize (keep uploading in the background)',
+        'upload.expand': 'Show upload',
+        'upload.mini_progress': 'Uploading {done}/{total}',
     },
     tr: {
         'upload.status_uploading': 'Yükleniyor...',
@@ -26,6 +29,9 @@ registerTranslations({
         'upload.session_expired': 'Oturum sona erdi, sayfa yenileniyor',
         'upload.error_generic': 'Yükleme hatası',
         'upload.complete': 'Yükleme tamamlandı!',
+        'upload.minimize': 'Küçült (yükleme arka planda devam etsin)',
+        'upload.expand': 'Yüklemeyi göster',
+        'upload.mini_progress': 'Yükleniyor {done}/{total}',
     },
     fr: {
         'upload.status_uploading': 'Téléversement...',
@@ -36,6 +42,9 @@ registerTranslations({
         'upload.session_expired': 'Session expirée, actualisation de la page',
         'upload.error_generic': 'Erreur de téléversement',
         'upload.complete': 'Téléversement terminé !',
+        'upload.minimize': "Réduire (le téléversement continue en arrière-plan)",
+        'upload.expand': 'Afficher le téléversement',
+        'upload.mini_progress': 'Téléversement {done}/{total}',
     },
     de: {
         'upload.status_uploading': 'Wird hochgeladen...',
@@ -46,6 +55,9 @@ registerTranslations({
         'upload.session_expired': 'Sitzung abgelaufen, Seite wird neu geladen',
         'upload.error_generic': 'Hochladefehler',
         'upload.complete': 'Hochladen abgeschlossen!',
+        'upload.minimize': 'Minimieren (Upload läuft im Hintergrund weiter)',
+        'upload.expand': 'Upload anzeigen',
+        'upload.mini_progress': 'Wird hochgeladen {done}/{total}',
     },
 });
 
@@ -55,9 +67,19 @@ let uploadItemSeq = 0;
 let uploadWakeLock = null;
 
 function initUpload() {
-    $('upload-btn').onclick = () => $('upload-modal').classList.remove('hidden');
+    $('upload-btn').onclick = () => restoreUpload();
     $('upload-modal-close').onclick = () => $('upload-modal').classList.add('hidden');
-    $('upload-modal').onclick = (e) => { if (e.target === $('upload-modal')) $('upload-modal').classList.add('hidden'); };
+    $('upload-modal-minimize').onclick = () => minimizeUpload();
+    // Clicking the modal backdrop minimizes instead of closing, so an
+    // in-progress upload isn't accidentally hidden with no way back to it -
+    // the mini widget keeps it reachable. With nothing uploading it just
+    // closes as before.
+    $('upload-modal').onclick = (e) => {
+        if (e.target !== $('upload-modal')) return;
+        if (uploadWorkerRunning || uploadQueue.length > 0) minimizeUpload();
+        else $('upload-modal').classList.add('hidden');
+    };
+    $('upload-mini').onclick = () => restoreUpload();
 
     const dz = $('upload-dropzone');
     const fi = $('file-input');
@@ -135,6 +157,32 @@ function setUploadItemStatus(idx, status, errorMsg) {
         st.textContent = `✗ ${t('common.error_prefix')}${errorMsg || t('upload.status_failed')}`;
         st.className = 'upload-item-status error';
     }
+    updateUploadMiniProgress();
+}
+
+function minimizeUpload() {
+    $('upload-modal').classList.add('hidden');
+    $('upload-mini').classList.remove('hidden');
+    updateUploadMiniProgress();
+}
+
+function restoreUpload() {
+    $('upload-mini').classList.add('hidden');
+    $('upload-modal').classList.remove('hidden');
+}
+
+// Keeps the collapsed pill's "uploading X/Y" text current. Counts done vs
+// total from the upload-list item statuses (an item still showing the
+// "uploading" class is not yet done), so it reflects the real queue state
+// without a separate counter to keep in sync.
+function updateUploadMiniProgress() {
+    const mini = $('upload-mini-text');
+    if (!mini) return;
+    const items = document.querySelectorAll('#upload-list .upload-item-status');
+    const total = items.length;
+    let done = 0;
+    items.forEach(s => { if (!s.classList.contains('uploading')) done++; });
+    mini.textContent = t('upload.mini_progress', { done, total });
 }
 
 // A checksum mismatch or truncated-write error (see UploadIntegrityError,
@@ -197,6 +245,7 @@ async function runUploadWorker() {
     setTimeout(() => {
         if (uploadWorkerRunning || uploadQueue.length > 0) return; // more got queued meanwhile
         $('upload-modal').classList.add('hidden');
+        $('upload-mini').classList.add('hidden'); // the batch is done - dismiss the collapsed pill too
         $('upload-dropzone').classList.remove('hidden');
         $('upload-progress').classList.add('hidden');
         uploadItemSeq = 0;

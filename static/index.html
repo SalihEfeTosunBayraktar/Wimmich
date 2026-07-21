@@ -238,9 +238,14 @@
         <div class="modal upload-modal">
             <div class="modal-header">
                 <h3 data-i18n="upload.title"></h3>
-                <button class="btn-icon modal-close" id="upload-modal-close">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+                <div style="display:flex;gap:4px">
+                    <button class="btn-icon" id="upload-modal-minimize" data-i18n-title="upload.minimize">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button class="btn-icon modal-close" id="upload-modal-close">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
             </div>
             <div class="upload-dropzone" id="upload-dropzone">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -258,6 +263,14 @@
             </div>
         </div>
     </div>
+
+    <!-- Minimized upload widget: shown when the upload modal is collapsed, so
+         an upload keeps running while the rest of the app stays usable. -->
+    <button class="upload-mini hidden" id="upload-mini" data-i18n-title="upload.expand">
+        <span class="upload-mini-spinner"></span>
+        <span class="upload-mini-text" id="upload-mini-text"></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
 
     <!-- Viewer Modal -->
     <div class="viewer-overlay hidden" id="viewer-overlay">
