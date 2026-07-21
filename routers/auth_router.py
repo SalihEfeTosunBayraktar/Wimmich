@@ -79,13 +79,28 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     }
 
 
+# A precomputed bcrypt hash of a throwaway value, verified against when no
+# user matches the email. Without this, a nonexistent email returns
+# immediately while a real email with a wrong password spends ~100ms in
+# bcrypt - that timing gap alone lets an attacker enumerate which emails
+# are registered. Running a real bcrypt comparison in both paths closes it.
+_DUMMY_PASSWORD_HASH = hash_password("wimmich-login-timing-equalizer")
+
+
 @router.post("/login")
 async def login(req: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
     """Login and get JWT token."""
     result = await db.execute(select(User).where(User.email == req.email))
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(req.password, user.password_hash):
+    if not user:
+        # Spend the same bcrypt time as a real-user-wrong-password attempt
+        # before failing, so the "does this email exist" timing side channel
+        # is gone. Result deliberately ignored.
+        verify_password(req.password, _DUMMY_PASSWORD_HASH)
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not user.is_approved and not user.is_admin:

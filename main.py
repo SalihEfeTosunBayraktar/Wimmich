@@ -132,11 +132,20 @@ async def job_already_exists_exception_handler(request, exc):
         content={"detail": str(exc)},
     )
 
-# CORS
+# CORS. allow_credentials is deliberately False: the SPA is served from the
+# same origin as the API and authenticates with a Bearer token in the
+# Authorization header (see static/js/api.js), never a cross-origin cookie.
+# Pairing allow_credentials=True with allow_origins=["*"] makes Starlette
+# reflect ANY requesting origin back with Access-Control-Allow-Credentials:
+# true, which would let any website the user visits make credentialed
+# cross-origin calls to a reachable server - a footgun with no upside here,
+# since nothing legitimately relies on cross-origin credentials. Same-origin
+# cookie auth (the httponly wimmich_token fallback in auth.py) is unaffected:
+# browsers always send same-origin cookies regardless of this setting.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

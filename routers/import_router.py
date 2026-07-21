@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from models import User, Job
-from auth import get_current_user
+from auth import get_admin_user
 from services.job_service import create_job
 from services.filesystem_browse_service import (
     browse_path, scan_folder_preview, list_reference_roots, remove_reference_root,
@@ -35,7 +35,7 @@ class ReferenceRootRequest(BaseModel):
 @router.post("/browse")
 async def browse_filesystem(
     req: BrowseRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_admin_user),
 ):
     """Browse local filesystem to select folders for import."""
     import asyncio
@@ -45,7 +45,7 @@ async def browse_filesystem(
 @router.post("/scan")
 async def scan_folder(
     req: ImportRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Scan a folder and show what would be imported."""
@@ -55,7 +55,7 @@ async def scan_folder(
 @router.post("/start")
 async def start_import(
     req: ImportRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Start importing files from a local path."""
@@ -80,7 +80,7 @@ async def start_import(
 @router.get("/status/{job_id}")
 async def import_status(
     job_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get import job status."""
@@ -108,7 +108,7 @@ async def import_status(
 
 @router.get("/references")
 async def get_reference_roots(
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """List the distinct folders currently linked via a Reference-mode import."""
@@ -118,7 +118,7 @@ async def get_reference_roots(
 @router.delete("/references")
 async def delete_reference_root(
     req: ReferenceRootRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Un-link every asset referenced from this folder - removes them from

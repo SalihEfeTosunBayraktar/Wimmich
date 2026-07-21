@@ -12,7 +12,7 @@ from typing import Optional, List, Tuple
 import numpy as np
 
 import config
-from utils.embedding_utils import load_embedding, cosine_similarity
+from utils.embedding_utils import load_embedding, load_embedding_cached, cosine_similarity
 from utils.log import info, success, error
 
 _model = None
@@ -168,7 +168,7 @@ def search_by_text(
 
     results = []
     for asset_id, emb_path in embedding_paths:
-        emb = load_embedding(emb_path)
+        emb = load_embedding_cached(emb_path)
         if emb is not None and emb.shape == text_emb.shape:
             score = cosine_similarity(text_emb, emb)
             results.append((asset_id, score))
