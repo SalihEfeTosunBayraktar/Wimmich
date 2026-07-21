@@ -485,10 +485,10 @@ async function renderAdmin() {
                 <div class="admin-status-card admin-status-card--jobs">
                     <h4>⚙️ ${t('admin_render.jobs_status_card_heading')}</h4>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
-                        <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
-                        <span class="badge badge-success">${t('admin_render.jobs_completed_badge', { count: stats.jobs.completed })}</span>
-                        <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
+                        <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}" id="jobs-pending-badge">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
+                        <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}" id="jobs-running-badge">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
+                        <span class="badge badge-success" id="jobs-completed-badge">${t('admin_render.jobs_completed_badge', { count: stats.jobs.completed })}</span>
+                        <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}" id="jobs-failed-badge">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
                     </div>
                     <p class="text-muted admin-field-hint" style="margin-bottom:8px">${t('admin_render.jobs_session_stats_hint')}</p>
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -736,7 +736,25 @@ async function refreshAdminStats() {
         _setStatValue('stat-people', stats.people);
         _setStatValue('stat-albums', stats.albums);
         _setStatValue('stat-users', stats.users);
+
+        _setJobBadge('jobs-pending-badge', t('admin_render.jobs_pending_badge', { count: stats.jobs.pending }), 'badge ' + (stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'));
+        _setJobBadge('jobs-running-badge', t('admin_render.jobs_running_badge', { count: stats.jobs.running }), 'badge ' + (stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'));
+        _setJobBadge('jobs-completed-badge', t('admin_render.jobs_completed_badge', { count: stats.jobs.completed }), 'badge badge-success');
+        _setJobBadge('jobs-failed-badge', t('admin_render.jobs_failed_badge', { count: stats.jobs.failed }), 'badge ' + (stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'));
     } catch (e) { /* non-critical - next tick tries again */ }
+}
+
+// Same idea as _setStatValue but for the jobs badges, which also need their
+// color class re-evaluated each tick (e.g. pending going 0 -> flips
+// badge-success -> badge-warning), not just their text.
+function _setJobBadge(id, text, className) {
+    const el = $(id);
+    if (!el) return;
+    if (el.textContent === text && el.className === className) return;
+    el.textContent = text;
+    el.className = className;
+    void el.offsetWidth;
+    el.classList.add('stat-value-updated');
 }
 
 // Only touches (and pops) a value that actually changed since the last
