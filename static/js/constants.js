@@ -3,6 +3,14 @@
  * Loaded before all other feature scripts (see index.html script order).
  */
 const TOUCH_HOLD_MS = 600;
+// Mouse: how far the pointer must move before a mousedown-on-a-photo (with
+// nothing selected yet) turns into a drag-select instead of a plain click
+// that opens the viewer.
+const DRAG_ARM_THRESHOLD_PX = 6;
+// Touch: how much finger jitter to tolerate during the long-press hold
+// before treating it as a deliberate move that cancels selection (a still
+// finger never sits at exactly 0,0 movement on a real touchscreen).
+const TOUCH_JITTER_TOLERANCE_PX = 10;
 const SEARCH_DEBOUNCE_MS = 500;
 const DUP_LOCATION_DEBOUNCE_MS = 500;
 const DUP_DELETE_FLASH_MS = 450; // red layer + X visible before the card shrinks away

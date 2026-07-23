@@ -37,7 +37,7 @@ function renderPhotoCard(asset) {
     return `
         <div class="photo-card" data-id="${asset.id}" data-type="${asset.file_type}">
             <div class="photo-select" data-id="${asset.id}"></div>
-            <img src="${thumb}" alt="" loading="lazy" onerror="this.onerror=null;this.src='/static/broken-file.png';">
+            <img src="${thumb}" alt="" loading="lazy" draggable="false" onerror="this.onerror=null;this.src='/static/broken-file.png';">
             <div class="photo-badges">
                 ${isVideo ? `<span class="photo-badge video">▶ ${t('timeline.video_badge')}</span>` : ''}
                 ${isFav ? '<span class="photo-badge favorite"><svg width="12" height="12" viewBox="0 0 24 24" fill="red" stroke="red" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>' : ''}
@@ -58,6 +58,29 @@ function renderPhotoCard(asset) {
 let _dragSelectActive = false;
 let _dragStartPoint = null; // {x, y} in viewport coords, set when the drag begins
 let _dragOriginSelected = null; // asset IDs already selected before this drag started - never deselected by it
+
+// Mouse only: a mousedown on a photo (not its checkbox, nothing selected
+// yet) doesn't arm a drag immediately - it might just be a click to open
+// the viewer. It's held "pending" until the pointer actually moves past
+// DRAG_ARM_THRESHOLD_PX, only then does it retroactively become a drag-
+// select starting from that card. This is what lets a drag started
+// anywhere on a photo (not just its tiny corner checkbox) work.
+let _pendingDragCard = null;
+let _pendingDragStart = null;
+
+// Set to the one card a drag-select was armed from, so the click event
+// that follows the eventual mouseup/touchend on that same element (browsers
+// still fire it if press and release land on the same element even after
+// intervening movement) doesn't immediately toggle it back off again.
+let _suppressClickCard = null;
+
+function _armDragSelect(card, x, y) {
+    _dragSelectActive = true;
+    _dragStartPoint = { x, y };
+    _dragOriginSelected = new Set(state.selectedAssets);
+    _suppressClickCard = card;
+    toggleSelect(card.dataset.id, card);
+}
 
 function _updateRectSelection(currentX, currentY) {
     if (!_dragStartPoint) return;
@@ -89,19 +112,34 @@ function _endDragSelect() {
     _dragSelectActive = false;
     _dragStartPoint = null;
     _dragOriginSelected = null;
+    _pendingDragCard = null;
+    _pendingDragStart = null;
 }
 document.addEventListener('mouseup', _endDragSelect);
 document.addEventListener('mousemove', (e) => {
-    if (_dragSelectActive) _updateRectSelection(e.clientX, e.clientY);
+    if (_dragSelectActive) {
+        _updateRectSelection(e.clientX, e.clientY);
+        return;
+    }
+    if (_pendingDragCard) {
+        const dx = e.clientX - _pendingDragStart.x;
+        const dy = e.clientY - _pendingDragStart.y;
+        if (Math.hypot(dx, dy) >= DRAG_ARM_THRESHOLD_PX) {
+            const card = _pendingDragCard;
+            _pendingDragCard = null;
+            _armDragSelect(card, _pendingDragStart.x, _pendingDragStart.y);
+            _updateRectSelection(e.clientX, e.clientY);
+        }
+    }
 });
 
 function bindPhotoCards(container) {
     container.querySelectorAll('.photo-card').forEach(card => {
         let touchTimer;
-        let suppressClick = false;
+        let touchStartPoint = null;
 
         card.onclick = (e) => {
-            if (suppressClick) { suppressClick = false; return; }
+            if (_suppressClickCard === card) { _suppressClickCard = null; return; }
             if (e.target.closest('.photo-select') || state.selectedAssets.size > 0) {
                 toggleSelect(card.dataset.id, card);
                 return;
@@ -113,19 +151,21 @@ function bindPhotoCards(container) {
         };
 
         // Desktop: mousedown on the checkbox (or anywhere once already
-        // selecting) arms a drag; a global mousemove (registered once,
-        // above) then extends the selection to every card inside the
-        // rectangle between here and the current pointer position.
+        // selecting) arms a drag immediately - it's already an explicit
+        // selection action. Mousedown anywhere ELSE on a photo (nothing
+        // selected yet) only arms once the pointer actually moves past the
+        // threshold (see the global mousemove above) so a plain click still
+        // opens the viewer - this is what lets a drag started from the
+        // middle of a photo (not just its tiny corner checkbox) work.
         card.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
+            if (state.selectedAssets.has(card.dataset.id)) return;
             const onCheckbox = !!e.target.closest('.photo-select');
-            const alreadySelected = state.selectedAssets.has(card.dataset.id);
-            if (!alreadySelected && (onCheckbox || state.selectedAssets.size > 0)) {
-                _dragSelectActive = true;
-                _dragStartPoint = { x: e.clientX, y: e.clientY };
-                _dragOriginSelected = new Set(state.selectedAssets);
-                suppressClick = true;
-                toggleSelect(card.dataset.id, card);
+            if (onCheckbox || state.selectedAssets.size > 0) {
+                _armDragSelect(card, e.clientX, e.clientY);
+            } else {
+                _pendingDragCard = card;
+                _pendingDragStart = { x: e.clientX, y: e.clientY };
             }
         });
 
@@ -135,22 +175,15 @@ function bindPhotoCards(container) {
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length !== 1) return;
             const touch = e.touches[0];
+            touchStartPoint = { x: touch.clientX, y: touch.clientY };
             if (state.selectedAssets.size > 0) {
                 if (!state.selectedAssets.has(card.dataset.id)) {
-                    _dragSelectActive = true;
-                    _dragStartPoint = { x: touch.clientX, y: touch.clientY };
-                    _dragOriginSelected = new Set(state.selectedAssets);
-                    suppressClick = true;
-                    toggleSelect(card.dataset.id, card);
+                    _armDragSelect(card, touch.clientX, touch.clientY);
                 }
                 return;
             }
             touchTimer = setTimeout(() => {
-                _dragSelectActive = true;
-                _dragStartPoint = { x: touch.clientX, y: touch.clientY };
-                _dragOriginSelected = new Set(state.selectedAssets);
-                suppressClick = true;
-                toggleSelect(card.dataset.id, card);
+                _armDragSelect(card, touch.clientX, touch.clientY);
                 if (navigator.vibrate) {
                     try { navigator.vibrate(50); } catch(err) {}
                 }
@@ -163,9 +196,19 @@ function bindPhotoCards(container) {
         });
 
         card.addEventListener('touchmove', (e) => {
-            if (!_dragSelectActive) { clearTimeout(touchTimer); return; }
-            e.preventDefault(); // block page scroll while actively drag-selecting
             const t = e.touches[0];
+            if (!_dragSelectActive) {
+                // Tolerate small jitter while waiting for the long-press to
+                // arm - a still finger never reports exactly 0 movement, and
+                // cancelling on the first pixel made the long-press feel
+                // unreliable. Only a real, deliberate move (e.g. starting to
+                // scroll the page) cancels the pending selection.
+                const dx = t.clientX - touchStartPoint.x;
+                const dy = t.clientY - touchStartPoint.y;
+                if (Math.hypot(dx, dy) > TOUCH_JITTER_TOLERANCE_PX) clearTimeout(touchTimer);
+                return;
+            }
+            e.preventDefault(); // block page scroll while actively drag-selecting
             _updateRectSelection(t.clientX, t.clientY);
         }, { passive: false });
     });

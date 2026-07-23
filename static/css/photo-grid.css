@@ -167,6 +167,10 @@
     cursor: pointer;
     background: var(--bg-tertiary);
     transition: transform var(--transition-fast);
+    /* Without this, a mousedown-drag starting on the thumbnail highlights
+       surrounding text instead of extending the rectangle drag-select. */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .photo-card:hover {
@@ -179,6 +183,13 @@
     height: 100%;
     object-fit: cover;
     transition: opacity var(--transition-normal);
+    /* A plain <img> is natively draggable in every browser - starting a
+       drag-select gesture on top of the thumbnail (instead of the empty
+       card background) would otherwise kick off a native "drag this image
+       out" operation instead, which hijacks the pointer and breaks the
+       rectangle-select entirely. */
+    -webkit-user-drag: none;
+    user-drag: none;
 }
 
 .photo-card .photo-overlay {
@@ -197,10 +208,10 @@
 
 .photo-card .photo-select {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 24px;
-    height: 24px;
+    top: 6px;
+    left: 6px;
+    width: 28px;
+    height: 28px;
     border-radius: var(--radius-full);
     border: 2px solid rgba(255,255,255,0.6);
     background: rgba(0,0,0,0.3);
@@ -211,6 +222,15 @@
     opacity: 0;
     transition: opacity var(--transition-fast);
     z-index: 3;
+}
+
+/* The visible circle stays small so it doesn't dominate a thumbnail, but its
+   actual tappable area extends further via this transparent halo - a real
+   finger is much fatter than the 28px circle it's aiming for. */
+.photo-card .photo-select::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
 }
 
 .photo-card:hover .photo-select,
