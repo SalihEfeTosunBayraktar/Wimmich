@@ -6,6 +6,21 @@
     <title>Wimmich - Photo & Video Management</title>
     <meta name="description" content="Wimmich - Self-hosted photo and video management server for Windows">
 
+    <!-- Applies the saved theme choice before first paint, so there's no
+         flash of the wrong theme while the rest of the page loads. See
+         theme.js for the full switcher logic. -->
+    <script>
+        (function() {
+            try {
+                var choice = localStorage.getItem('wimmich_theme') || 'system';
+                var resolved = choice === 'system'
+                    ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+                    : choice;
+                document.documentElement.setAttribute('data-theme', resolved);
+            } catch (e) {}
+        })();
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -383,6 +398,23 @@
                     <label for="profile-new-password" data-i18n="profile.new_password_label"></label>
                     <input type="password" id="profile-new-password" data-i18n-placeholder="profile.password_leave_blank">
                 </div>
+                <div class="form-group">
+                    <label data-i18n="profile.theme_label"></label>
+                    <div class="theme-switch" id="theme-switch">
+                        <button type="button" class="theme-switch-btn" data-theme-choice="light">
+                            <span class="theme-switch-icon">☀️</span>
+                            <span data-i18n="profile.theme_light"></span>
+                        </button>
+                        <button type="button" class="theme-switch-btn" data-theme-choice="dark">
+                            <span class="theme-switch-icon">🌙</span>
+                            <span data-i18n="profile.theme_dark"></span>
+                        </button>
+                        <button type="button" class="theme-switch-btn" data-theme-choice="system">
+                            <span class="theme-switch-icon">🖥</span>
+                            <span data-i18n="profile.theme_system"></span>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="profile-modal-cancel" data-i18n="common.cancel"></button>
@@ -482,6 +514,7 @@
     <!-- Load order matters: these are classic scripts (no type="module"), so
          later files rely on globals (state, pages, helpers) defined earlier. -->
     <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/theme.js"></script>
     <script src="/static/js/constants.js"></script>
     <script src="/static/js/state.js"></script>
     <script src="/static/js/helpers.js"></script>

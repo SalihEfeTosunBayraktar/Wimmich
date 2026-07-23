@@ -72,6 +72,41 @@
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* ─── Light theme ────────────────────────────────────────────
+   Same variable names, inverted palette - every component already reads
+   colors through these custom properties, so this one override block is
+   enough to re-theme the whole app. Brand accent and the semantic status
+   colors (success/warning/danger/info) stay the same across both themes,
+   only the background/text/border/shadow scale flips. Applied via a
+   data-theme attribute on <html> (see theme.js) rather than a bare
+   prefers-color-scheme query, since the user can explicitly override the
+   OS setting instead of only following it. */
+:root[data-theme="light"] {
+    --bg-primary: #f6f6fb;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #edeef5;
+    --bg-surface: rgba(255, 255, 255, 0.85);
+    --bg-glass: rgba(255, 255, 255, 0.7);
+    --bg-hover: rgba(99, 102, 241, 0.08);
+    --bg-active: rgba(99, 102, 241, 0.14);
+
+    --text-primary: #16161f;
+    --text-secondary: #55556b;
+    --text-muted: #8a8aa0;
+    --text-inverse: #f6f6fb;
+
+    --border-color: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.16);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.14);
+
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(0, 0, 0, 0.06);
+}
+
 /* ─── Storage bar state colors (set via class, not inline hex) ── */
 .storage-bar--ok { background: var(--accent-gradient); }
 .storage-bar--warning { background: var(--warning); }

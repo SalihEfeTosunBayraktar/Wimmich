@@ -56,7 +56,7 @@ function renderPhotoCard(asset) {
 // corner drag) - so every card inside the box ends up selected, matching
 // Google Photos/Immich's drag-select.
 let _dragSelectActive = false;
-let _dragStartPoint = null; // {x, y} in viewport coords, set when the drag begins
+let _dragStartPoint = null; // {x, y} in page-content scroll-space, set when the drag begins
 let _dragOriginSelected = null; // asset IDs already selected before this drag started - never deselected by it
 
 // Mouse only: a mousedown on a photo (not its checkbox, nothing selected
@@ -74,24 +74,45 @@ let _pendingDragStart = null;
 // intervening movement) doesn't immediately toggle it back off again.
 let _suppressClickCard = null;
 
-function _armDragSelect(card, x, y) {
+// Every photo grid scrolls inside #page-content (overflow-y: auto), not the
+// window - so both the drag's anchor point and the rectangle math need to
+// be expressed in that element's scroll-space (viewport coords + its
+// scrollTop/scrollLeft), not raw viewport coords. Otherwise scrolling
+// mid-drag (a manual wheel scroll, or the auto-scroll below) would silently
+// shift the whole page under a start point that never moved.
+function _scrollSpacePoint(clientX, clientY) {
+    const pc = $('page-content');
+    return {
+        x: clientX + (pc ? pc.scrollLeft : 0),
+        y: clientY + (pc ? pc.scrollTop : 0),
+    };
+}
+
+function _armDragSelect(card, clientX, clientY) {
     _dragSelectActive = true;
-    _dragStartPoint = { x, y };
+    _dragStartPoint = _scrollSpacePoint(clientX, clientY);
     _dragOriginSelected = new Set(state.selectedAssets);
     _suppressClickCard = card;
     toggleSelect(card.dataset.id, card);
+    _startDragAutoScroll();
 }
 
-function _updateRectSelection(currentX, currentY) {
+function _updateRectSelection(currentClientX, currentClientY) {
     if (!_dragStartPoint) return;
-    const minX = Math.min(_dragStartPoint.x, currentX);
-    const maxX = Math.max(_dragStartPoint.x, currentX);
-    const minY = Math.min(_dragStartPoint.y, currentY);
-    const maxY = Math.max(_dragStartPoint.y, currentY);
+    const pc = $('page-content');
+    const scrollLeft = pc ? pc.scrollLeft : 0;
+    const scrollTop = pc ? pc.scrollTop : 0;
+    const current = { x: currentClientX + scrollLeft, y: currentClientY + scrollTop };
+    const minX = Math.min(_dragStartPoint.x, current.x);
+    const maxX = Math.max(_dragStartPoint.x, current.x);
+    const minY = Math.min(_dragStartPoint.y, current.y);
+    const maxY = Math.max(_dragStartPoint.y, current.y);
 
     document.querySelectorAll('.photo-card').forEach(card => {
         const r = card.getBoundingClientRect();
-        const intersects = r.left < maxX && r.right > minX && r.top < maxY && r.bottom > minY;
+        const left = r.left + scrollLeft, right = r.right + scrollLeft;
+        const top = r.top + scrollTop, bottom = r.bottom + scrollTop;
+        const intersects = left < maxX && right > minX && top < maxY && bottom > minY;
         const id = card.dataset.id;
         const isSelected = state.selectedAssets.has(id);
         if (intersects && !isSelected) {
@@ -108,15 +129,57 @@ function _updateRectSelection(currentX, currentY) {
     updateSelectionBar();
 }
 
+// Auto-scrolls #page-content while a drag-select's pointer sits near its top
+// or bottom edge - without this, a selection that needs to span more items
+// than fit on screen at once was simply unreachable (release, scroll, and
+// restart the drag, losing anything not literally visible at drag-start).
+// Runs on rAF rather than off the move events themselves so it keeps
+// scrolling even while the pointer is held still right at the edge.
+const DRAG_EDGE_ZONE_PX = 60;
+const DRAG_AUTOSCROLL_MAX_SPEED_PX = 16;
+let _dragAutoScrollRAF = null;
+let _lastPointerClientX = 0;
+let _lastPointerClientY = 0;
+
+function _dragAutoScrollTick() {
+    if (!_dragSelectActive) { _dragAutoScrollRAF = null; return; }
+    const pc = $('page-content');
+    if (pc) {
+        const rect = pc.getBoundingClientRect();
+        const y = _lastPointerClientY;
+        let dy = 0;
+        if (y < rect.top + DRAG_EDGE_ZONE_PX) {
+            dy = -Math.min(1, (rect.top + DRAG_EDGE_ZONE_PX - y) / DRAG_EDGE_ZONE_PX) * DRAG_AUTOSCROLL_MAX_SPEED_PX;
+        } else if (y > rect.bottom - DRAG_EDGE_ZONE_PX) {
+            dy = Math.min(1, (y - (rect.bottom - DRAG_EDGE_ZONE_PX)) / DRAG_EDGE_ZONE_PX) * DRAG_AUTOSCROLL_MAX_SPEED_PX;
+        }
+        if (dy !== 0) {
+            pc.scrollTop += dy;
+            _updateRectSelection(_lastPointerClientX, _lastPointerClientY);
+        }
+    }
+    _dragAutoScrollRAF = requestAnimationFrame(_dragAutoScrollTick);
+}
+
+function _startDragAutoScroll() {
+    if (!_dragAutoScrollRAF) _dragAutoScrollRAF = requestAnimationFrame(_dragAutoScrollTick);
+}
+
 function _endDragSelect() {
     _dragSelectActive = false;
     _dragStartPoint = null;
     _dragOriginSelected = null;
     _pendingDragCard = null;
     _pendingDragStart = null;
+    if (_dragAutoScrollRAF) {
+        cancelAnimationFrame(_dragAutoScrollRAF);
+        _dragAutoScrollRAF = null;
+    }
 }
 document.addEventListener('mouseup', _endDragSelect);
 document.addEventListener('mousemove', (e) => {
+    _lastPointerClientX = e.clientX;
+    _lastPointerClientY = e.clientY;
     if (_dragSelectActive) {
         _updateRectSelection(e.clientX, e.clientY);
         return;

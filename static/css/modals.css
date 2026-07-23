@@ -1,3 +1,39 @@
+/* ─── Theme switch (Profile Settings) ──────────────────────── */
+.theme-switch {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.theme-switch-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-sm) var(--space-xs);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.theme-switch-icon { font-size: 1.1rem; }
+
+.theme-switch-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.theme-switch-btn.active {
+    background: var(--accent-primary);
+    color: white;
+}
+
 /* ─── Modals ────────────────────────────────────────────── */
 .modal-overlay {
     position: fixed;

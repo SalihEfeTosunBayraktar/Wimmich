@@ -4,6 +4,7 @@
  * for load order); this file only wires up DOMContentLoaded init.
  */
 document.addEventListener('DOMContentLoaded', () => {
+    initThemeSwitch();
     initAuth();
     initSidebar();
     initUpload();
