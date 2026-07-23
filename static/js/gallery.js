@@ -46,6 +46,7 @@ registerTranslations({
         'gallery.no_photos': 'No photos',
         'gallery.back_to_years': '← Back to Years',
         'gallery.collapse_btn': 'Collapse',
+        'gallery.clear_city_filter': '✕ Clear',
     },
     tr: {
         'gallery.sort_date_desc': 'Tarih (Yeni → Eski)',
@@ -88,6 +89,7 @@ registerTranslations({
         'gallery.no_photos': 'Fotoğraf yok',
         'gallery.back_to_years': '← Yıllara Dön',
         'gallery.collapse_btn': 'Küçült',
+        'gallery.clear_city_filter': '✕ Temizle',
     },
     fr: {
         'gallery.sort_date_desc': 'Date (Récent → Ancien)',
@@ -130,6 +132,7 @@ registerTranslations({
         'gallery.no_photos': 'Aucune photo',
         'gallery.back_to_years': '← Retour aux années',
         'gallery.collapse_btn': 'Réduire',
+        'gallery.clear_city_filter': '✕ Effacer',
     },
     de: {
         'gallery.sort_date_desc': 'Datum (Neu → Alt)',
@@ -172,6 +175,7 @@ registerTranslations({
         'gallery.no_photos': 'Keine Fotos',
         'gallery.back_to_years': '← Zurück zu den Jahren',
         'gallery.collapse_btn': 'Einklappen',
+        'gallery.clear_city_filter': '✕ Löschen',
     },
 });
 
@@ -302,6 +306,12 @@ async function renderGallery() {
     g.page = 1;
     g.groups = [];
 
+    // A city clicked from the Map's visit ranking sets filterBy to this -
+    // without a visible marker for it, the gallery it lands on looks
+    // identical to "All Photos" even though it's already correctly
+    // filtered server-side, making it seem like the click did nothing.
+    const cityFilterName = g.filterBy.startsWith('city_') ? g.filterBy.slice('city_'.length) : null;
+
     const pc = $('page-content');
     pc.innerHTML = `
         <div class="search-container">
@@ -317,8 +327,20 @@ async function renderGallery() {
                 </div>
             </div>
         </div>
+        ${cityFilterName ? `
+            <div class="date-group-header" style="margin-bottom:12px">
+                <span class="date-group-title">🏙️ ${escHtml(cityFilterName)}</span>
+                <button class="btn btn-secondary btn-sm" id="gallery-clear-city-filter">${t('gallery.clear_city_filter')}</button>
+            </div>
+        ` : ''}
         <div id="gallery-grid-container"></div>
     `;
+    if (cityFilterName) {
+        $('gallery-clear-city-filter').onclick = () => {
+            g.filterBy = 'all';
+            renderGallery();
+        };
+    }
     $('gallery-sort').onchange = (e) => { g.sortBy = e.target.value; renderGallery(); };
     $('gallery-group').onchange = (e) => { g.groupBy = e.target.value; renderGallery(); };
 
