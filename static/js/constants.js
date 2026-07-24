@@ -26,6 +26,10 @@ const ADMIN_STATS_POLL_INTERVAL_MS = 15000;
 const SERVER_PING_INTERVAL_MS = 5000;
 const IMPORT_POLL_INTERVAL_MS = 2000;
 const TOAST_DURATION_MS = 2200;
+// A toast with an action button (e.g. "Undo") needs to be read AND clicked,
+// not just read - the plain duration above disappears before most people
+// could react to it.
+const TOAST_ACTION_DURATION_MS = 5000;
 const TOAST_REMOVE_DELAY_MS = 300;
 // Deleting a run of items (e.g. clearing duplicate groups one after another)
 // used to stack an unbounded column of toasts down the screen - cap how

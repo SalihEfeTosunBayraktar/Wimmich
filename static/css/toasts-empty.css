@@ -33,6 +33,21 @@
 
 .toast.removing { animation: slideOutRight 0.3s ease forwards; }
 
+.toast-text { flex: 1; }
+
+.toast-action-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+.toast-action-btn:hover { opacity: 0.75; }
+
 /* ─── Empty States ──────────────────────────────────────── */
 .empty-state {
     display: flex;

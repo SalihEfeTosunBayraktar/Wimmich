@@ -158,53 +158,79 @@ function clearSelection() {
     removeSelectionBar();
 }
 
+// Shared by every reversible bulk action below: shows the usual success
+// toast but with an "Undo" button that repeats the same bulk action with
+// its opposite verb (favorite/unfavorite, archive/unarchive, delete/
+// restore, ...) against the exact same asset IDs, then refreshes whatever's
+// currently on screen. Not used for permanent delete - that one is
+// genuinely irreversible, which is what its own confirm() dialog is for.
+function _undoableToast(msg, undoFn, refreshFn) {
+    toast(msg, 'success', {
+        label: t('common.undo'),
+        onClick: async () => {
+            try {
+                await undoFn();
+                (refreshFn || (() => navigateTo(state.currentPage)))();
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        },
+    });
+}
+
 async function bulkDelete() {
-    // Trash is a soft delete (reversible from the Trash page), so this
-    // doesn't block on a confirm() popup - same reasoning as the viewer's
-    // single-photo delete.
-    await API.bulkAction([...state.selectedAssets], 'delete');
-    toast(t('selection.moved_to_trash', { count: state.selectedAssets.size }), 'success');
+    // Trash is a soft delete (reversible from the Trash page, or right away
+    // via the toast's Undo), so this doesn't block on a confirm() popup -
+    // same reasoning as the viewer's single-photo delete.
+    const ids = [...state.selectedAssets];
+    await API.bulkAction(ids, 'delete');
+    _undoableToast(t('selection.moved_to_trash', { count: ids.length }), () => API.bulkAction(ids, 'restore'));
     clearSelection();
     navigateTo(state.currentPage);
 }
 
 async function bulkFavorite() {
-    await API.bulkAction([...state.selectedAssets], 'favorite');
-    toast(t('selection.added_to_favorites'), 'success');
+    const ids = [...state.selectedAssets];
+    await API.bulkAction(ids, 'favorite');
+    _undoableToast(t('selection.added_to_favorites'), () => API.bulkAction(ids, 'unfavorite'));
     clearSelection();
     navigateTo(state.currentPage);
 }
 
 async function bulkArchive() {
-    await API.bulkAction([...state.selectedAssets], 'archive');
-    toast(t('selection.archived'), 'success');
+    const ids = [...state.selectedAssets];
+    await API.bulkAction(ids, 'archive');
+    _undoableToast(t('selection.archived'), () => API.bulkAction(ids, 'unarchive'));
     clearSelection();
     navigateTo(state.currentPage);
 }
 
 async function bulkUnarchive() {
-    await API.bulkAction([...state.selectedAssets], 'unarchive');
-    toast(t('selection.unarchived'), 'success');
+    const ids = [...state.selectedAssets];
+    await API.bulkAction(ids, 'unarchive');
+    _undoableToast(t('selection.unarchived'), () => API.bulkAction(ids, 'archive'));
     clearSelection();
     navigateTo(state.currentPage);
 }
 
 async function bulkRestore() {
-    await API.bulkAction([...state.selectedAssets], 'restore');
-    toast(t('selection.restored'), 'success');
+    const ids = [...state.selectedAssets];
+    await API.bulkAction(ids, 'restore');
+    _undoableToast(t('selection.restored'), () => API.bulkAction(ids, 'delete'));
     clearSelection();
     navigateTo(state.currentPage);
 }
 
 async function bulkRemoveFromAlbum() {
     const albumId = state.currentAlbum.id;
-    await API.removeFromAlbum(albumId, [...state.selectedAssets]);
-    toast(t('selection.removed_from_album'), 'success');
-    clearSelection();
+    const ids = [...state.selectedAssets];
+    await API.removeFromAlbum(albumId, ids);
     // navigateTo(state.currentPage) would land back on the album cover-grid
     // list, not this album's detail view - openAlbum() is the actual
     // "refresh what I'm looking at" here, same as albums.js's own re-fetch
     // pattern after a mutation.
+    _undoableToast(t('selection.removed_from_album'), () => API.addToAlbum(albumId, ids), () => openAlbum(albumId));
+    clearSelection();
     openAlbum(albumId);
 }
 

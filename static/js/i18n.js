@@ -93,6 +93,7 @@ registerTranslations({
         'common.first_run_title': 'Choose your language',
         'common.first_run_desc': 'You can change this later from the sidebar.',
         'common.first_run_continue': 'Continue',
+        'common.undo': 'Undo',
     },
     tr: {
         'common.language': 'Dil',
@@ -114,6 +115,7 @@ registerTranslations({
         'common.first_run_title': 'Dilinizi seçin',
         'common.first_run_desc': 'Bunu daha sonra kenar çubuğundan değiştirebilirsiniz.',
         'common.first_run_continue': 'Devam Et',
+        'common.undo': 'Geri Al',
     },
     fr: {
         'common.language': 'Langue',
@@ -135,6 +137,7 @@ registerTranslations({
         'common.first_run_title': 'Choisissez votre langue',
         'common.first_run_desc': 'Vous pourrez la modifier plus tard depuis la barre latérale.',
         'common.first_run_continue': 'Continuer',
+        'common.undo': 'Annuler',
     },
     de: {
         'common.language': 'Sprache',
@@ -156,6 +159,7 @@ registerTranslations({
         'common.first_run_title': 'Wählen Sie Ihre Sprache',
         'common.first_run_desc': 'Sie können dies später in der Seitenleiste ändern.',
         'common.first_run_continue': 'Weiter',
+        'common.undo': 'Rückgängig',
     },
 });
 

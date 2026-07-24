@@ -37,19 +37,42 @@ function formatDateShort(iso) {
     return d.toLocaleDateString(_DATE_LOCALES[getLanguage()]);
 }
 
-function toast(msg, type = 'info') {
+// action (optional): { label, onClick } - renders a button inside the toast
+// (e.g. "Undo" after a bulk delete/archive) and gives it more time on screen
+// than a plain informational toast, since it has to be read AND clicked
+// before it disappears, not just read.
+function toast(msg, type = 'info', action = null) {
     const c = $('toast-container');
     while (c.children.length >= TOAST_MAX_VISIBLE) {
         c.firstElementChild.remove();
     }
     const el = document.createElement('div');
     el.className = `toast ${type}`;
-    el.textContent = msg;
-    c.appendChild(el);
-    setTimeout(() => {
+
+    const textEl = document.createElement('span');
+    textEl.className = 'toast-text';
+    textEl.textContent = msg;
+    el.appendChild(textEl);
+
+    const dismiss = () => {
         el.classList.add('removing');
         setTimeout(() => el.remove(), TOAST_REMOVE_DELAY_MS);
-    }, TOAST_DURATION_MS);
+    };
+
+    if (action) {
+        const btn = document.createElement('button');
+        btn.className = 'toast-action-btn';
+        btn.textContent = action.label;
+        btn.onclick = () => {
+            clearTimeout(timer);
+            dismiss();
+            action.onClick();
+        };
+        el.appendChild(btn);
+    }
+
+    c.appendChild(el);
+    const timer = setTimeout(dismiss, action ? TOAST_ACTION_DURATION_MS : TOAST_DURATION_MS);
 }
 
 function escHtml(s) {
