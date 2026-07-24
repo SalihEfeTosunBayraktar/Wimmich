@@ -239,6 +239,8 @@ function bindPhotoCards(container) {
             if (e.touches.length !== 1) return;
             const touch = e.touches[0];
             touchStartPoint = { x: touch.clientX, y: touch.clientY };
+            _lastPointerClientX = touch.clientX;
+            _lastPointerClientY = touch.clientY;
             if (state.selectedAssets.size > 0) {
                 if (!state.selectedAssets.has(card.dataset.id)) {
                     _armDragSelect(card, touch.clientX, touch.clientY);
@@ -272,6 +274,12 @@ function bindPhotoCards(container) {
                 return;
             }
             e.preventDefault(); // block page scroll while actively drag-selecting
+            // The auto-scroll rAF loop (see _dragAutoScrollTick) reads these
+            // to keep scrolling even while the finger is held still at the
+            // edge - only the mouse path updated them until now, so
+            // auto-scroll silently never triggered on touch at all.
+            _lastPointerClientX = t.clientX;
+            _lastPointerClientY = t.clientY;
             _updateRectSelection(t.clientX, t.clientY);
         }, { passive: false });
     });
