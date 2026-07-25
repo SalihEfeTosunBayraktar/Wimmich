@@ -47,6 +47,7 @@ registerTranslations({
         'gallery.back_to_years': '← Back to Years',
         'gallery.collapse_btn': 'Collapse',
         'gallery.clear_city_filter': '✕ Clear',
+        'gallery.jump_to_date': 'Jump to date',
     },
     tr: {
         'gallery.sort_date_desc': 'Tarih (Yeni → Eski)',
@@ -90,6 +91,7 @@ registerTranslations({
         'gallery.back_to_years': '← Yıllara Dön',
         'gallery.collapse_btn': 'Küçült',
         'gallery.clear_city_filter': '✕ Temizle',
+        'gallery.jump_to_date': 'Tarihe git',
     },
     fr: {
         'gallery.sort_date_desc': 'Date (Récent → Ancien)',
@@ -133,6 +135,7 @@ registerTranslations({
         'gallery.back_to_years': '← Retour aux années',
         'gallery.collapse_btn': 'Réduire',
         'gallery.clear_city_filter': '✕ Effacer',
+        'gallery.jump_to_date': 'Aller à la date',
     },
     de: {
         'gallery.sort_date_desc': 'Datum (Neu → Alt)',
@@ -176,6 +179,7 @@ registerTranslations({
         'gallery.back_to_years': '← Zurück zu den Jahren',
         'gallery.collapse_btn': 'Einklappen',
         'gallery.clear_city_filter': '✕ Löschen',
+        'gallery.jump_to_date': 'Zu Datum springen',
     },
 });
 
@@ -322,6 +326,7 @@ async function renderGallery() {
                     <div id="gallery-search-suggestions" class="search-suggestions hidden"></div>
                 </div>
                 <div id="gallery-controls-row" class="gallery-controls-mini" style="${g.searchQuery ? 'display:none' : ''}">
+                    <input type="month" id="gallery-jump-date" class="gallery-mini-select" title="${t('gallery.jump_to_date')}">
                     <select id="gallery-sort" class="gallery-mini-select" title="${t('gallery.sort_title')}">${_galleryOptionsHtml(GALLERY_SORT_OPTIONS, g.sortBy)}</select>
                     <select id="gallery-group" class="gallery-mini-select" title="${t('gallery.group_title')}">${_galleryOptionsHtml(GALLERY_GROUP_OPTIONS, g.groupBy)}</select>
                 </div>
@@ -343,6 +348,11 @@ async function renderGallery() {
     }
     $('gallery-sort').onchange = (e) => { g.sortBy = e.target.value; renderGallery(); };
     $('gallery-group').onchange = (e) => { g.groupBy = e.target.value; renderGallery(); };
+    $('gallery-jump-date').onchange = (e) => {
+        if (!e.target.value) return;
+        const [year, month] = e.target.value.split('-').map(Number);
+        _jumpToMonth(year, month);
+    };
 
     const searchInput = $('gallery-search-input');
     const suggestions = $('gallery-search-suggestions');
@@ -711,5 +721,21 @@ async function _openMonthDrilldown(year, month) {
     `;
     bindPhotoCards(pc.querySelector('.date-group'));
     state.viewerList = assets.map(a => a.id);
+}
+
+// Same Turkish month names the backend's year/month grid always uses
+// (config.py's LOCALE_MONTH_NAMES isn't translated per UI language) - kept
+// in sync so jumping straight to a month reads identically to the header
+// you'd see browsing to it normally via the year view.
+const _JUMP_MONTH_NAMES = {
+    1: 'Ocak', 2: 'Şubat', 3: 'Mart', 4: 'Nisan', 5: 'Mayıs', 6: 'Haziran',
+    7: 'Temmuz', 8: 'Ağustos', 9: 'Eylül', 10: 'Ekim', 11: 'Kasım', 12: 'Aralık',
+};
+
+// Lets the gallery's month-picker jump straight to a month's full grid
+// without first paging through the year view to find it - a real ask once
+// the library has thousands of photos spanning years.
+function _jumpToMonth(year, month) {
+    _openMonthDrilldown(year, { month, display_date: _JUMP_MONTH_NAMES[month] || '' });
 }
 
