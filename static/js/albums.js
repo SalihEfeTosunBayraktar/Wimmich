@@ -18,7 +18,7 @@ registerTranslations({
         'albums.select_photos_first': 'Select photos first',
         'albums.no_albums_hint': "You don't have any albums yet. Create one from above.",
         'albums.items_added': '{count} items added to album',
-        'albums.share_with_account_button': '👥 Share with Account',
+        'albums.share_with_account_button': 'Share with Account',
         'albums.share_with_account_title': 'Share Album with Account',
         'albums.add_person_label': 'Add a person',
         'albums.allow_edit': 'Allow adding/removing photos',
@@ -55,7 +55,7 @@ registerTranslations({
         'albums.select_photos_first': 'Önce fotoğraf seçin',
         'albums.no_albums_hint': 'Henüz albümünüz yok. Yukarıdan yeni bir tane oluşturun.',
         'albums.items_added': '{count} öğe albüme eklendi',
-        'albums.share_with_account_button': '👥 Hesapla Paylaş',
+        'albums.share_with_account_button': 'Hesapla Paylaş',
         'albums.share_with_account_title': 'Albümü Hesapla Paylaş',
         'albums.add_person_label': 'Kişi ekle',
         'albums.allow_edit': 'Fotoğraf ekleme/çıkarmaya izin ver',
@@ -92,7 +92,7 @@ registerTranslations({
         'albums.select_photos_first': "Sélectionnez d'abord des photos",
         'albums.no_albums_hint': "Vous n'avez pas encore d'album. Créez-en un ci-dessus.",
         'albums.items_added': '{count} éléments ajoutés à l\'album',
-        'albums.share_with_account_button': '👥 Partager avec un compte',
+        'albums.share_with_account_button': 'Partager avec un compte',
         'albums.share_with_account_title': "Partager l'album avec un compte",
         'albums.add_person_label': 'Ajouter une personne',
         'albums.allow_edit': "Autoriser l'ajout/la suppression de photos",
@@ -129,7 +129,7 @@ registerTranslations({
         'albums.select_photos_first': 'Wählen Sie zuerst Fotos aus',
         'albums.no_albums_hint': 'Sie haben noch keine Alben. Erstellen Sie oben eines.',
         'albums.items_added': '{count} Elemente zum Album hinzugefügt',
-        'albums.share_with_account_button': '👥 Mit Konto teilen',
+        'albums.share_with_account_button': 'Mit Konto teilen',
         'albums.share_with_account_title': 'Album mit Konto teilen',
         'albums.add_person_label': 'Person hinzufügen',
         'albums.allow_edit': 'Hinzufügen/Entfernen von Fotos erlauben',
@@ -202,8 +202,8 @@ async function openAlbum(id) {
                 ${album.is_smart ? `<span class="album-view-only-badge album-smart-badge">${t('albums.smart_badge')}</span>` : ''}
                 ${!isOwner ? `<span class="text-muted">${t('albums.shared_by', { name: escHtml(album.owner_name || '') })}</span>` : ''}
                 ${!isOwner && !album.can_edit ? `<span class="album-view-only-badge">${t('albums.view_only_badge')}</span>` : ''}
-                <button class="btn btn-secondary btn-sm" onclick="showShareModal('ALBUM', '${id}')">🔗 ${t('albums.share_button')}</button>
-                ${isOwner ? `<button class="btn btn-secondary btn-sm" onclick="showAlbumShareModal('${id}')">${t('albums.share_with_account_button')}</button>` : ''}
+                <button class="btn btn-secondary btn-sm" onclick="showShareModal('ALBUM', '${id}')">${icon('link')} ${t('albums.share_button')}</button>
+                ${isOwner ? `<button class="btn btn-secondary btn-sm" onclick="showAlbumShareModal('${id}')">${icon('users')} ${t('albums.share_with_account_button')}</button>` : ''}
                 ${isOwner ? `<button class="btn btn-danger btn-sm" onclick="deleteAlbum('${id}')">${t('common.delete')}</button>` : ''}
             </div>
             ${album.description ? `<p style="color:var(--text-secondary);margin-bottom:16px">${escHtml(album.description)}</p>` : ''}
@@ -217,7 +217,7 @@ async function openAlbum(id) {
                 const btn = document.createElement('button');
                 btn.className = 'photo-cover-btn';
                 btn.title = t('albums.set_cover_title');
-                btn.textContent = '⭐';
+                btn.innerHTML = icon('star');
                 btn.onclick = (e) => { e.stopPropagation(); setAlbumCover(id, card.dataset.id); };
                 overlay.appendChild(btn);
             });
@@ -382,7 +382,7 @@ function _renderAlbumShareCurrentList(sharedUsers) {
                 <div>${escHtml(u.name)}</div>
                 <div class="text-muted">${escHtml(u.email)}${!u.can_edit ? ` · ${t('albums.view_only_badge')}` : ''}</div>
             </div>
-            <button class="btn btn-danger btn-sm" title="${t('albums.remove_access')}" onclick="removeAlbumShare('${u.user_id}')">✕</button>
+            <button class="btn btn-danger btn-sm" title="${t('albums.remove_access')}" onclick="removeAlbumShare('${u.user_id}')">${icon('close')}</button>
         </div>
     `).join('');
 }

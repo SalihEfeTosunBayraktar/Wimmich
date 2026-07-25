@@ -98,7 +98,7 @@ function renderTunnelPanel(status) {
         return `
             <div style="text-align:center;padding:16px">
                 <p style="color:var(--text-secondary);margin-bottom:12px">${t('admin_tunnel.not_found')}</p>
-                <button class="btn btn-primary" onclick="downloadCloudflared()">⬇️ ${t('admin_tunnel.download_button')}</button>
+                <button class="btn btn-primary" onclick="downloadCloudflared()">${icon('download')} ${t('admin_tunnel.download_button')}</button>
                 <p style="color:var(--text-muted);font-size:0.8rem;margin-top:8px">${t('admin_tunnel.download_manual', { link })}</p>
             </div>
         `;
@@ -131,7 +131,7 @@ function renderTunnelPanel(status) {
                 <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px">${t('admin_tunnel.share_url_label')}</p>
                 <div style="display:flex;align-items:center;gap:8px">
                     <a href="${status.url}" target="_blank" style="flex:1;font-size:0.95rem;color:var(--success);word-break:break-all">${status.url}</a>
-                    <button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText('${status.url}');toast('${t('admin_tunnel.copied')}','success')">📋</button>
+                    <button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText('${status.url}');toast('${t('admin_tunnel.copied')}','success')">${icon('copy')}</button>
                 </div>
             </div>
             <p style="color:var(--text-muted);font-size:0.8rem">${t('admin_tunnel.share_hint')}</p>
@@ -141,7 +141,7 @@ function renderTunnelPanel(status) {
     return `
         <div style="text-align:center;padding:16px">
             <p style="color:var(--text-secondary);margin-bottom:16px">${t('admin_tunnel.intro')}</p>
-            <button class="btn btn-primary" onclick="startTunnel()">🚀 ${t('admin_tunnel.start_button')}</button>
+            <button class="btn btn-primary" onclick="startTunnel()">${icon('rocket')} ${t('admin_tunnel.start_button')}</button>
             <p style="color:var(--text-muted);font-size:0.8rem;margin-top:12px">${t('admin_tunnel.quick_tunnel_hint')}</p>
         </div>
     `;

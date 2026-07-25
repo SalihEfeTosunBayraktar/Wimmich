@@ -55,7 +55,7 @@ async function renderSharing() {
                         <div class="share-link">${location.origin}/shared/${s.key}</div>
                         <div class="share-meta">${s.link_type} · ${t('sharing.view_count', { count: s.view_count })} · ${formatDateShort(s.created_at)} ${s.has_password ? '🔒' : ''} ${s.expires_at ? '⏰ ' + formatDateShort(s.expires_at) : ''}</div>
                     </div>
-                    <button class="btn btn-sm btn-secondary" onclick="copyShareLink('${s.key}')">📋 ${t('sharing.copy_btn')}</button>
+                    <button class="btn btn-sm btn-secondary" onclick="copyShareLink('${s.key}')">${icon('copy')} ${t('sharing.copy_btn')}</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteShareLink('${s.id}')">${t('common.delete')}</button>
                 </div>
             `).join('')}</div>

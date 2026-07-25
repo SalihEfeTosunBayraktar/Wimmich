@@ -345,10 +345,10 @@ function _showPhotoContextMenu(clientX, clientY, ids) {
     menu.className = 'photo-context-menu';
     menu.id = 'photo-context-menu';
     menu.innerHTML = `
-        <button data-action="favorite">♥ ${t('timeline.context_favorite')}</button>
-        <button data-action="archive">🗄 ${t('timeline.context_archive')}</button>
-        <button data-action="download">⬇ ${t('timeline.context_download')}</button>
-        <button class="photo-context-menu-danger" data-action="delete">🗑 ${t('timeline.context_delete')}</button>
+        <button data-action="favorite">${icon('heart')} ${t('timeline.context_favorite')}</button>
+        <button data-action="archive">${icon('archive')} ${t('timeline.context_archive')}</button>
+        <button data-action="download">${icon('download')} ${t('timeline.context_download')}</button>
+        <button class="photo-context-menu-danger" data-action="delete">${icon('trash')} ${t('timeline.context_delete')}</button>
     `;
     document.body.appendChild(menu);
 

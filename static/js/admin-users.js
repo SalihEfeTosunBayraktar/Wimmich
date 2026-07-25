@@ -197,11 +197,11 @@ function renderUserList(users) {
                         ${u.is_approved ? t('admin_users.revoke_approval') : t('admin_users.approve')}
                     </button>
                 ` : ''}
-                <button class="btn btn-secondary btn-sm" onclick="editUserQuota('${u.id}', ${u.storage_quota_mb})">⚙️ ${t('admin_users.quota_label')}</button>
-                <button class="btn btn-secondary btn-sm" onclick="showSetPasswordModal('${u.id}', '${escAttr(u.name)}')">🔑 ${t('admin_users.reset_password')}</button>
+                <button class="btn btn-secondary btn-sm" onclick="editUserQuota('${u.id}', ${u.storage_quota_mb})">${icon('settings')} ${t('admin_users.quota_label')}</button>
+                <button class="btn btn-secondary btn-sm" onclick="showSetPasswordModal('${u.id}', '${escAttr(u.name)}')">${icon('key')} ${t('admin_users.reset_password')}</button>
                 ${u.id !== state.user.id ? `
                     <button class="btn btn-secondary btn-sm" onclick="toggleUserAdmin('${u.id}', ${u.is_admin})">
-                        👑 ${u.is_admin ? t('admin_users.remove_admin') : t('admin_users.make_admin')}
+                        ${icon('crown')} ${u.is_admin ? t('admin_users.remove_admin') : t('admin_users.make_admin')}
                     </button>
                 ` : ''}
                 ${!u.is_admin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">${t('common.delete')}</button>` : ''}

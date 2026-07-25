@@ -196,20 +196,20 @@ const GALLERY_SORT_OPTIONS = [
 // search-box suggestion now - there's no separate filter dropdown to
 // scan through as well, this is the one place to find any of them.
 const GALLERY_SEARCH_SUGGESTIONS = [
-    ['all', `🖼️ ${t('gallery.suggestion_all')}`],
-    ['no_album', `📁 ${t('gallery.suggestion_no_album')}`],
-    ['image', `🖼️ ${t('gallery.suggestion_image')}`],
-    ['video', `🎬 ${t('gallery.suggestion_video')}`],
-    ['favorite', `❤️ ${t('gallery.suggestion_favorite')}`],
-    ['not_archived', `📤 ${t('gallery.suggestion_not_archived')}`],
-    ['archived', `📦 ${t('gallery.suggestion_archived')}`],
-    ['category_screenshot', `📱 ${t('gallery.suggestion_category_screenshot')}`],
-    ['category_document', `📄 ${t('gallery.suggestion_category_document')}`],
-    ['category_nature', `🌳 ${t('gallery.suggestion_category_nature')}`],
-    ['category_pet', `🐾 ${t('gallery.suggestion_category_pet')}`],
-    ['category_food', `🍔 ${t('gallery.suggestion_category_food')}`],
-    ['category_car', `🚗 ${t('gallery.suggestion_category_car')}`],
-    ['category_technology', `💻 ${t('gallery.suggestion_category_technology')}`],
+    ['all', 'image', t('gallery.suggestion_all')],
+    ['no_album', 'folder', t('gallery.suggestion_no_album')],
+    ['image', 'image', t('gallery.suggestion_image')],
+    ['video', 'film', t('gallery.suggestion_video')],
+    ['favorite', 'heart', t('gallery.suggestion_favorite')],
+    ['not_archived', 'unarchive', t('gallery.suggestion_not_archived')],
+    ['archived', 'archive', t('gallery.suggestion_archived')],
+    ['category_screenshot', 'phone', t('gallery.suggestion_category_screenshot')],
+    ['category_document', 'file', t('gallery.suggestion_category_document')],
+    ['category_nature', 'tree', t('gallery.suggestion_category_nature')],
+    ['category_pet', 'paw', t('gallery.suggestion_category_pet')],
+    ['category_food', 'utensils', t('gallery.suggestion_category_food')],
+    ['category_car', 'car', t('gallery.suggestion_category_car')],
+    ['category_technology', 'laptop', t('gallery.suggestion_category_technology')],
 ];
 // Shown before the user has typed anything - a short, Google-style default
 // set instead of dumping the full 14-item menu on every focus. Typing
@@ -414,9 +414,9 @@ function _renderSearchSuggestions(query) {
     } else {
         matches = GALLERY_SEARCH_SUGGESTIONS
             .filter(([v]) => v !== 'all')
-            .map(([v, label]) => [v, label, label.toLocaleLowerCase(_DATE_LOCALES[getLanguage()]).indexOf(q)])
-            .filter(([, , idx]) => idx !== -1)
-            .sort((a, b) => a[2] - b[2]);
+            .map(([v, iconName, label]) => [v, iconName, label, label.toLocaleLowerCase(_DATE_LOCALES[getLanguage()]).indexOf(q)])
+            .filter(([, , , idx]) => idx !== -1)
+            .sort((a, b) => a[3] - b[3]);
     }
 
     if (!matches.length) {
@@ -425,11 +425,11 @@ function _renderSearchSuggestions(query) {
     }
 
     _ensureSmartCategoryCounts();
-    suggestions.innerHTML = matches.map(([v, label]) => {
+    suggestions.innerHTML = matches.map(([v, iconName, label]) => {
         const countSuffix = (_smartCategoryCounts && v.startsWith('category_'))
             ? ` (${_smartCategoryCounts[v.slice('category_'.length)] ?? 0})`
             : '';
-        return `<button type="button" class="search-suggestion-row" data-filter="${v}">${label}${countSuffix}</button>`;
+        return `<button type="button" class="search-suggestion-row" data-filter="${v}">${icon(iconName)} <span>${label}${countSuffix}</span></button>`;
     }).join('');
     suggestions.classList.remove('hidden');
     suggestions.querySelectorAll('.search-suggestion-row').forEach(row => {
@@ -439,7 +439,10 @@ function _renderSearchSuggestions(query) {
             // Kept in the box (not cleared to blank) until the user clicks
             // back in to change it - see the onfocus handler above, which
             // selects it so the next keystroke overwrites it cleanly.
-            state.gallery.selectedLabel = row.textContent;
+            // .trim() - the icon svg and label sit in separate nodes with a
+            // literal space between them for the flex gap, which textContent
+            // otherwise includes verbatim as a leading space.
+            state.gallery.selectedLabel = row.textContent.trim();
             state.gallery.filterBy = row.dataset.filter;
             renderGallery();
         };

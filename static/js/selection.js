@@ -98,17 +98,17 @@ function toggleSelect(id, card) {
 function _selectionBarActions() {
     if (state.currentPage === 'trash') {
         return `
-            <button class="btn btn-sm btn-secondary" onclick="bulkRestore()">↩ <span>${t('selection.restore')}</span></button>
-            <button class="btn btn-sm btn-danger" onclick="bulkDeletePermanent()">🗑 <span>${t('selection.delete_permanent')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="bulkRestore()">${icon('undo')} <span>${t('selection.restore')}</span></button>
+            <button class="btn btn-sm btn-danger" onclick="bulkDeletePermanent()">${icon('trash')} <span>${t('selection.delete_permanent')}</span></button>
         `;
     }
     if (state.currentPage === 'archive') {
         return `
-            <button class="btn btn-sm btn-secondary" onclick="showAddToAlbumModal()">📁 <span>${t('selection.album')}</span></button>
-            <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">🔗 <span>${t('selection.share')}</span></button>
-            <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">⬇ <span>${t('selection.download')}</span></button>
-            <button class="btn btn-sm btn-secondary" onclick="bulkUnarchive()">📤 <span>${t('selection.unarchive')}</span></button>
-            <button class="btn btn-sm btn-danger" onclick="bulkDelete()">🗑 <span>${t('common.delete')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="showAddToAlbumModal()">${icon('folder')} <span>${t('selection.album')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">${icon('link')} <span>${t('selection.share')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">${icon('download')} <span>${t('selection.download')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="bulkUnarchive()">${icon('unarchive')} <span>${t('selection.unarchive')}</span></button>
+            <button class="btn btn-sm btn-danger" onclick="bulkDelete()">${icon('trash')} <span>${t('common.delete')}</span></button>
         `;
     }
     // Only when actually inside an opened album (state.currentAlbum is set
@@ -117,18 +117,18 @@ function _selectionBarActions() {
     // is meaningless (there's no single album to remove anything from).
     if (state.currentPage === 'albums' && state.currentAlbum) {
         return `
-            <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">🔗 <span>${t('selection.share')}</span></button>
-            <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">⬇ <span>${t('selection.download')}</span></button>
-            <button class="btn btn-sm btn-danger" onclick="bulkRemoveFromAlbum()">➖ <span>${t('selection.remove_from_album')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">${icon('link')} <span>${t('selection.share')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">${icon('download')} <span>${t('selection.download')}</span></button>
+            <button class="btn btn-sm btn-danger" onclick="bulkRemoveFromAlbum()">${icon('minus')} <span>${t('selection.remove_from_album')}</span></button>
         `;
     }
     return `
-        <button class="btn btn-sm btn-secondary" onclick="bulkFavorite()">♥ <span>${t('selection.favorite')}</span></button>
-        <button class="btn btn-sm btn-secondary" onclick="showAddToAlbumModal()">📁 <span>${t('selection.album')}</span></button>
-        <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">🔗 <span>${t('selection.share')}</span></button>
-        <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">⬇ <span>${t('selection.download')}</span></button>
-        <button class="btn btn-sm btn-secondary" onclick="bulkArchive()">🗄 <span>${t('selection.archive')}</span></button>
-        <button class="btn btn-sm btn-danger" onclick="bulkDelete()">🗑 <span>${t('common.delete')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="bulkFavorite()">${icon('heart')} <span>${t('selection.favorite')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="showAddToAlbumModal()">${icon('folder')} <span>${t('selection.album')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">${icon('link')} <span>${t('selection.share')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">${icon('download')} <span>${t('selection.download')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="bulkArchive()">${icon('archive')} <span>${t('selection.archive')}</span></button>
+        <button class="btn btn-sm btn-danger" onclick="bulkDelete()">${icon('trash')} <span>${t('common.delete')}</span></button>
     `;
 }
 
@@ -142,7 +142,7 @@ function updateSelectionBar() {
     bar.innerHTML = `
         <span class="selection-count">${t('selection.selected_count', { count: state.selectedAssets.size })}</span>
         ${_selectionBarActions()}
-        <button class="btn btn-sm btn-secondary" onclick="clearSelection()">✗ <span>${t('common.cancel')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="clearSelection()">${icon('close')} <span>${t('common.cancel')}</span></button>
     `;
     document.body.appendChild(bar);
 }

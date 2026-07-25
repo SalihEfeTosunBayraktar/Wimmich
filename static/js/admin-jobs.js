@@ -363,7 +363,7 @@ async function checkForUpdate() {
                 latest: data.latest_commit,
             })}</p>
             <div style="max-height:200px;overflow-y:auto;margin:8px 0;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-md)">${changelogHtml}</div>
-            <button class="btn btn-primary btn-sm" onclick="applyUpdate()">⬆️ ${t('admin_render.apply_update_btn')}</button>
+            <button class="btn btn-primary btn-sm" onclick="applyUpdate()">${icon('upload')} ${t('admin_render.apply_update_btn')}</button>
         `;
     } catch (e) {
         container.innerHTML = `<p class="text-muted">${escHtml(e.message)}</p>`;

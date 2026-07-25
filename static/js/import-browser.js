@@ -234,7 +234,7 @@ function _renderScanResult(path, data) {
             ` : ''}
             ${data.new_files > 0 ? `
                 <button class="btn btn-primary" onclick="startImport('${escAttr(path)}')">
-                    🚀 ${t('import_browser.import_files_button', { count: data.new_files })} (${data.copy_mode ? t('import_browser.copy_mode') : t('import_browser.reference_mode')})
+                    ${icon('rocket')} ${t('import_browser.import_files_button', { count: data.new_files })} (${data.copy_mode ? t('import_browser.copy_mode') : t('import_browser.reference_mode')})
                 </button>
             ` : `<p style="color:var(--text-muted)">${t('import_browser.no_new_files')}</p>`}
         </div>

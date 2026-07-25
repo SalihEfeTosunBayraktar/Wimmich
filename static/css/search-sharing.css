@@ -82,7 +82,9 @@
 }
 
 .search-suggestion-row {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     width: 100%;
     text-align: left;
     padding: 10px var(--space-md);

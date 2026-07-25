@@ -29,9 +29,9 @@ registerTranslations({
         'viewer.people_title': 'People ({count})',
         'viewer.faces_detected': '{count} faces detected',
         'viewer.maintenance_title': 'Maintenance',
-        'viewer.regenerate_thumbnail_btn': '🔄 Regenerate Thumbnail',
+        'viewer.regenerate_thumbnail_btn': 'Regenerate Thumbnail',
         'viewer.regenerating_btn': 'Regenerating...',
-        'viewer.retranscode_video_btn': '🎬 Retranscode Video',
+        'viewer.retranscode_video_btn': 'Retranscode Video',
         'viewer.retranscoding_btn': 'Retranscoding...',
         'viewer.category_title': 'Category',
         'viewer.category_wrong_title': "Wrong? Remove from this category",
@@ -71,9 +71,9 @@ registerTranslations({
         'viewer.people_title': 'Kişiler ({count})',
         'viewer.faces_detected': '{count} yüz algılandı',
         'viewer.maintenance_title': 'Bakım',
-        'viewer.regenerate_thumbnail_btn': '🔄 Küçük Resmi Yeniden Oluştur',
+        'viewer.regenerate_thumbnail_btn': 'Küçük Resmi Yeniden Oluştur',
         'viewer.regenerating_btn': 'Yeniden oluşturuluyor...',
-        'viewer.retranscode_video_btn': '🎬 Videoyu Yeniden Dönüştür',
+        'viewer.retranscode_video_btn': 'Videoyu Yeniden Dönüştür',
         'viewer.retranscoding_btn': 'Yeniden dönüştürülüyor...',
         'viewer.category_title': 'Kategori',
         'viewer.category_wrong_title': 'Yanlış mı? Bu kategoriden çıkar',
@@ -113,9 +113,9 @@ registerTranslations({
         'viewer.people_title': 'Personnes ({count})',
         'viewer.faces_detected': '{count} visages détectés',
         'viewer.maintenance_title': 'Maintenance',
-        'viewer.regenerate_thumbnail_btn': '🔄 Régénérer la miniature',
+        'viewer.regenerate_thumbnail_btn': 'Régénérer la miniature',
         'viewer.regenerating_btn': 'Régénération...',
-        'viewer.retranscode_video_btn': '🎬 Retranscoder la vidéo',
+        'viewer.retranscode_video_btn': 'Retranscoder la vidéo',
         'viewer.retranscoding_btn': 'Retranscodage...',
         'viewer.category_title': 'Catégorie',
         'viewer.category_wrong_title': 'Incorrect ? Retirer de cette catégorie',
@@ -155,9 +155,9 @@ registerTranslations({
         'viewer.people_title': 'Personen ({count})',
         'viewer.faces_detected': '{count} Gesichter erkannt',
         'viewer.maintenance_title': 'Wartung',
-        'viewer.regenerate_thumbnail_btn': '🔄 Miniaturbild neu erstellen',
+        'viewer.regenerate_thumbnail_btn': 'Miniaturbild neu erstellen',
         'viewer.regenerating_btn': 'Wird neu erstellt...',
-        'viewer.retranscode_video_btn': '🎬 Video neu transkodieren',
+        'viewer.retranscode_video_btn': 'Video neu transkodieren',
         'viewer.retranscoding_btn': 'Wird neu transkodiert...',
         'viewer.category_title': 'Kategorie',
         'viewer.category_wrong_title': 'Falsch? Aus dieser Kategorie entfernen',
@@ -499,8 +499,11 @@ async function navigateViewer(dir) {
 }
 
 async function _runViewerReprocess(btn, apiCall, idleLabel, busyLabel) {
+    // Only the label span updates - the icon before it is a permanent part
+    // of the button, not part of the busy/idle text swap.
+    const label = btn.querySelector('.viewer-reprocess-label');
     btn.disabled = true;
-    btn.textContent = busyLabel;
+    label.textContent = busyLabel;
     try {
         const result = await apiCall();
         toast(result.message, 'success');
@@ -508,7 +511,7 @@ async function _runViewerReprocess(btn, apiCall, idleLabel, busyLabel) {
         toast(e.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = idleLabel;
+        label.textContent = idleLabel;
     }
 }
 
@@ -528,21 +531,21 @@ function renderViewerInfo(asset) {
         <div class="viewer-info-section">
             <div class="viewer-info-section-header">
                 <h4>${t('viewer.category_title')}</h4>
-                <button class="btn-icon" id="viewer-category-wrong-btn" title="${t('viewer.category_wrong_title')}">✕</button>
+                <button class="btn-icon" id="viewer-category-wrong-btn" title="${t('viewer.category_wrong_title')}">${icon('close')}</button>
             </div>
             <div class="viewer-info-row"><span class="label">${t('viewer.label_category')}</span><span class="value">${t('gallery.suggestion_category_' + asset.smart_category)}</span></div>
         </div>` : ''}
         <div class="viewer-info-section">
             <h4>${t('viewer.maintenance_title')}</h4>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-secondary btn-sm" id="viewer-regen-thumb-btn">${t('viewer.regenerate_thumbnail_btn')}</button>
-                ${asset.file_type === 'VIDEO' ? `<button class="btn btn-secondary btn-sm" id="viewer-retranscode-btn">${t('viewer.retranscode_video_btn')}</button>` : ''}
+                <button class="btn btn-secondary btn-sm" id="viewer-regen-thumb-btn">${icon('refresh')} <span class="viewer-reprocess-label">${t('viewer.regenerate_thumbnail_btn')}</span></button>
+                ${asset.file_type === 'VIDEO' ? `<button class="btn btn-secondary btn-sm" id="viewer-retranscode-btn">${icon('film')} <span class="viewer-reprocess-label">${t('viewer.retranscode_video_btn')}</span></button>` : ''}
             </div>
         </div>
         <div class="viewer-info-section">
             <div class="viewer-info-section-header">
                 <h4>${t('viewer.date_location_title')}</h4>
-                <button class="btn-icon" id="viewer-exif-edit-btn" title="${t('viewer.edit_date_location_title')}">✎</button>
+                <button class="btn-icon" id="viewer-exif-edit-btn" title="${t('viewer.edit_date_location_title')}">${icon('edit')}</button>
             </div>
             <div class="viewer-info-row"><span class="label">${t('viewer.label_taken')}</span><span class="value">${asset.taken_at ? formatDate(asset.taken_at) : t('viewer.unknown')}</span></div>
             <div class="viewer-info-row"><span class="label">${t('viewer.label_uploaded')}</span><span class="value">${formatDate(asset.created_at)}</span></div>

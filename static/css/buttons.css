@@ -46,6 +46,11 @@
 .btn-full { width: 100%; }
 .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
 
+/* Inline SVG icons used inside buttons/menus instead of emoji - sized to
+   match nearby text, never squashed by flex, colored via currentColor so
+   it always matches the button/menu's own text color and theme. */
+.btn-icon-svg { flex-shrink: 0; }
+
 .btn-icon {
     display: inline-flex;
     align-items: center;

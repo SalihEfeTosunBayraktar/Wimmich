@@ -92,15 +92,15 @@ function renderNamingQueueItem(item) {
     const suggestion = item.suggested_person ? `
         <p class="naming-queue-question">${t('people_naming_queue.confirm_person_question', { name: `<strong>${escHtml(item.suggested_person.name)}</strong>` })}</p>
         <div class="naming-queue-actions">
-            <button class="btn btn-primary btn-sm" data-action="confirm" data-id="${item.id}" data-target="${item.suggested_person.id}">✓ ${t('people_naming_queue.confirm_yes')}</button>
+            <button class="btn btn-primary btn-sm" data-action="confirm" data-id="${item.id}" data-target="${item.suggested_person.id}">${icon('check')} ${t('people_naming_queue.confirm_yes')}</button>
             <button class="btn btn-secondary btn-sm" data-action="reject" data-id="${item.id}">${t('people_naming_queue.reject_different_person')}</button>
-            <button class="btn btn-secondary btn-sm" data-action="unknown" data-id="${item.id}">🤷 ${t('people_naming_queue.unknown_btn')}</button>
+            <button class="btn btn-secondary btn-sm" data-action="unknown" data-id="${item.id}">${icon('question')} ${t('people_naming_queue.unknown_btn')}</button>
         </div>
     ` : `
         <input type="text" class="naming-queue-input" placeholder="${t('people_naming_queue.name_placeholder')}" data-id="${item.id}">
         <div class="naming-queue-actions">
             <button class="btn btn-primary btn-sm" data-action="name" data-id="${item.id}">${t('common.save')}</button>
-            <button class="btn btn-secondary btn-sm" data-action="unknown" data-id="${item.id}">🤷 ${t('people_naming_queue.unknown_btn')}</button>
+            <button class="btn btn-secondary btn-sm" data-action="unknown" data-id="${item.id}">${icon('question')} ${t('people_naming_queue.unknown_btn')}</button>
         </div>
     `;
 
@@ -137,7 +137,7 @@ function bindNamingQueueActions() {
                     <input type="text" class="naming-queue-input" placeholder="${t('people_naming_queue.name_placeholder')}" data-id="${btn.dataset.id}">
                     <div class="naming-queue-actions">
                         <button class="btn btn-primary btn-sm" data-action="name" data-id="${btn.dataset.id}">${t('common.save')}</button>
-                        <button class="btn btn-secondary btn-sm" data-action="unknown" data-id="${btn.dataset.id}">🤷 ${t('people_naming_queue.unknown_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" data-action="unknown" data-id="${btn.dataset.id}">${icon('question')} ${t('people_naming_queue.unknown_btn')}</button>
                     </div>
                 `;
                 bindNamingQueueActions();

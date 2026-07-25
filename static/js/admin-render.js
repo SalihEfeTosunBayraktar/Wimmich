@@ -458,11 +458,11 @@ async function renderAdmin() {
             </div>
 
             <div class="admin-tabs">
-                <button class="admin-tab-btn ${activeAdminTab === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchAdminTab('overview')">📊 ${t('admin_render.tab_overview')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'users' ? 'active' : ''}" data-tab="users" onclick="switchAdminTab('users')">👥 ${t('admin_render.tab_users')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'storage' ? 'active' : ''}" data-tab="storage" onclick="switchAdminTab('storage')">📁 ${t('admin_render.tab_storage_backup')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'import' ? 'active' : ''}" data-tab="import" onclick="switchAdminTab('import')">📥 ${t('admin_render.tab_import')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">🌐 ${t('admin_render.tab_network_system')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchAdminTab('overview')">${icon('dashboard')} ${t('admin_render.tab_overview')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'users' ? 'active' : ''}" data-tab="users" onclick="switchAdminTab('users')">${icon('users')} ${t('admin_render.tab_users')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'storage' ? 'active' : ''}" data-tab="storage" onclick="switchAdminTab('storage')">${icon('folder')} ${t('admin_render.tab_storage_backup')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'import' ? 'active' : ''}" data-tab="import" onclick="switchAdminTab('import')">${icon('upload')} ${t('admin_render.tab_import')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">${icon('globe')} ${t('admin_render.tab_network_system')}</button>
             </div>
 
             <div id="admin-tab-overview" class="admin-tab-panel" ${activeAdminTab === 'overview' ? '' : 'hidden'}>
@@ -492,15 +492,15 @@ async function renderAdmin() {
                     </div>
                     <p class="text-muted admin-field-hint" style="margin-bottom:8px">${t('admin_render.jobs_session_stats_hint')}</p>
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">🧠 ${t('admin_render.job_clip_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">👤 ${t('admin_render.job_face_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">🖼 ${t('admin_render.job_thumbnail_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">📍 ${t('admin_render.job_geocode_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">🎬 ${t('admin_render.job_transcode_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">🔁 ${t('admin_render.job_recluster_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">🗂 ${t('admin_render.job_categorize_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('REPAIR')" title="${t('admin_render.job_repair_title')}">🔧 ${t('admin_render.job_repair_btn')}</button>
-                        <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">🛑 ${t('admin_render.cancel_all_jobs_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">${icon('brain')} ${t('admin_render.job_clip_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">${icon('person')} ${t('admin_render.job_face_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">${icon('image')} ${t('admin_render.job_thumbnail_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">${icon('pin')} ${t('admin_render.job_geocode_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">${icon('film')} ${t('admin_render.job_transcode_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">${icon('repeat')} ${t('admin_render.job_recluster_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">${icon('category')} ${t('admin_render.job_categorize_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('REPAIR')" title="${t('admin_render.job_repair_title')}">${icon('wrench')} ${t('admin_render.job_repair_btn')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">${icon('stop')} ${t('admin_render.cancel_all_jobs_btn')}</button>
                     </div>
                     <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">
                         <label class="admin-field-label">${t('admin_jobs.concurrency_label')}</label>
@@ -604,7 +604,7 @@ async function renderAdmin() {
                             </div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
                                 <button class="btn btn-primary" onclick="saveBackupConfig()">${t('admin_render.save_settings_btn')}</button>
-                                <button class="btn btn-secondary" onclick="runAdminJob('BACKUP')" title="${t('admin_render.backup_now_title')}">💾 ${t('admin_render.backup_now_btn')}</button>
+                                <button class="btn btn-secondary" onclick="runAdminJob('BACKUP')" title="${t('admin_render.backup_now_title')}">${icon('save')} ${t('admin_render.backup_now_btn')}</button>
                             </div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>
                         </div>
@@ -656,13 +656,13 @@ async function renderAdmin() {
                         <h4>⬆️ ${t('admin_render.updates_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
                         <div id="update-status-container"></div>
-                        <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">🔍 ${t('admin_render.check_update_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">${icon('search')} ${t('admin_render.check_update_btn')}</button>
                     </div>
 
                     <div class="admin-status-card">
                         <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
-                        <button class="btn btn-danger btn-sm" onclick="shutdownServer()">🛑 ${t('admin_render.shutdown_server_btn')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="shutdownServer()">${icon('stop')} ${t('admin_render.shutdown_server_btn')}</button>
                     </div>
                 </div>
             </div>

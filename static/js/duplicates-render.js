@@ -250,9 +250,9 @@ function renderDupControlsBar(groups) {
                 </div>
             </div>
             <div class="dup-controls-actions">
-                <button id="dup-scan-trigger" class="btn btn-secondary"><span>🔍</span> ${t('duplicates_render.scan_trigger')}</button>
-                <button id="dup-slideshow-start" class="btn btn-secondary"><span>🎬</span> ${t('duplicates_render.slideshow_start')}</button>
-                <button id="dup-auto-clean-all" class="dup-auto-clean-all-btn"><span>🧹</span> ${autoCleanLabel}</button>
+                <button id="dup-scan-trigger" class="btn btn-secondary">${icon('search')} ${t('duplicates_render.scan_trigger')}</button>
+                <button id="dup-slideshow-start" class="btn btn-secondary">${icon('film')} ${t('duplicates_render.slideshow_start')}</button>
+                <button id="dup-auto-clean-all" class="dup-auto-clean-all-btn">${icon('broom')} ${autoCleanLabel}</button>
             </div>
         </div>
     `;
@@ -280,9 +280,9 @@ function renderDupGroup(group, idx) {
                     <span class="dup-group-meta">${t('duplicates_render.group_size_label')} ${totalSizeStr} | ${matchInfo}</span>
                 </div>
                 <div class="dup-group-header-actions">
-                    <button class="btn-group-skip" ${skipAttr}>⏭ ${t('duplicates_render.skip')}</button>
+                    <button class="btn-group-skip" ${skipAttr}>${icon('skipForward')} ${t('duplicates_render.skip')}</button>
                     <button class="btn-group-auto-clean" data-checksum="${group.checksum}">${t('duplicates_render.clean_group')}</button>
-                    <button class="btn-group-delete-all" data-checksum="${group.checksum}">🗑 ${t('duplicates_render.delete_all')}</button>
+                    <button class="btn-group-delete-all" data-checksum="${group.checksum}">${icon('trash')} ${t('duplicates_render.delete_all')}</button>
                 </div>
             </div>
             <div class="dup-group-assets">${assetsHtml}</div>

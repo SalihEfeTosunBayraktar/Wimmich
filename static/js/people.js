@@ -38,7 +38,7 @@ registerTranslations({
         'people.confirm_dissolve': 'Dissolve this group? Its faces go back to the unclustered pool - the group itself is deleted, nothing else is touched.',
         'people.dissolved_success': 'Group dissolved',
         'people.dissolve_button': 'Dissolve Group',
-        'people.blacklist_button': '🚫 Select Photos to Review/Delete',
+        'people.blacklist_button': 'Select Photos to Review/Delete',
         'people.photos_selected_for_review': '{count} photos selected - review and delete the ones you don\'t want',
         'people.no_photos_to_select': 'This person has no photos',
     },
@@ -78,7 +78,7 @@ registerTranslations({
         'people.confirm_dissolve': 'Bu grup dağıtılsın mı? İçindeki yüzler gruplanmamış havuza geri döner - sadece grup silinir, başka bir şeye dokunulmaz.',
         'people.dissolved_success': 'Grup dağıtıldı',
         'people.dissolve_button': 'Grubu Dağıt',
-        'people.blacklist_button': '🚫 Fotoğrafları Seç (İncele/Sil)',
+        'people.blacklist_button': 'Fotoğrafları Seç (İncele/Sil)',
         'people.photos_selected_for_review': '{count} fotoğraf seçildi - istemediklerinizi inceleyip silebilirsiniz',
         'people.no_photos_to_select': 'Bu kişiye ait fotoğraf yok',
     },
@@ -118,7 +118,7 @@ registerTranslations({
         'people.confirm_dissolve': 'Dissoudre ce groupe ? Ses visages retournent dans le pool non groupé - seul le groupe est supprimé, rien d\'autre n\'est touché.',
         'people.dissolved_success': 'Groupe dissous',
         'people.dissolve_button': 'Dissoudre le groupe',
-        'people.blacklist_button': '🚫 Sélectionner les photos à examiner/supprimer',
+        'people.blacklist_button': 'Sélectionner les photos à examiner/supprimer',
         'people.photos_selected_for_review': '{count} photos sélectionnées - examinez et supprimez celles que vous ne voulez pas',
         'people.no_photos_to_select': 'Cette personne n\'a aucune photo',
     },
@@ -158,7 +158,7 @@ registerTranslations({
         'people.confirm_dissolve': 'Diese Gruppe auflösen? Ihre Gesichter kommen zurück in den nicht gruppierten Pool - nur die Gruppe wird gelöscht, sonst nichts.',
         'people.dissolved_success': 'Gruppe aufgelöst',
         'people.dissolve_button': 'Gruppe auflösen',
-        'people.blacklist_button': '🚫 Fotos zur Prüfung/Löschung auswählen',
+        'people.blacklist_button': 'Fotos zur Prüfung/Löschung auswählen',
         'people.photos_selected_for_review': '{count} Fotos ausgewählt - prüfen und löschen Sie die unerwünschten',
         'people.no_photos_to_select': 'Diese Person hat keine Fotos',
     },
@@ -167,8 +167,8 @@ registerTranslations({
 function _renderPersonCard(p, { hidden = false, showDissolve = false } = {}) {
     return `
         <div class="person-card" onclick="openPerson('${p.id}')">
-            ${showDissolve ? `<button class="person-dissolve-btn" onclick="event.stopPropagation(); dissolvePersonAction('${p.id}')" title="${t('people.dissolve_title')}">💥</button>` : ''}
-            <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? '🙈' : '👁️'}</button>
+            ${showDissolve ? `<button class="person-dissolve-btn" onclick="event.stopPropagation(); dissolvePersonAction('${p.id}')" title="${t('people.dissolve_title')}">${icon('explosion')}</button>` : ''}
+            <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? icon('eyeOff') : icon('eye')}</button>
             <div class="person-avatar">
                 ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : '<span style="font-size:2rem">👤</span>'}
             </div>
@@ -271,15 +271,15 @@ async function openPerson(id) {
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button class="btn btn-secondary btn-sm" onclick="navigateTo('people')">${t('people.back_to_list')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="blacklistPersonAction('${id}')">${t('people.blacklist_button')}</button>
-                        <button class="btn btn-danger btn-sm" onclick="dissolvePersonAction('${id}')" title="${t('people.dissolve_title')}">💥 ${t('people.dissolve_button')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="blacklistPersonAction('${id}')">${icon('ban')} ${t('people.blacklist_button')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="dissolvePersonAction('${id}')" title="${t('people.dissolve_title')}">${icon('explosion')} ${t('people.dissolve_button')}</button>
                     </div>
                 </div>
             </div>
 
             <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border-color);padding-bottom:10px;flex-wrap:wrap">
-                <button class="btn btn-sm ${subTab === 'photos' ? 'btn-primary' : 'btn-secondary'}" onclick="setPersonSubTab('${id}', 'photos')" style="padding:6px 12px; font-size:13px">🖼️ ${t('people.photos_tab_label', { count: person.assets.length })}</button>
-                <button class="btn btn-sm ${subTab === 'correction' ? 'btn-primary' : 'btn-secondary'}" onclick="setPersonSubTab('${id}', 'correction')" style="padding:6px 12px; font-size:13px">⚙️ ${t('people.correction_tab_label', { count: person.faces ? person.faces.length : 0 })}</button>
+                <button class="btn btn-sm ${subTab === 'photos' ? 'btn-primary' : 'btn-secondary'}" onclick="setPersonSubTab('${id}', 'photos')" style="padding:6px 12px; font-size:13px">${icon('image', 14)} ${t('people.photos_tab_label', { count: person.assets.length })}</button>
+                <button class="btn btn-sm ${subTab === 'correction' ? 'btn-primary' : 'btn-secondary'}" onclick="setPersonSubTab('${id}', 'correction')" style="padding:6px 12px; font-size:13px">${icon('settings', 14)} ${t('people.correction_tab_label', { count: person.faces ? person.faces.length : 0 })}</button>
             </div>
 
             <div id="person-sub-content">
@@ -319,10 +319,10 @@ function renderFaceCorrectionTab(person) {
                         <img src="${f.thumbnail_url}" style="width:100%;height:100%;object-fit:cover">
                     </div>
                     <div style="display:flex;flex-direction:column;gap:6px;width:100%">
-                        <button class="btn btn-secondary btn-sm" onclick="reassignFaceAction('${person.id}', '${f.id}', 'new')" style="font-size:11px;padding:6px 4px;width:100%">🆕 ${t('people.make_new_person')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="reassignFaceAction('${person.id}', '${f.id}', null)" style="font-size:11px;padding:6px 4px;width:100%">🗑️ ${t('people.remove_from_group')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="showMoveFaceModal('${person.id}', '${f.id}')" style="font-size:11px;padding:6px 4px;width:100%">🔄 ${t('people.move_to_another')}</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteFaceAction('${person.id}', '${f.id}')" style="font-size:11px;padding:6px 4px;width:100%">❌ ${t('people.not_a_face')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="reassignFaceAction('${person.id}', '${f.id}', 'new')" style="font-size:11px;padding:6px 4px;width:100%">${icon('plus', 14)} ${t('people.make_new_person')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="reassignFaceAction('${person.id}', '${f.id}', null)" style="font-size:11px;padding:6px 4px;width:100%">${icon('trash', 14)} ${t('people.remove_from_group')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="showMoveFaceModal('${person.id}', '${f.id}')" style="font-size:11px;padding:6px 4px;width:100%">${icon('refresh', 14)} ${t('people.move_to_another')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteFaceAction('${person.id}', '${f.id}')" style="font-size:11px;padding:6px 4px;width:100%">${icon('close', 14)} ${t('people.not_a_face')}</button>
                     </div>
                 </div>
             `).join('')}

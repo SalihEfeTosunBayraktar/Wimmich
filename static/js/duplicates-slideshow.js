@@ -70,14 +70,14 @@ function startDupSlideshow(groups) {
     overlay.innerHTML = `
         <div class="dup-slideshow-header">
             <span class="dup-slideshow-progress" id="dup-slideshow-progress"></span>
-            <button class="btn-icon" id="dup-slideshow-close" title="${t('common.close')}">✕</button>
+            <button class="btn-icon" id="dup-slideshow-close" title="${t('common.close')}">${icon('close')}</button>
         </div>
         <div class="dup-slideshow-timerbar"><div class="dup-slideshow-timerbar-fill" id="dup-slideshow-timerbar-fill"></div></div>
         <div class="dup-slideshow-stage" id="dup-slideshow-stage"></div>
         <div class="dup-slideshow-actions">
-            <button class="btn btn-secondary" id="dup-slideshow-skip">⏭ ${t('duplicates_slideshow.skip')}</button>
-            <button class="btn btn-primary" id="dup-slideshow-apply">✓ ${t('duplicates_slideshow.apply_continue')}</button>
-            <button class="btn btn-danger" id="dup-slideshow-delete-all">🗑 ${t('duplicates_slideshow.delete_all')}</button>
+            <button class="btn btn-secondary" id="dup-slideshow-skip">${icon('skipForward')} ${t('duplicates_slideshow.skip')}</button>
+            <button class="btn btn-primary" id="dup-slideshow-apply">${icon('check')} ${t('duplicates_slideshow.apply_continue')}</button>
+            <button class="btn btn-danger" id="dup-slideshow-delete-all">${icon('trash')} ${t('duplicates_slideshow.delete_all')}</button>
         </div>
     `;
     document.body.appendChild(overlay);
@@ -130,7 +130,7 @@ function _renderDupSlideshowCard(asset) {
         <div class="dup-slideshow-card ${isKeep ? 'dup-slideshow-card--keep' : 'dup-slideshow-card--delete'}" onclick="_dupSlideshowCardClick('${asset.id}', event)">
             <img src="${API.getThumb(asset.id, 'medium')}" alt="" onerror="this.onerror=null;this.src='/static/broken-file.png'">
             ${st.multiAllowed ? `
-                <button type="button" class="dup-slideshow-card-multi" onclick="_dupSlideshowCardToggle('${asset.id}', event)" title="${t('duplicates_slideshow.toggle_keep_title')}">${isKeep ? '✓' : ''}</button>
+                <button type="button" class="dup-slideshow-card-multi" onclick="_dupSlideshowCardToggle('${asset.id}', event)" title="${t('duplicates_slideshow.toggle_keep_title')}">${isKeep ? icon('check') : ''}</button>
             ` : ''}
             <span class="dup-slideshow-card-tag ${isKeep ? 'dup-slideshow-card-tag--keep' : 'dup-slideshow-card-tag--delete'}">${isKeep ? '✓ ' + t('duplicates_slideshow.tag_keep') : '✕ ' + t('duplicates_slideshow.tag_delete')}</span>
         </div>
