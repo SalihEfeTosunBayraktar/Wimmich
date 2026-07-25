@@ -573,10 +573,6 @@ async function renderAdmin() {
                                 <label class="admin-field-label">${t('admin_render.storage_limit_label')}</label>
                                 <input type="number" id="storage-limit-input" value="${storageConfig.total_storage_limit_mb || 0}" min="0" style="width:100%">
                             </div>
-                            <div style="display:flex;align-items:center;gap:8px">
-                                <input type="checkbox" id="storage-autostart-input" ${storageConfig.auto_start_tunnel ? 'checked' : ''} style="width:auto;margin:0">
-                                <label for="storage-autostart-input" class="admin-checkbox-label">${t('admin_render.tunnel_autostart_label')}</label>
-                            </div>
                             <div><button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button></div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">
                                 ${t('admin_render.db_location_hint', { path: `<code>${escHtml(storageConfig.db_dir)}</code>` })}
@@ -650,6 +646,11 @@ async function renderAdmin() {
                     <div class="admin-status-card">
                         <h4>🌐 ${t('admin_render.remote_access_heading')}</h4>
                         <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+                            <input type="checkbox" id="storage-autostart-input" ${storageConfig.auto_start_tunnel ? 'checked' : ''} style="width:auto;margin:0">
+                            <label for="storage-autostart-input" class="admin-checkbox-label">${t('admin_render.tunnel_autostart_label')}</label>
+                            <button class="btn btn-secondary btn-sm" onclick="saveStorageConfig()" style="margin-left:auto">${t('admin_render.save_settings_btn')}</button>
+                        </div>
                     </div>
 
                     <div class="admin-status-card">
