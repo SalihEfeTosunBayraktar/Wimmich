@@ -24,6 +24,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pathlib import Path
 
 import config
@@ -214,6 +215,16 @@ async def serve_index():
     if index_path.exists():
         return render_spa(index_path)
     return {"message": "Wimmich API is running. Frontend not found."}
+
+
+@app.get("/sw.js")
+async def serve_service_worker():
+    """Served from the site root (not /static/) so its default scope covers
+    the whole app - a service worker registered from /static/sw.js would
+    only ever be allowed to control /static/*, never the actual pages under
+    / that the PWA manifest's start_url/scope need it to control."""
+    sw_path = static_dir / "sw.js"
+    return FileResponse(sw_path, media_type="application/javascript", headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/shared/{key}")

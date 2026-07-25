@@ -56,6 +56,15 @@
     <link rel="icon" type="image/png" href="/static/favicon-32.png">
     <link rel="icon" type="image/png" href="/static/favicon-16.png">
     <link rel="apple-touch-icon" href="/static/favicon-180.png">
+
+    <!-- PWA: lets a phone "Add to Home Screen" and open this full-screen
+         like a native app instead of a browser tab. -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Wimmich">
 </head>
 <body>
     <!-- Auth Screen -->
@@ -548,5 +557,6 @@
     <script src="/static/js/import-browser.js"></script>
     <script src="/static/js/shared-view.js"></script>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/pwa.js"></script>
 </body>
 </html>
