@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initShareModal();
     initAlbumShareModal();
     initProfileModal();
+    initShortcutsModal();
 
     // A shared-link visitor never has (or needs) an auth session - dispatch
     // to the standalone public viewer before checkAuth() ever runs, instead
