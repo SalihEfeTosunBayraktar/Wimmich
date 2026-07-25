@@ -156,6 +156,7 @@ function clearSelection() {
     state.selectedAssets.clear();
     document.querySelectorAll('.photo-card.selected').forEach(c => c.classList.remove('selected'));
     removeSelectionBar();
+    _lastClickedCard = null; // stale shift-click anchor would point at a card that's no longer relevant
 }
 
 // Shared by every reversible bulk action below: shows the usual success

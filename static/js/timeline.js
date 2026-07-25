@@ -196,6 +196,27 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
+// The last card a plain click/toggle landed on - a following shift-click
+// selects everything between this and the new card (DOM order, matching
+// visual grid order), same "anchor" behavior as a file manager's list view.
+let _lastClickedCard = null;
+
+function _selectRange(fromCard, toCard) {
+    const allCards = Array.from(document.querySelectorAll('.photo-card'));
+    const fromIdx = allCards.indexOf(fromCard);
+    const toIdx = allCards.indexOf(toCard);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx];
+    for (let i = start; i <= end; i++) {
+        const c = allCards[i];
+        if (!state.selectedAssets.has(c.dataset.id)) {
+            state.selectedAssets.add(c.dataset.id);
+            c.classList.add('selected');
+        }
+    }
+    updateSelectionBar();
+}
+
 function bindPhotoCards(container) {
     container.querySelectorAll('.photo-card').forEach(card => {
         let touchTimer;
@@ -203,15 +224,37 @@ function bindPhotoCards(container) {
 
         card.onclick = (e) => {
             if (_suppressClickCard === card) { _suppressClickCard = null; return; }
-            if (e.target.closest('.photo-select') || state.selectedAssets.size > 0) {
-                toggleSelect(card.dataset.id, card);
+
+            if (e.shiftKey && (_lastClickedCard || state.selectedAssets.size > 0)) {
+                if (_lastClickedCard) _selectRange(_lastClickedCard, card);
+                else toggleSelect(card.dataset.id, card);
+                _lastClickedCard = card;
                 return;
             }
+
+            if (e.target.closest('.photo-select') || state.selectedAssets.size > 0) {
+                toggleSelect(card.dataset.id, card);
+                _lastClickedCard = card;
+                return;
+            }
+            _lastClickedCard = card;
             const allCards = Array.from(document.querySelectorAll('.photo-card'));
             state.viewerList = allCards.map(c => c.dataset.id);
             state.viewerIndex = state.viewerList.indexOf(card.dataset.id);
             openViewer(card.dataset.id);
         };
+
+        // Right-click: act on the current multi-selection if this card is
+        // part of it, otherwise just this one photo - same "act on the
+        // right scope" rule the toolbar's bulk actions already follow.
+        card.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const id = card.dataset.id;
+            const ids = state.selectedAssets.has(id) && state.selectedAssets.size > 1
+                ? [...state.selectedAssets]
+                : [id];
+            _showPhotoContextMenu(e.clientX, e.clientY, ids);
+        });
 
         // Desktop: mousedown on the checkbox (or anywhere once already
         // selecting) arms a drag immediately - it's already an explicit
@@ -283,4 +326,78 @@ function bindPhotoCards(container) {
             _updateRectSelection(t.clientX, t.clientY);
         }, { passive: false });
     });
+}
+
+registerTranslations({
+    en: { 'timeline.context_favorite': 'Favorite', 'timeline.context_archive': 'Archive', 'timeline.context_download': 'Download', 'timeline.context_delete': 'Delete' },
+    tr: { 'timeline.context_favorite': 'Favori', 'timeline.context_archive': 'Arşivle', 'timeline.context_download': 'İndir', 'timeline.context_delete': 'Sil' },
+    fr: { 'timeline.context_favorite': 'Favori', 'timeline.context_archive': 'Archiver', 'timeline.context_download': 'Télécharger', 'timeline.context_delete': 'Supprimer' },
+    de: { 'timeline.context_favorite': 'Favorit', 'timeline.context_archive': 'Archivieren', 'timeline.context_download': 'Herunterladen', 'timeline.context_delete': 'Löschen' },
+});
+
+// Right-click quick-action menu - lets a single photo (or the current
+// multi-selection) get favorited/archived/downloaded/deleted without first
+// having to enter selection mode via the checkbox or a long-press.
+function _showPhotoContextMenu(clientX, clientY, ids) {
+    _closePhotoContextMenu();
+
+    const menu = document.createElement('div');
+    menu.className = 'photo-context-menu';
+    menu.id = 'photo-context-menu';
+    menu.innerHTML = `
+        <button data-action="favorite">♥ ${t('timeline.context_favorite')}</button>
+        <button data-action="archive">🗄 ${t('timeline.context_archive')}</button>
+        <button data-action="download">⬇ ${t('timeline.context_download')}</button>
+        <button class="photo-context-menu-danger" data-action="delete">🗑 ${t('timeline.context_delete')}</button>
+    `;
+    document.body.appendChild(menu);
+
+    // Clamp inside the viewport so a right-click near an edge doesn't spawn
+    // a menu that's partly cut off.
+    const rect = menu.getBoundingClientRect();
+    menu.style.left = `${Math.min(clientX, window.innerWidth - rect.width - 8)}px`;
+    menu.style.top = `${Math.min(clientY, window.innerHeight - rect.height - 8)}px`;
+
+    menu.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+            _closePhotoContextMenu();
+            _runContextMenuAction(btn.dataset.action, ids);
+        };
+    });
+}
+
+function _closePhotoContextMenu() {
+    const existing = $('photo-context-menu');
+    if (existing) existing.remove();
+}
+document.addEventListener('click', _closePhotoContextMenu);
+document.addEventListener('contextmenu', (e) => {
+    if (!e.target.closest('.photo-card')) _closePhotoContextMenu();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') _closePhotoContextMenu();
+});
+
+async function _runContextMenuAction(action, ids) {
+    try {
+        if (action === 'download') {
+            if (ids.length === 1) window.open(API.getAssetFile(ids[0]), '_blank');
+            else window.open(API.getDownloadZipUrl(ids), '_blank');
+            return;
+        }
+        if (action === 'favorite') {
+            await API.bulkAction(ids, 'favorite');
+            _undoableToast(t('selection.added_to_favorites'), () => API.bulkAction(ids, 'unfavorite'));
+        } else if (action === 'archive') {
+            await API.bulkAction(ids, 'archive');
+            _undoableToast(t('selection.archived'), () => API.bulkAction(ids, 'unarchive'));
+        } else if (action === 'delete') {
+            await API.bulkAction(ids, 'delete');
+            _undoableToast(t('selection.moved_to_trash', { count: ids.length }), () => API.bulkAction(ids, 'restore'));
+        }
+        clearSelection();
+        navigateTo(state.currentPage);
+    } catch (e) {
+        toast(e.message, 'error');
+    }
 }
