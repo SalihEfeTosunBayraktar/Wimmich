@@ -84,7 +84,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             "message": "Kayıt başarılı. Giriş yapabilmek için yönetici onayı bekleniyor."
         }
 
-    token = create_access_token(user.id, user.email, user.is_admin)
+    token = create_access_token(user.id, user.email, user.is_admin, user.priority)
 
     return {
         "token": token,
@@ -145,7 +145,7 @@ async def login(req: LoginRequest, request: Request, response: Response, db: Asy
     # Correct credentials - clear this identity's failure history so a few
     # earlier typos never accumulate toward a lockout.
     login_rate_limit.reset(rate_keys)
-    token = create_access_token(user.id, user.email, user.is_admin)
+    token = create_access_token(user.id, user.email, user.is_admin, user.priority)
 
     # Set cookie too
     response.set_cookie(

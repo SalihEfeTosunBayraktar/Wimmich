@@ -151,6 +151,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from auth import decode_token
+from services.request_priority import request_gate
+
+# Scoped to /api/ - static assets (JS/CSS/images) do real work on neither the
+# DB nor the ML pipeline, so gating them too would only add latency for zero
+# benefit. /api/health is excluded as well: the admin panel's ping badge
+# measures actual round-trip responsiveness, which an artificial queueing
+# delay from low priority would misrepresent as the server being slow.
+@app.middleware("http")
+async def priority_gate_middleware(request, call_next):
+    path = request.url.path
+    if not path.startswith("/api/") or path == "/api/health":
+        return await call_next(request)
+
+    priority = 3  # unauthenticated or invalid token - treated as the default tier
+    auth_header = request.headers.get("authorization", "")
+    token = auth_header[7:] if auth_header.lower().startswith("bearer ") else request.cookies.get("wimmich_token")
+    if token:
+        payload = decode_token(token)
+        if payload:
+            priority = payload.get("priority", 3)
+
+    await request_gate.acquire(priority)
+    try:
+        return await call_next(request)
+    finally:
+        await request_gate.release()
+
 # Routers
 from routers.auth_router import router as auth_router
 from routers.asset_router import router as asset_router

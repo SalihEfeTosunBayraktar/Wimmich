@@ -100,6 +100,7 @@ async def list_users(
             "asset_count": asset_count,
             "total_size": total_size,
             "storage_quota_mb": u.storage_quota_mb,
+            "priority": u.priority,
         })
 
     return {"users": user_list}

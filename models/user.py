@@ -19,6 +19,11 @@ class User(Base):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     profile_image_path = Column(String(500), nullable=True)
     is_approved = Column(Boolean, default=False)
+    # Request priority (1-5, 5 highest) - only changes anything under actual
+    # contention (see services/request_priority.py's PriorityGate); baked
+    # into the JWT at login time same as is_admin, so a change here takes
+    # effect on the user's next login, not their already-issued token.
+    priority = Column(Integer, default=3, nullable=False)
 
     # Relationships
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")

@@ -32,12 +32,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def create_access_token(user_id: str, email: str, is_admin: bool = False) -> str:
+def create_access_token(user_id: str, email: str, is_admin: bool = False, priority: int = 3) -> str:
     expire = datetime.now(timezone.utc) + timedelta(hours=config.JWT_EXPIRE_HOURS)
     payload = {
         "sub": user_id,
         "email": email,
         "is_admin": is_admin,
+        "priority": priority,
         "exp": expire,
         "iat": datetime.now(timezone.utc),
     }

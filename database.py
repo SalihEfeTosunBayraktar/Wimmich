@@ -117,6 +117,12 @@ async def init_db():
         except Exception:
             pass
 
+        # Automatic column migration for per-user request priority
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN priority INTEGER DEFAULT 3"))
+        except Exception:
+            pass
+
         # Automatic column migration for the jobs table's denormalized
         # asset_id (see models/job.py) - backfilled from the still-active
         # jobs' data_json in the same pass, via SQLite's own JSON1

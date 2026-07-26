@@ -231,6 +231,13 @@ LOCALE_MONTH_NAMES = {
     9: "Eylül", 10: "Ekim", 11: "Kasım", 12: "Aralık",
 }
 
+# Requests handled concurrently before the priority gate starts queuing by
+# priority instead of letting everything through immediately (see
+# services/request_priority.py) - low enough that a real burst (several
+# users' browsers loading a gallery page's thumbnails at once) can actually
+# hit it, not so low that ordinary single-user browsing ever notices it.
+REQUEST_PRIORITY_GATE_CAPACITY = int(os.getenv("WIMMICH_REQUEST_PRIORITY_GATE_CAPACITY", "8"))
+
 # Background job worker
 JOB_POLL_INTERVAL_SECONDS = float(os.getenv("WIMMICH_JOB_POLL_INTERVAL_SECONDS", "2"))
 # How often to check whether the currently-running job finished, so the next

@@ -32,6 +32,10 @@ class UpdateAdminRequest(BaseModel):
     is_admin: bool
 
 
+class UpdatePriorityRequest(BaseModel):
+    priority: int
+
+
 class SetPasswordRequest(BaseModel):
     new_password: str
 
@@ -105,6 +109,29 @@ async def update_user_quota(
     user.storage_quota_mb = req.storage_quota_mb
     await db.commit()
     return {"message": "Kullanıcı kotası güncellendi", "storage_quota_mb": user.storage_quota_mb}
+
+
+@router.put("/users/{user_id}/priority")
+async def update_user_priority(
+    user_id: str,
+    req: UpdatePriorityRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Set a user's request priority, 1-5 (admin only). Baked into the JWT
+    at login, so this takes effect on the user's next login, not their
+    already-issued token - same trade-off as changing is_admin."""
+    if req.priority < 1 or req.priority > 5:
+        raise HTTPException(status_code=400, detail="Öncelik 1 ile 5 arasında olmalı")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+    user.priority = req.priority
+    await db.commit()
+    return {"message": "Kullanıcı önceliği güncellendi", "priority": user.priority}
 
 
 @router.put("/users/{user_id}/approve")

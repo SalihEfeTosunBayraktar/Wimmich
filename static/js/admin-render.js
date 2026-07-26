@@ -537,7 +537,7 @@ async function renderAdmin() {
             <div id="admin-tab-users" class="admin-tab-panel" ${activeAdminTab === 'users' ? '' : 'hidden'}>
                 <div class="admin-section">
                     <div style="display:flex;justify-content:space-between;align-items:center">
-                        <h3>👥 ${t('admin_render.stat_users')}</h3>
+                        <h3>👥 ${t('admin_render.stat_users')} ${infoBtn(t('admin_users.priority_info_hint'))}</h3>
                         <button class="btn btn-primary btn-sm" onclick="showCreateUserModal()">${t('admin_users.new_user_button')}</button>
                     </div>
                     <div class="user-list">${renderUserList(users.users)}</div>

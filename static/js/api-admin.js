@@ -9,6 +9,7 @@ Object.assign(API, {
     createUser(data) { return this.request('/api/admin/users', { method: 'POST', body: data }); },
     deleteUser(id) { return this.request(`/api/admin/users/${id}`, { method: 'DELETE' }); },
     updateUserQuota(id, quota) { return this.request(`/api/admin/users/${id}/quota`, { method: 'PUT', body: { storage_quota_mb: quota } }); },
+    updateUserPriority(id, priority) { return this.request(`/api/admin/users/${id}/priority`, { method: 'PUT', body: { priority } }); },
     approveUser(id, isApproved) { return this.request(`/api/admin/users/${id}/approve`, { method: 'PUT', body: { is_approved: isApproved } }); },
     updateUserAdmin(id, isAdmin) { return this.request(`/api/admin/users/${id}/admin`, { method: 'PUT', body: { is_admin: isAdmin } }); },
     setUserPassword(id, newPassword) { return this.request(`/api/admin/users/${id}/password`, { method: 'PUT', body: { new_password: newPassword } }); },

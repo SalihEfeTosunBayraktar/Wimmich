@@ -12,6 +12,9 @@ registerTranslations({
         'admin_users.revoke_approval': 'Revoke Approval',
         'admin_users.approve': 'Approve',
         'admin_users.quota_label': 'Quota',
+        'admin_users.priority_label': 'Priority',
+        'admin_users.priority_info_hint': "Only matters when several requests actually overlap in time - normally none of this is noticeable at all. When it happens, whichever waiting request belongs to the highest-priority user (5) gets handled next, ahead of lower ones (1), instead of strict first-come-first-served.",
+        'admin_users.priority_updated': "User's priority updated",
         'admin_users.storage_path_required': 'Storage path cannot be empty',
         'admin_users.backup_dir_required': 'Backup folder cannot be empty',
         'admin_users.backup_settings_saved': 'Backup settings saved',
@@ -54,6 +57,9 @@ registerTranslations({
         'admin_users.revoke_approval': 'Onayı Kaldır',
         'admin_users.approve': 'Onayla',
         'admin_users.quota_label': 'Kota',
+        'admin_users.priority_label': 'Öncelik',
+        'admin_users.priority_info_hint': 'Sadece birden fazla istek gerçekten aynı anda çakıştığında bir anlam ifade eder - normalde bunun hiçbir farkı fark edilmez. Çakışma olduğunda, bekleyen isteklerden en yüksek önceliğe (5) sahip kullanıcınınki, düşük olanlardan (1) önce, kim önce geldiyse mantığı yerine öncelikli olarak işlenir.',
+        'admin_users.priority_updated': 'Kullanıcının önceliği güncellendi',
         'admin_users.storage_path_required': 'Depolama yolu boş olamaz',
         'admin_users.backup_dir_required': 'Yedekleme klasörü boş olamaz',
         'admin_users.backup_settings_saved': 'Yedekleme ayarları kaydedildi',
@@ -96,6 +102,9 @@ registerTranslations({
         'admin_users.revoke_approval': "Retirer l'approbation",
         'admin_users.approve': 'Approuver',
         'admin_users.quota_label': 'Quota',
+        'admin_users.priority_label': 'Priorité',
+        'admin_users.priority_info_hint': "Ne compte que lorsque plusieurs requêtes se chevauchent réellement dans le temps - normalement, rien de tout cela n'est perceptible. Quand cela arrive, la requête en attente de l'utilisateur avec la priorité la plus haute (5) est traitée en premier, avant celles de priorité plus basse (1), au lieu d'un strict premier arrivé, premier servi.",
+        'admin_users.priority_updated': "Priorité de l'utilisateur mise à jour",
         'admin_users.storage_path_required': 'Le chemin de stockage ne peut pas être vide',
         'admin_users.backup_dir_required': 'Le dossier de sauvegarde ne peut pas être vide',
         'admin_users.backup_settings_saved': 'Paramètres de sauvegarde enregistrés',
@@ -138,6 +147,9 @@ registerTranslations({
         'admin_users.revoke_approval': 'Genehmigung entziehen',
         'admin_users.approve': 'Genehmigen',
         'admin_users.quota_label': 'Kontingent',
+        'admin_users.priority_label': 'Priorität',
+        'admin_users.priority_info_hint': 'Spielt nur eine Rolle, wenn sich mehrere Anfragen zeitlich tatsächlich überschneiden - normalerweise ist davon nichts spürbar. Wenn es passiert, wird die wartende Anfrage des Benutzers mit der höchsten Priorität (5) als Nächstes bearbeitet, vor niedrigeren (1), statt streng nach Ankunftsreihenfolge.',
+        'admin_users.priority_updated': 'Priorität des Benutzers aktualisiert',
         'admin_users.storage_path_required': 'Speicherpfad darf nicht leer sein',
         'admin_users.backup_dir_required': 'Sicherungsordner darf nicht leer sein',
         'admin_users.backup_settings_saved': 'Sicherungseinstellungen gespeichert',
@@ -197,6 +209,12 @@ function renderUserList(users) {
                         ${u.is_approved ? t('admin_users.revoke_approval') : t('admin_users.approve')}
                     </button>
                 ` : ''}
+                <label class="admin-checkbox-label" style="display:flex;align-items:center;gap:4px;font-size:12px" for="priority-${u.id}">
+                    ${t('admin_users.priority_label')}
+                    <select id="priority-${u.id}" class="gallery-mini-select" style="max-width:52px;height:32px;font-size:12px" onchange="changeUserPriority('${u.id}', this.value)">
+                        ${[5, 4, 3, 2, 1].map(p => `<option value="${p}" ${u.priority === p ? 'selected' : ''}>${p}</option>`).join('')}
+                    </select>
+                </label>
                 <button class="btn btn-secondary btn-sm" onclick="editUserQuota('${u.id}', ${u.storage_quota_mb})">${icon('settings')} ${t('admin_users.quota_label')}</button>
                 <button class="btn btn-secondary btn-sm" onclick="showSetPasswordModal('${u.id}', '${escAttr(u.name)}')">${icon('key')} ${t('admin_users.reset_password')}</button>
                 ${u.id !== state.user.id ? `
@@ -419,6 +437,16 @@ async function toggleUserApproval(userId, currentStatus) {
         renderAdmin();
     } catch (e) {
         toast(e.message, 'error');
+    }
+}
+
+async function changeUserPriority(userId, priorityStr) {
+    try {
+        await API.updateUserPriority(userId, parseInt(priorityStr, 10));
+        toast(t('admin_users.priority_updated'), 'success');
+    } catch (e) {
+        toast(e.message, 'error');
+        renderAdmin(); // revert the select back to its actual saved value
     }
 }
 
