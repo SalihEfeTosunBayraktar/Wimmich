@@ -92,3 +92,38 @@ function renderEmptyState(title, desc) {
         </div>
     `;
 }
+
+// A small "(i)" button that shows an explanatory popover on click - for
+// technical/advanced settings (tunnel, Tailscale, API keys, ...) where a
+// one-line label isn't enough context, but a permanent paragraph of text
+// would clutter the card. Click-based (not hover-only) so it works the same
+// on touch as with a mouse.
+function infoBtn(hintText) {
+    return `<button type="button" class="info-tooltip-btn" data-hint="${escHtml(hintText)}" onclick="event.stopPropagation(); _toggleInfoTooltip(this)">${icon('question', 14)}</button>`;
+}
+
+function _toggleInfoTooltip(btn) {
+    const existing = $('info-tooltip-popover');
+    const reopeningSameBtn = existing && existing._sourceBtn === btn;
+    _closeInfoTooltip();
+    if (reopeningSameBtn) return; // clicking the same info button again just closes it
+
+    const popover = document.createElement('div');
+    popover.className = 'info-tooltip-popover';
+    popover.id = 'info-tooltip-popover';
+    popover.textContent = btn.dataset.hint;
+    popover._sourceBtn = btn;
+    document.body.appendChild(popover);
+
+    const r = btn.getBoundingClientRect();
+    const pr = popover.getBoundingClientRect();
+    popover.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - pr.width - 8))}px`;
+    popover.style.top = `${r.bottom + 6}px`;
+}
+
+function _closeInfoTooltip() {
+    const existing = $('info-tooltip-popover');
+    if (existing) existing.remove();
+}
+document.addEventListener('click', _closeInfoTooltip);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') _closeInfoTooltip(); });

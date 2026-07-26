@@ -166,6 +166,7 @@ from routers.admin_jobs_router import router as admin_jobs_router
 from routers.admin_config_router import router as admin_config_router
 from routers.admin_backup_router import router as admin_backup_router
 from routers.tunnel_router import router as tunnel_router
+from routers.tailscale_router import router as tailscale_router
 from routers.import_router import router as import_router
 
 app.include_router(auth_router)
@@ -186,6 +187,7 @@ app.include_router(admin_jobs_router)
 app.include_router(admin_config_router)
 app.include_router(admin_backup_router)
 app.include_router(tunnel_router)
+app.include_router(tailscale_router)
 app.include_router(import_router)
 
 # Static files - "Cache-Control: no-cache" forces every request (browser

@@ -1,3 +1,35 @@
+/* ─── Info tooltip (click-to-show help popover) ─────────────── */
+.info-tooltip-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-muted);
+    cursor: pointer;
+    vertical-align: middle;
+}
+.info-tooltip-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.info-tooltip-popover {
+    position: fixed;
+    z-index: 2500;
+    max-width: 280px;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    animation: fadeIn 0.12s ease;
+}
+
 /* ─── Theme switch (Profile Settings) ──────────────────────── */
 .theme-switch {
     display: flex;

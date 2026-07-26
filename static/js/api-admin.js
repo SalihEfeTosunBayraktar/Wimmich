@@ -30,6 +30,9 @@ Object.assign(API, {
     stopTunnel() { return this.request('/api/tunnel/stop', { method: 'POST' }); },
     downloadCloudflared() { return this.request('/api/tunnel/download', { method: 'POST' }); },
 
+    // Tailscale (read-only detection, not managed by Wimmich)
+    getTailscaleStatus() { return this.request('/api/tailscale/status'); },
+
     // Import
     browsePath(path) {
         return this.request('/api/import/browse', { method: 'POST', body: { path: path || '' } });

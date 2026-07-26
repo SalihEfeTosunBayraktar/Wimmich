@@ -23,6 +23,13 @@ registerTranslations({
         'admin_tunnel.stopped': 'Tunnel stopped',
         'admin_tunnel.downloading': 'Downloading cloudflared...',
         'admin_tunnel.downloaded': 'cloudflared downloaded!',
+        'admin_tunnel.other_methods_heading': 'Other Access Methods',
+        'admin_tunnel.other_methods_info_hint': "If you'd rather not expose a public URL at all, these keep access private to devices you control: Tailscale creates a private network between just your own devices, and a reverse proxy/port-forward is entirely your own network setup - Wimmich doesn't need to know which one you use.",
+        'admin_tunnel.tailscale_not_installed': 'Tailscale not detected. It\'s an alternative to the Cloudflare Tunnel above - a private network between your own devices, no public URL involved.',
+        'admin_tunnel.tailscale_install_link_text': 'Install Tailscale',
+        'admin_tunnel.tailscale_not_running': 'Tailscale is installed but not signed in yet - run "tailscale up" or sign in from its tray icon.',
+        'admin_tunnel.tailscale_running': 'Tailscale is active - reachable from your other Tailscale devices at:',
+        'admin_tunnel.reverse_proxy_hint': 'You can also put your own reverse proxy (nginx, Caddy, ...) or router port-forward in front of this server instead - it listens on every network interface, no code changes needed.',
     },
     tr: {
         'admin_tunnel.not_found': 'cloudflared bulunamadı. Uzaktan erişim için cloudflared gereklidir.',
@@ -45,6 +52,13 @@ registerTranslations({
         'admin_tunnel.stopped': 'Tunnel durduruldu',
         'admin_tunnel.downloading': 'cloudflared indiriliyor...',
         'admin_tunnel.downloaded': 'cloudflared indirildi!',
+        'admin_tunnel.other_methods_heading': 'Diğer Erişim Yöntemleri',
+        'admin_tunnel.other_methods_info_hint': "Herkese açık bir URL hiç açmak istemiyorsanız, bunlar erişimi sadece kendi kontrolünüzdeki cihazlarla sınırlı tutar: Tailscale sadece kendi cihazlarınız arasında özel bir ağ oluşturur, reverse proxy/port yönlendirme ise tamamen kendi ağ kurulumunuzdur - Wimmich hangisini kullandığınızı bilmesine gerek duymaz.",
+        'admin_tunnel.tailscale_not_installed': 'Tailscale tespit edilemedi. Yukarıdaki Cloudflare Tunnel\'a bir alternatif - kendi cihazlarınız arasında özel bir ağ, herkese açık bir URL gerekmez.',
+        'admin_tunnel.tailscale_install_link_text': "Tailscale'i Kur",
+        'admin_tunnel.tailscale_not_running': 'Tailscale kurulu ama henüz giriş yapılmamış - "tailscale up" komutunu çalıştırın veya sistem tepsisindeki simgeden giriş yapın.',
+        'admin_tunnel.tailscale_running': 'Tailscale aktif - diğer Tailscale cihazlarınızdan şu adresle erişilebilir:',
+        'admin_tunnel.reverse_proxy_hint': 'İsterseniz bunun yerine kendi reverse proxy\'nizi (nginx, Caddy vb.) veya router port yönlendirmenizi de kullanabilirsiniz - sunucu tüm ağ arayüzlerinde dinliyor, kod değişikliği gerekmiyor.',
     },
     fr: {
         'admin_tunnel.not_found': "cloudflared introuvable. cloudflared est requis pour l'accès à distance.",
@@ -67,6 +81,13 @@ registerTranslations({
         'admin_tunnel.stopped': 'Tunnel arrêté',
         'admin_tunnel.downloading': 'Téléchargement de cloudflared...',
         'admin_tunnel.downloaded': 'cloudflared téléchargé !',
+        'admin_tunnel.other_methods_heading': "Autres méthodes d'accès",
+        'admin_tunnel.other_methods_info_hint': "Si vous préférez ne pas exposer d'URL publique du tout, ces méthodes gardent l'accès privé aux appareils que vous contrôlez : Tailscale crée un réseau privé entre vos seuls appareils, et un reverse proxy/redirection de port est entièrement votre propre configuration réseau - Wimmich n'a pas besoin de savoir lequel vous utilisez.",
+        'admin_tunnel.tailscale_not_installed': "Tailscale non détecté. C'est une alternative au Cloudflare Tunnel ci-dessus - un réseau privé entre vos propres appareils, sans URL publique.",
+        'admin_tunnel.tailscale_install_link_text': 'Installer Tailscale',
+        'admin_tunnel.tailscale_not_running': 'Tailscale est installé mais pas encore connecté - exécutez "tailscale up" ou connectez-vous depuis son icône de la barre des tâches.',
+        'admin_tunnel.tailscale_running': 'Tailscale est actif - accessible depuis vos autres appareils Tailscale à :',
+        'admin_tunnel.reverse_proxy_hint': "Vous pouvez aussi placer votre propre reverse proxy (nginx, Caddy, ...) ou une redirection de port de routeur devant ce serveur - il écoute sur toutes les interfaces réseau, aucune modification de code nécessaire.",
     },
     de: {
         'admin_tunnel.not_found': 'cloudflared nicht gefunden. cloudflared wird für den Fernzugriff benötigt.',
@@ -89,6 +110,13 @@ registerTranslations({
         'admin_tunnel.stopped': 'Tunnel gestoppt',
         'admin_tunnel.downloading': 'cloudflared wird heruntergeladen...',
         'admin_tunnel.downloaded': 'cloudflared heruntergeladen!',
+        'admin_tunnel.other_methods_heading': 'Andere Zugriffsmethoden',
+        'admin_tunnel.other_methods_info_hint': 'Wenn Sie überhaupt keine öffentliche URL preisgeben möchten, halten diese den Zugriff privat auf Geräte, die Sie kontrollieren: Tailscale erstellt ein privates Netzwerk nur zwischen Ihren eigenen Geräten, und ein Reverse-Proxy/Port-Forwarding ist ganz Ihre eigene Netzwerkeinrichtung - Wimmich muss nicht wissen, welches Sie verwenden.',
+        'admin_tunnel.tailscale_not_installed': 'Tailscale nicht erkannt. Es ist eine Alternative zum Cloudflare Tunnel oben - ein privates Netzwerk zwischen Ihren eigenen Geräten, ohne öffentliche URL.',
+        'admin_tunnel.tailscale_install_link_text': 'Tailscale installieren',
+        'admin_tunnel.tailscale_not_running': 'Tailscale ist installiert, aber noch nicht angemeldet - führen Sie "tailscale up" aus oder melden Sie sich über das Symbol in der Taskleiste an.',
+        'admin_tunnel.tailscale_running': 'Tailscale ist aktiv - von Ihren anderen Tailscale-Geräten erreichbar unter:',
+        'admin_tunnel.reverse_proxy_hint': 'Sie können stattdessen auch Ihren eigenen Reverse-Proxy (nginx, Caddy, ...) oder eine Router-Portweiterleitung vor diesen Server schalten - er lauscht auf allen Netzwerkschnittstellen, keine Codeänderungen nötig.',
     },
 });
 
@@ -143,6 +171,32 @@ function renderTunnelPanel(status) {
             <p style="color:var(--text-secondary);margin-bottom:16px">${t('admin_tunnel.intro')}</p>
             <button class="btn btn-primary" onclick="startTunnel()">${icon('rocket')} ${t('admin_tunnel.start_button')}</button>
             <p style="color:var(--text-muted);font-size:0.8rem;margin-top:12px">${t('admin_tunnel.quick_tunnel_hint')}</p>
+        </div>
+    `;
+}
+
+// Purely informational - Wimmich never starts/stops/configures Tailscale
+// itself (unlike cloudflared above), it only detects what's already there.
+// Reaching the server over Tailscale needs nothing else: it binds 0.0.0.0,
+// so the host's Tailscale IP already routes to it automatically.
+function renderTailscalePanel(status) {
+    if (!status.available) {
+        return `
+            <p style="color:var(--text-secondary);margin-bottom:8px">${t('admin_tunnel.tailscale_not_installed')}</p>
+            <a class="btn btn-secondary btn-sm" href="https://tailscale.com/download" target="_blank" rel="noopener">${t('admin_tunnel.tailscale_install_link_text')}</a>
+        `;
+    }
+    if (!status.running) {
+        return `<p style="color:var(--warning);font-size:0.85rem">${t('admin_tunnel.tailscale_not_running')}</p>`;
+    }
+    return `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <div class="tunnel-status-dot"></div>
+            <span style="font-weight:600;color:var(--success)">${t('admin_tunnel.tailscale_running')}</span>
+        </div>
+        <div class="tunnel-url-box">
+            <code style="font-size:0.95rem;color:var(--success)">${escHtml(status.ip)}</code>
+            ${status.hostname ? `<div style="color:var(--text-muted);font-size:0.8rem;margin-top:4px">${escHtml(status.hostname)}</div>` : ''}
         </div>
     `;
 }

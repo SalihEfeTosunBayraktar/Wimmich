@@ -23,6 +23,7 @@ registerTranslations({
         'admin_render.save_settings_btn': 'Save Settings',
         'admin_render.db_location_hint': 'For database security, the database file is always stored at the fixed location {path}.',
         'admin_render.remote_access_heading': 'Remote Access (Cloudflare Tunnel)',
+        'admin_render.remote_access_info_hint': 'Creates a public URL that forwards to this server, so you (or family/friends you share it with) can open your photos from outside your home network - no router configuration or open ports needed. Off by default; nothing is exposed until you start it here.',
         'admin_render.backup_heading': 'Backup',
         'admin_render.backup_dir_label': 'Backup Folder (preferably a separate disk)',
         'admin_render.backup_dir_placeholder': 'e.g. E:\\WimmichBackup',
@@ -130,6 +131,7 @@ registerTranslations({
         'admin_render.save_settings_btn': 'Ayarları Kaydet',
         'admin_render.db_location_hint': 'Veri tabanı güvenliği için veritabanı dosyası her zaman sabit olarak {path} konumunda saklanır.',
         'admin_render.remote_access_heading': 'Uzaktan Erişim (Cloudflare Tunnel)',
+        'admin_render.remote_access_info_hint': 'Bu sunucuya yönlendiren herkese açık bir URL oluşturur - böylece siz (veya paylaştığınız aile/arkadaşlarınız) fotoğraflarınızı ev ağınızın dışından açabilirsiniz - router ayarı veya port açmaya gerek yok. Varsayılan olarak kapalıdır; burada başlatana kadar hiçbir şey dışarı açılmaz.',
         'admin_render.backup_heading': 'Yedekleme',
         'admin_render.backup_dir_label': 'Yedekleme Klasörü (tercihen ayrı bir disk)',
         'admin_render.backup_dir_placeholder': 'Örn: E:\\WimmichYedek',
@@ -237,6 +239,7 @@ registerTranslations({
         'admin_render.save_settings_btn': 'Enregistrer les paramètres',
         'admin_render.db_location_hint': "Pour des raisons de sécurité, le fichier de base de données est toujours stocké à l'emplacement fixe {path}.",
         'admin_render.remote_access_heading': 'Accès à distance (tunnel Cloudflare)',
+        'admin_render.remote_access_info_hint': "Crée une URL publique qui redirige vers ce serveur, pour que vous (ou la famille/des amis avec qui vous la partagez) puissiez ouvrir vos photos depuis l'extérieur de votre réseau domestique - aucune configuration du routeur ni de port à ouvrir. Désactivé par défaut ; rien n'est exposé tant que vous ne le démarrez pas ici.",
         'admin_render.backup_heading': 'Sauvegarde',
         'admin_render.backup_dir_label': 'Dossier de sauvegarde (de préférence un disque séparé)',
         'admin_render.backup_dir_placeholder': 'ex. E:\\WimmichSauvegarde',
@@ -344,6 +347,7 @@ registerTranslations({
         'admin_render.save_settings_btn': 'Einstellungen speichern',
         'admin_render.db_location_hint': 'Aus Gründen der Datenbanksicherheit wird die Datenbankdatei immer am festen Speicherort {path} gespeichert.',
         'admin_render.remote_access_heading': 'Fernzugriff (Cloudflare-Tunnel)',
+        'admin_render.remote_access_info_hint': 'Erstellt eine öffentliche URL, die auf diesen Server weiterleitet - so können Sie (oder Familie/Freunde, mit denen Sie sie teilen) Ihre Fotos von außerhalb Ihres Heimnetzwerks öffnen - keine Router-Konfiguration oder offene Ports nötig. Standardmäßig deaktiviert; nichts wird preisgegeben, bis Sie es hier starten.',
         'admin_render.backup_heading': 'Sicherung',
         'admin_render.backup_dir_label': 'Sicherungsordner (vorzugsweise ein separates Laufwerk)',
         'admin_render.backup_dir_placeholder': 'z.B. E:\\WimmichSicherung',
@@ -437,10 +441,11 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
+            API.getTailscaleStatus().catch(() => ({ available: false, running: false, ip: null, hostname: null })),
             API.getStorageConfig().catch(() => ({ data_dir: '', db_dir: '' })),
             API.getBackupSettings().catch(() => ({ backup_dir: '', interval_hours: 24, enabled: false, last_backup_at: null, last_backup_status: null, last_backup_error: null })),
             API.getReferenceRoots().catch(() => ({ references: [] })),
@@ -644,13 +649,19 @@ async function renderAdmin() {
             <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
                 <div class="admin-status-matrix">
                     <div class="admin-status-card">
-                        <h4>🌐 ${t('admin_render.remote_access_heading')}</h4>
+                        <h4>🌐 ${t('admin_render.remote_access_heading')} ${infoBtn(t('admin_render.remote_access_info_hint'))}</h4>
                         <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
                         <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
                             <input type="checkbox" id="storage-autostart-input" ${storageConfig.auto_start_tunnel ? 'checked' : ''} style="width:auto;margin:0">
                             <label for="storage-autostart-input" class="admin-checkbox-label">${t('admin_render.tunnel_autostart_label')}</label>
                             <button class="btn btn-secondary btn-sm" onclick="saveStorageConfig()" style="margin-left:auto">${t('admin_render.save_settings_btn')}</button>
                         </div>
+                    </div>
+
+                    <div class="admin-status-card">
+                        <h4>🔀 ${t('admin_tunnel.other_methods_heading')} ${infoBtn(t('admin_tunnel.other_methods_info_hint'))}</h4>
+                        <div id="tailscale-panel">${renderTailscalePanel(tailscaleStatus)}</div>
+                        <p class="text-muted admin-field-hint admin-field-hint--bordered">${t('admin_tunnel.reverse_proxy_hint')}</p>
                     </div>
 
                     <div class="admin-status-card">
