@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models import User, Asset
 from auth import get_admin_user, hash_password
+from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -42,6 +43,9 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new user (admin only)."""
+    if not is_password_strong_enough(req.password):
+        raise HTTPException(status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+
     existing = await db.execute(select(User).where(User.email == req.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already exists")
@@ -134,8 +138,8 @@ async def set_user_password(
     """Set a new password for any user (admin only) - for helping a user who
     forgot theirs. No current-password check (that's the whole point of an
     admin reset); the requester is already verified as an admin."""
-    if not req.new_password or len(req.new_password) < 4:
-        raise HTTPException(status_code=400, detail="Şifre en az 4 karakter olmalı")
+    if not is_password_strong_enough(req.new_password):
+        raise HTTPException(status_code=400, detail=f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalı")
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()

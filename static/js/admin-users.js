@@ -41,7 +41,7 @@ registerTranslations({
         'admin_users.reset_password': 'Password',
         'admin_users.set_password_title': 'Set New Password',
         'admin_users.new_password_label': 'New password (min 4 characters)',
-        'admin_users.password_too_short': 'Password must be at least 4 characters',
+        'admin_users.password_too_short': 'Password must be at least 8 characters',
         'admin_users.password_updated': "User's password updated",
     },
     tr: {
@@ -83,7 +83,7 @@ registerTranslations({
         'admin_users.reset_password': 'Şifre',
         'admin_users.set_password_title': 'Yeni Şifre Belirle',
         'admin_users.new_password_label': 'Yeni şifre (en az 4 karakter)',
-        'admin_users.password_too_short': 'Şifre en az 4 karakter olmalı',
+        'admin_users.password_too_short': 'Şifre en az 8 karakter olmalı',
         'admin_users.password_updated': 'Kullanıcının şifresi güncellendi',
     },
     fr: {
@@ -125,7 +125,7 @@ registerTranslations({
         'admin_users.reset_password': 'Mot de passe',
         'admin_users.set_password_title': 'Définir un nouveau mot de passe',
         'admin_users.new_password_label': 'Nouveau mot de passe (min. 4 caractères)',
-        'admin_users.password_too_short': 'Le mot de passe doit comporter au moins 4 caractères',
+        'admin_users.password_too_short': 'Le mot de passe doit comporter au moins 8 caractères',
         'admin_users.password_updated': "Mot de passe de l'utilisateur mis à jour",
     },
     de: {
@@ -167,7 +167,7 @@ registerTranslations({
         'admin_users.reset_password': 'Passwort',
         'admin_users.set_password_title': 'Neues Passwort festlegen',
         'admin_users.new_password_label': 'Neues Passwort (mind. 4 Zeichen)',
-        'admin_users.password_too_short': 'Passwort muss mindestens 4 Zeichen lang sein',
+        'admin_users.password_too_short': 'Passwort muss mindestens 8 Zeichen lang sein',
         'admin_users.password_updated': 'Passwort des Benutzers aktualisiert',
     },
 });
@@ -288,7 +288,7 @@ function showSetPasswordModal(userId, userName) {
             <h3 style="margin-top:0">${t('admin_users.set_password_title')}</h3>
             <p class="text-muted admin-field-hint" style="margin-top:0">${escHtml(userName)}</p>
             <label class="admin-field-label" for="set-password-input">${t('admin_users.new_password_label')}</label>
-            <input type="password" id="set-password-input" style="width:100%;box-sizing:border-box">
+            <input type="password" id="set-password-input" minlength="8" style="width:100%;box-sizing:border-box">
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px">
                 <button class="btn btn-secondary btn-sm" id="set-password-cancel">${t('common.cancel')}</button>
                 <button class="btn btn-primary btn-sm" id="set-password-save">${t('common.save')}</button>
@@ -306,7 +306,7 @@ function showSetPasswordModal(userId, userName) {
 }
 
 async function saveUserPassword(userId, password, close) {
-    if (!password || password.length < 4) {
+    if (!password || password.length < 8) {
         toast(t('admin_users.password_too_short'), 'warning');
         return;
     }
@@ -331,7 +331,7 @@ function showCreateUserModal() {
             <label class="admin-field-label" for="create-user-email">${t('admin_users.email_label')}</label>
             <input type="email" id="create-user-email" style="width:100%;box-sizing:border-box;margin-bottom:8px">
             <label class="admin-field-label" for="create-user-password">${t('admin_users.password_label')}</label>
-            <input type="password" id="create-user-password" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+            <input type="password" id="create-user-password" minlength="8" style="width:100%;box-sizing:border-box;margin-bottom:8px">
             <label class="admin-field-label" for="create-user-quota">${t('admin_users.quota_mb_label')}</label>
             <input type="number" id="create-user-quota" min="0" value="0" style="width:100%;box-sizing:border-box">
             <p class="text-muted admin-field-hint" id="create-user-quota-hint"></p>

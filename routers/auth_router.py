@@ -8,6 +8,7 @@ from database import get_db
 from models import User, Asset
 from auth import hash_password, verify_password, create_access_token, get_current_user
 from services import login_rate_limit
+from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -47,6 +48,9 @@ class UpdateProfileRequest(BaseModel):
 @router.post("/register")
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Register a new user. First user becomes admin."""
+    if not is_password_strong_enough(req.password):
+        raise HTTPException(status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+
     # Check if email exists
     result = await db.execute(select(User).where(User.email == req.email))
     if result.scalar_one_or_none():
@@ -214,6 +218,8 @@ async def update_me(
     if req.new_password:
         if not req.current_password or not verify_password(req.current_password, user.password_hash):
             raise HTTPException(status_code=400, detail="Current password is incorrect")
+        if not is_password_strong_enough(req.new_password):
+            raise HTTPException(status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
         user.password_hash = hash_password(req.new_password)
 
     await db.commit()
