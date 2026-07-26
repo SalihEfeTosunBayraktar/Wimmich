@@ -117,13 +117,13 @@ function _updateRectSelection(currentClientX, currentClientY) {
         const isSelected = state.selectedAssets.has(id);
         if (intersects && !isSelected) {
             state.selectedAssets.add(id);
-            card.classList.add('selected');
+            _setCardSelected(card, true);
         } else if (!intersects && isSelected && !_dragOriginSelected.has(id)) {
             // Dragged back out past a card the CURRENT drag had picked up -
             // drop it, same as a real lasso. Anything selected before the
             // drag started is left alone.
             state.selectedAssets.delete(id);
-            card.classList.remove('selected');
+            _setCardSelected(card, false);
         }
     });
     updateSelectionBar();
@@ -211,7 +211,7 @@ function _selectRange(fromCard, toCard) {
         const c = allCards[i];
         if (!state.selectedAssets.has(c.dataset.id)) {
             state.selectedAssets.add(c.dataset.id);
-            c.classList.add('selected');
+            _setCardSelected(c, true);
         }
     }
     updateSelectionBar();
@@ -255,6 +255,21 @@ function bindPhotoCards(container) {
                 : [id];
             _showPhotoContextMenu(e.clientX, e.clientY, ids);
         });
+
+        // Native HTML5 drag, to drop a photo (or the whole selection) onto
+        // an album - only possible from an already-selected card (see
+        // _setCardSelected: draggable only turns on once selected), which is
+        // exactly the one case the custom rectangle-select's own mousedown
+        // handler already treats as a no-op (`if selected: return` below),
+        // so there's no gesture conflict between the two.
+        card.addEventListener('dragstart', (e) => {
+            const id = card.dataset.id;
+            const ids = state.selectedAssets.size > 1 ? [...state.selectedAssets] : [id];
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', ''); // some browsers require this for the drag to start at all
+            _startAlbumDropBar(ids);
+        });
+        card.addEventListener('dragend', () => _endAlbumDropBar());
 
         // Desktop: mousedown on the checkbox (or anywhere once already
         // selecting) arms a drag immediately - it's already an explicit

@@ -84,13 +84,24 @@ registerTranslations({
     },
 });
 
+// Kept in sync everywhere a card's selection state changes - also toggles
+// draggable, since only an already-selected card is native-drag-enabled
+// (see timeline.js's bindPhotoCards for why: an unselected card's mousedown
+// is still owned by the custom rectangle-select gesture, and letting the
+// browser's native drag start there too would hijack it, same conflict
+// native image dragging caused before that was disabled on the <img> itself).
+function _setCardSelected(card, selected) {
+    card.classList.toggle('selected', selected);
+    card.draggable = selected;
+}
+
 function toggleSelect(id, card) {
     if (state.selectedAssets.has(id)) {
         state.selectedAssets.delete(id);
-        card.classList.remove('selected');
+        _setCardSelected(card, false);
     } else {
         state.selectedAssets.add(id);
-        card.classList.add('selected');
+        _setCardSelected(card, true);
     }
     updateSelectionBar();
 }
@@ -154,7 +165,7 @@ function removeSelectionBar() {
 
 function clearSelection() {
     state.selectedAssets.clear();
-    document.querySelectorAll('.photo-card.selected').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.photo-card.selected').forEach(c => _setCardSelected(c, false));
     removeSelectionBar();
     _lastClickedCard = null; // stale shift-click anchor would point at a card that's no longer relevant
 }
@@ -256,7 +267,7 @@ function selectAllVisible() {
     document.querySelectorAll('.photo-card').forEach(card => {
         if (!state.selectedAssets.has(card.dataset.id)) {
             state.selectedAssets.add(card.dataset.id);
-            card.classList.add('selected');
+            _setCardSelected(card, true);
         }
     });
     updateSelectionBar();

@@ -1,3 +1,63 @@
+/* ─── Album drag-drop bar ────────────────────────────────── */
+.album-drop-bar {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-lg);
+    transform: translateX(-50%);
+    z-index: 1500;
+    display: flex;
+    gap: var(--space-sm);
+    max-width: calc(100vw - 32px);
+    padding: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    overflow-x: auto;
+    animation: fadeInUp 0.2s ease;
+}
+
+.album-drop-target {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 72px;
+    flex-shrink: 0;
+    padding: 6px;
+    border-radius: var(--radius-md);
+    border: 2px dashed transparent;
+    cursor: default;
+}
+
+.album-drop-target img,
+.album-drop-target .empty-cover {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.album-drop-target span {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.album-drop-target.drag-over {
+    border-color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
 /* ─── Info tooltip (click-to-show help popover) ─────────────── */
 .info-tooltip-btn {
     display: inline-flex;

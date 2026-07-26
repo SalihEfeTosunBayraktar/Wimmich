@@ -205,7 +205,7 @@ async function blacklistPersonAction(personId) {
         clearSelection();
         person.assets.forEach(a => state.selectedAssets.add(a.id));
         document.querySelectorAll('#person-sub-content .photo-card').forEach(card => {
-            if (state.selectedAssets.has(card.dataset.id)) card.classList.add('selected');
+            if (state.selectedAssets.has(card.dataset.id)) _setCardSelected(card, true);
         });
         updateSelectionBar();
         toast(t('people.photos_selected_for_review', { count: person.assets.length }), 'info');
