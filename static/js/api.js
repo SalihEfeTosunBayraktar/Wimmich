@@ -123,6 +123,9 @@ const API = {
     bulkAction(assetIds, action) {
         return this.request('/api/assets/bulk', { method: 'POST', body: { asset_ids: assetIds, action } });
     },
+    bulkUpdateMetadata(assetIds, data) {
+        return this.request('/api/assets/bulk-metadata', { method: 'PUT', body: { asset_ids: assetIds, ...data } });
+    },
     getTrash() { return this.request('/api/assets/trash'); },
     getDuplicates(sortBy = 'date_desc', fileType = '', location = '', mode = 'exact') {
         let url = `/api/assets/duplicates?sort_by=${sortBy}&mode=${mode}`;

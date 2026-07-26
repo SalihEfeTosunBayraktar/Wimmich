@@ -168,6 +168,35 @@ async def update_asset(
     return asset_to_dict(asset)
 
 
+async def bulk_update_metadata(
+    db: AsyncSession, asset_ids: List[str], user: User,
+    taken_at: Optional[datetime] = None,
+    latitude: Optional[float] = None, longitude: Optional[float] = None,
+    city: Optional[str] = None, country: Optional[str] = None,
+) -> dict:
+    """Same field set as update_asset, applied to every asset in the batch
+    at once - for correcting a whole trip/album's date or location in one
+    go instead of one photo at a time (e.g. a camera with the wrong clock,
+    or an import that arrived with no GPS on any of them)."""
+    result = await db.execute(
+        select(Asset).where(and_(Asset.id.in_(asset_ids), Asset.user_id == user.id))
+    )
+    assets = list(result.scalars().all())
+    for asset in assets:
+        if taken_at is not None:
+            asset.taken_at = taken_at
+        if latitude is not None:
+            asset.latitude = latitude
+        if longitude is not None:
+            asset.longitude = longitude
+        if city is not None:
+            asset.city = city
+        if country is not None:
+            asset.country = country
+    await db.commit()
+    return {"updated": len(assets)}
+
+
 async def toggle_favorite(db: AsyncSession, asset_id: str, user: User) -> dict:
     asset = await get_asset_or_404(db, asset_id, user.id)
     asset.is_favorite = not asset.is_favorite

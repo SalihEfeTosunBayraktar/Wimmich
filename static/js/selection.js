@@ -118,6 +118,7 @@ function _selectionBarActions() {
             <button class="btn btn-sm btn-secondary" onclick="showAddToAlbumModal()">${icon('folder')} <span>${t('selection.album')}</span></button>
             <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">${icon('link')} <span>${t('selection.share')}</span></button>
             <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">${icon('download')} <span>${t('selection.download')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="showBulkMetadataEditModal()">${icon('calendar')} <span>${t('bulk_metadata_edit.button')}</span></button>
             <button class="btn btn-sm btn-secondary" onclick="bulkUnarchive()">${icon('unarchive')} <span>${t('selection.unarchive')}</span></button>
             <button class="btn btn-sm btn-danger" onclick="bulkDelete()">${icon('trash')} <span>${t('common.delete')}</span></button>
         `;
@@ -130,6 +131,7 @@ function _selectionBarActions() {
         return `
             <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">${icon('link')} <span>${t('selection.share')}</span></button>
             <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">${icon('download')} <span>${t('selection.download')}</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="showBulkMetadataEditModal()">${icon('calendar')} <span>${t('bulk_metadata_edit.button')}</span></button>
             <button class="btn btn-sm btn-danger" onclick="bulkRemoveFromAlbum()">${icon('minus')} <span>${t('selection.remove_from_album')}</span></button>
         `;
     }
@@ -138,6 +140,7 @@ function _selectionBarActions() {
         <button class="btn btn-sm btn-secondary" onclick="showAddToAlbumModal()">${icon('folder')} <span>${t('selection.album')}</span></button>
         <button class="btn btn-sm btn-secondary" onclick="showShareModal('ASSET', [...state.selectedAssets])">${icon('link')} <span>${t('selection.share')}</span></button>
         <button class="btn btn-sm btn-secondary" onclick="bulkDownload()">${icon('download')} <span>${t('selection.download')}</span></button>
+        <button class="btn btn-sm btn-secondary" onclick="showBulkMetadataEditModal()">${icon('calendar')} <span>${t('bulk_metadata_edit.button')}</span></button>
         <button class="btn btn-sm btn-secondary" onclick="bulkArchive()">${icon('archive')} <span>${t('selection.archive')}</span></button>
         <button class="btn btn-sm btn-danger" onclick="bulkDelete()">${icon('trash')} <span>${t('common.delete')}</span></button>
     `;

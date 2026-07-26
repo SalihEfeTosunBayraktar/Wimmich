@@ -26,6 +26,14 @@ class BulkActionRequest(BaseModel):
     asset_ids: List[str]
     action: str  # delete, favorite, unfavorite, archive, unarchive, restore, delete_permanent
 
+class BulkMetadataRequest(BaseModel):
+    asset_ids: List[str]
+    taken_at: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+
 class CategoryCorrectionRequest(BaseModel):
     category: str
 
@@ -259,6 +267,24 @@ async def get_asset(
 ):
     """Get single asset details."""
     return await asset_query_service.get_asset_detail(db, asset_id, user)
+
+@router.put("/bulk-metadata")
+async def bulk_update_metadata(
+    req: BulkMetadataRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Correct the taken date and/or location for a whole batch of assets
+    at once - same fields as the single-asset update endpoint below. Must
+    stay registered BEFORE the PUT /{asset_id} catch-all, or a request here
+    gets swallowed by it (asset_id="bulk-metadata", a 404) instead - same
+    class of ordering issue main.py's own router-registration comment
+    already calls out for asset_media_router vs asset_router."""
+    return await asset_mutation_service.bulk_update_metadata(
+        db, req.asset_ids, user,
+        taken_at=req.taken_at, latitude=req.latitude, longitude=req.longitude,
+        city=req.city, country=req.country,
+    )
 
 @router.put("/{asset_id}")
 async def update_asset(
