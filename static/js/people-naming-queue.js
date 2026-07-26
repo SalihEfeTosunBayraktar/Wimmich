@@ -167,8 +167,29 @@ function bindNamingQueueActions() {
                 await API.updatePerson(btn.dataset.id, { name });
                 toast(t('people_naming_queue.name_saved_success'), 'success');
                 renderNamingQueue();
+                refreshPendingBadge();
                 if (state.currentPage === 'people') renderPeople();
             } catch (e) { toast(e.message, 'error'); }
         };
     });
+}
+
+// Sidebar nav badge for pending naming-queue items - visible from any page,
+// not just People, so a user actually notices there's something waiting
+// instead of only finding out by opening the page. Uses the same endpoint
+// the People page's own queue section already calls, just polled less
+// often and independent of which page is currently open.
+async function refreshPendingBadge() {
+    const badge = $('nav-people-badge');
+    if (!badge) return;
+    try {
+        const data = await API.getNamingQueue();
+        const count = data.queue.length;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : String(count);
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    } catch (e) { /* non-critical - next tick tries again */ }
 }

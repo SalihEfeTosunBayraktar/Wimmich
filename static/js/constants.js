@@ -25,6 +25,11 @@ const ADMIN_STATS_POLL_INTERVAL_MS = 15000;
 // built exactly for this kind of frequent lightweight check.
 const SERVER_PING_INTERVAL_MS = 5000;
 const IMPORT_POLL_INTERVAL_MS = 2000;
+// The People page's own naming-queue section already refetches this on
+// every render - this is just for the sidebar badge staying current while
+// the user is elsewhere in the app, so it doesn't need to be nearly as
+// frequent.
+const PENDING_BADGE_POLL_INTERVAL_MS = 60000;
 const TOAST_DURATION_MS = 2200;
 // A toast with an action button (e.g. "Undo") needs to be read AND clicked,
 // not just read - the plain duration above disappears before most people

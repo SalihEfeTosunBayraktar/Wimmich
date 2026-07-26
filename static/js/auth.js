@@ -180,6 +180,8 @@ function showApp() {
     else $('nav-admin').classList.remove('hidden');
     updateSidebarStorage();
     loadAppVersion();
+    refreshPendingBadge();
+    setInterval(refreshPendingBadge, PENDING_BADGE_POLL_INTERVAL_MS);
     navigateTo(location.hash.slice(1) || 'gallery');
 }
 

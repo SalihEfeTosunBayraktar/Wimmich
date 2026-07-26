@@ -80,6 +80,20 @@
 }
 .nav-item svg { flex-shrink: 0; }
 
+.nav-badge {
+    margin-left: auto;
+    flex-shrink: 0;
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    background: var(--accent-primary);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.4;
+}
+
 .nav-divider {
     height: 1px;
     background: var(--border-color);
