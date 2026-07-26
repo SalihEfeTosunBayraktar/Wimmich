@@ -10,6 +10,7 @@ from typing import Optional, Tuple
 
 import config
 from utils.hash_utils import compute_bytes_hash
+from utils.file_signature import matches_claimed_type
 from utils.log import warn
 from services.media_processing import _process_image, _process_video
 
@@ -80,6 +81,14 @@ async def process_upload(
     file_type = get_file_type(original_filename)
     if not file_type:
         raise ValueError(f"Unsupported file type: {original_filename}")
+
+    # Content, not just extension: a renamed executable/script claiming to
+    # be a photo would otherwise sail through on filename alone. Checked
+    # before anything is written to disk, same as the checksum check below.
+    if not matches_claimed_type(original_filename, file_data):
+        raise ValueError(
+            f"{original_filename}: dosya içeriği uzantısıyla eşleşmiyor - bu dosya iddia ettiği türde değil"
+        )
 
     # Hashed from the in-memory bytes rather than reading the file back from
     # disk after writing (the old approach) - one fewer full-file disk read,
