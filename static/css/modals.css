@@ -31,6 +31,47 @@
     margin-top: 2px;
 }
 
+/* ─── Profile: API keys ──────────────────────────────────── */
+.profile-api-key-create {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+.profile-api-key-create input {
+    flex: 1;
+}
+
+.profile-api-key-reveal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-md);
+}
+
+.profile-api-key-reveal-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.profile-api-key-reveal-value {
+    flex: 1;
+    font-family: monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+    color: var(--text-primary);
+}
+
+.profile-api-key-reveal-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
 /* ─── Album drag-drop bar ────────────────────────────────── */
 .album-drop-bar {
     position: fixed;

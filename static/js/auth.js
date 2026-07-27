@@ -18,6 +18,21 @@ registerTranslations({
         'profile.sessions_sign_out': 'Sign out',
         'profile.sessions_revoked': 'Session signed out',
         'profile.sessions_last_seen': 'Last active {date}',
+        'profile.api_keys_label': 'API Keys',
+        'profile.api_keys_hint': 'Long-lived keys for scripts or other apps to access your account without logging in interactively.',
+        'profile.api_keys_name_placeholder': 'Key name (e.g. "My script")',
+        'profile.api_keys_create': 'Create Key',
+        'profile.api_keys_revoke': 'Revoke',
+        'profile.api_keys_never_used': 'Never used',
+        'profile.api_keys_last_used': 'Last used {date}',
+        'profile.api_keys_created_label': 'Created {date}',
+        'profile.api_keys_copy': 'Copy',
+        'profile.api_keys_copied': 'Copied to clipboard',
+        'profile.api_keys_reveal_note': 'Copy this key now - it will not be shown again.',
+        'profile.api_keys_created_toast': 'API key created',
+        'profile.api_keys_revoked_toast': 'API key revoked',
+        'profile.api_keys_name_required': 'Enter a name for the key',
+        'profile.api_keys_empty': 'No API keys yet',
     },
     tr: {
         'profile.settings_title': 'Profil Ayarları',
@@ -35,6 +50,21 @@ registerTranslations({
         'profile.sessions_sign_out': 'Çıkış Yap',
         'profile.sessions_revoked': 'Oturum sonlandırıldı',
         'profile.sessions_last_seen': 'Son aktif: {date}',
+        'profile.api_keys_label': 'API Anahtarları',
+        'profile.api_keys_hint': 'Betiklerin veya diğer uygulamaların hesabınıza etkileşimli giriş yapmadan erişmesi için uzun ömürlü anahtarlar.',
+        'profile.api_keys_name_placeholder': 'Anahtar adı (örn. "Betiğim")',
+        'profile.api_keys_create': 'Anahtar Oluştur',
+        'profile.api_keys_revoke': 'İptal Et',
+        'profile.api_keys_never_used': 'Hiç kullanılmadı',
+        'profile.api_keys_last_used': 'Son kullanım: {date}',
+        'profile.api_keys_created_label': 'Oluşturulma: {date}',
+        'profile.api_keys_copy': 'Kopyala',
+        'profile.api_keys_copied': 'Panoya kopyalandı',
+        'profile.api_keys_reveal_note': 'Bu anahtarı şimdi kopyalayın - tekrar gösterilmeyecek.',
+        'profile.api_keys_created_toast': 'API anahtarı oluşturuldu',
+        'profile.api_keys_revoked_toast': 'API anahtarı iptal edildi',
+        'profile.api_keys_name_required': 'Anahtar için bir isim girin',
+        'profile.api_keys_empty': 'Henüz API anahtarı yok',
     },
     fr: {
         'profile.settings_title': 'Paramètres du profil',
@@ -52,6 +82,21 @@ registerTranslations({
         'profile.sessions_sign_out': 'Déconnecter',
         'profile.sessions_revoked': 'Session déconnectée',
         'profile.sessions_last_seen': 'Actif pour la dernière fois {date}',
+        'profile.api_keys_label': 'Clés API',
+        'profile.api_keys_hint': "Clés longue durée permettant à des scripts ou autres applications d'accéder à votre compte sans connexion interactive.",
+        'profile.api_keys_name_placeholder': 'Nom de la clé (ex. "Mon script")',
+        'profile.api_keys_create': 'Créer une clé',
+        'profile.api_keys_revoke': 'Révoquer',
+        'profile.api_keys_never_used': 'Jamais utilisée',
+        'profile.api_keys_last_used': 'Dernière utilisation {date}',
+        'profile.api_keys_created_label': 'Créée le {date}',
+        'profile.api_keys_copy': 'Copier',
+        'profile.api_keys_copied': 'Copié dans le presse-papiers',
+        'profile.api_keys_reveal_note': 'Copiez cette clé maintenant - elle ne sera plus affichée.',
+        'profile.api_keys_created_toast': 'Clé API créée',
+        'profile.api_keys_revoked_toast': 'Clé API révoquée',
+        'profile.api_keys_name_required': 'Entrez un nom pour la clé',
+        'profile.api_keys_empty': 'Aucune clé API pour le moment',
     },
     de: {
         'profile.settings_title': 'Profileinstellungen',
@@ -69,6 +114,21 @@ registerTranslations({
         'profile.sessions_sign_out': 'Abmelden',
         'profile.sessions_revoked': 'Sitzung abgemeldet',
         'profile.sessions_last_seen': 'Zuletzt aktiv: {date}',
+        'profile.api_keys_label': 'API-Schlüssel',
+        'profile.api_keys_hint': 'Langlebige Schlüssel, damit Skripte oder andere Apps ohne interaktive Anmeldung auf Ihr Konto zugreifen können.',
+        'profile.api_keys_name_placeholder': 'Schlüsselname (z. B. "Mein Skript")',
+        'profile.api_keys_create': 'Schlüssel erstellen',
+        'profile.api_keys_revoke': 'Widerrufen',
+        'profile.api_keys_never_used': 'Nie verwendet',
+        'profile.api_keys_last_used': 'Zuletzt verwendet: {date}',
+        'profile.api_keys_created_label': 'Erstellt: {date}',
+        'profile.api_keys_copy': 'Kopieren',
+        'profile.api_keys_copied': 'In die Zwischenablage kopiert',
+        'profile.api_keys_reveal_note': 'Kopieren Sie diesen Schlüssel jetzt - er wird nicht erneut angezeigt.',
+        'profile.api_keys_created_toast': 'API-Schlüssel erstellt',
+        'profile.api_keys_revoked_toast': 'API-Schlüssel widerrufen',
+        'profile.api_keys_name_required': 'Geben Sie einen Namen für den Schlüssel ein',
+        'profile.api_keys_empty': 'Noch keine API-Schlüssel',
     },
 });
 
@@ -139,6 +199,7 @@ function showProfileModal() {
     $('profile-modal').classList.remove('hidden');
     $('profile-name').focus();
     renderProfileSessions();
+    renderProfileApiKeys();
 }
 
 // A rough, dependency-free read of the two things that actually matter for
@@ -195,10 +256,92 @@ async function revokeMySession(sessionId) {
     }
 }
 
+// revealKey: the raw key text just returned by a create call - shown once,
+// inline at the top of the list, since the server never stores or returns
+// it again after this response.
+async function renderProfileApiKeys(revealKey = null) {
+    const container = $('profile-api-keys-list');
+    if (!container) return;
+    container.innerHTML = `<p class="text-muted admin-field-hint">${t('profile.sessions_loading')}</p>`;
+    try {
+        const data = await API.getApiKeys();
+        let html = '';
+        if (revealKey) {
+            html += `
+                <div class="profile-api-key-reveal">
+                    <div class="profile-api-key-reveal-row">
+                        <span class="profile-api-key-reveal-value">${escHtml(revealKey)}</span>
+                        <button type="button" class="btn btn-secondary btn-sm" id="profile-api-key-copy-btn">${t('profile.api_keys_copy')}</button>
+                    </div>
+                    <div class="profile-api-key-reveal-note">${t('profile.api_keys_reveal_note')}</div>
+                </div>
+            `;
+        }
+        html += data.keys.length === 0
+            ? `<p class="text-muted admin-field-hint">${t('profile.api_keys_empty')}</p>`
+            : data.keys.map(k => `
+                <div class="profile-session-row">
+                    <div>
+                        <div class="profile-session-agent">${escHtml(k.name)}</div>
+                        <div class="profile-session-meta">${escHtml(k.key_prefix)}&hellip; &middot; ${k.last_used_at ? t('profile.api_keys_last_used', { date: formatDateShort(k.last_used_at) }) : t('profile.api_keys_never_used')}</div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" data-api-key-id="${k.id}">${t('profile.api_keys_revoke')}</button>
+                </div>
+            `).join('');
+        container.innerHTML = html;
+        if (revealKey) {
+            $('profile-api-key-copy-btn').onclick = () => _copyApiKeyToClipboard(revealKey);
+        }
+        container.querySelectorAll('button[data-api-key-id]').forEach(btn => {
+            btn.onclick = () => revokeProfileApiKey(btn.dataset.apiKeyId);
+        });
+    } catch (e) {
+        container.innerHTML = `<p class="text-muted admin-field-hint">${e.message}</p>`;
+    }
+}
+
+async function _copyApiKeyToClipboard(key) {
+    try {
+        await navigator.clipboard.writeText(key);
+        toast(t('profile.api_keys_copied'), 'success');
+    } catch (e) {
+        // Clipboard API unavailable (e.g. non-secure context) - the key is
+        // still visible in the reveal box for manual selection/copy.
+    }
+}
+
+async function createProfileApiKey() {
+    const input = $('profile-api-key-name');
+    const name = input.value.trim();
+    if (!name) {
+        toast(t('profile.api_keys_name_required'), 'warning');
+        return;
+    }
+    try {
+        const key = await API.createApiKey(name);
+        input.value = '';
+        toast(t('profile.api_keys_created_toast'), 'success');
+        renderProfileApiKeys(key.key);
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+async function revokeProfileApiKey(id) {
+    try {
+        await API.revokeApiKey(id);
+        toast(t('profile.api_keys_revoked_toast'), 'success');
+        renderProfileApiKeys();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
 function initProfileModal() {
     const close = () => $('profile-modal').classList.add('hidden');
     $('profile-modal-close').onclick = close;
     $('profile-modal-cancel').onclick = close;
+    $('profile-api-key-create-btn').onclick = createProfileApiKey;
 
     $('profile-modal-save').onclick = async () => {
         const name = $('profile-name').value.trim();

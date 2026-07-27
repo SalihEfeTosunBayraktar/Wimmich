@@ -17,6 +17,7 @@ from models.category_correction import CategoryCorrection
 from models.similar_asset import SimilarAsset
 from models.similar_ignore import IgnoredSimilarAsset
 from models.session import Session
+from models.api_key import ApiKey
 
 __all__ = [
     "Base",
@@ -36,4 +37,5 @@ __all__ = [
     "SimilarAsset",
     "IgnoredSimilarAsset",
     "Session",
+    "ApiKey",
 ]

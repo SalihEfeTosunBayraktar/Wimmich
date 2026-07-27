@@ -196,8 +196,10 @@ from routers.admin_backup_router import router as admin_backup_router
 from routers.tunnel_router import router as tunnel_router
 from routers.tailscale_router import router as tailscale_router
 from routers.import_router import router as import_router
+from routers.api_keys_router import router as api_keys_router
 
 app.include_router(auth_router)
+app.include_router(api_keys_router)
 # asset_media_router must be registered before asset_router: it has literal
 # paths like /download-zip, and asset_router's GET /{asset_id} catch-all
 # would otherwise swallow them (Starlette matches routes in registration

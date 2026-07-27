@@ -1,4 +1,6 @@
 """Wimmich Authentication Module - JWT + Password Hashing"""
+import hashlib
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -11,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from database import get_db
-from models import User, Session
+from models import User, Session, ApiKey
 
 # Bearer token scheme
 security = HTTPBearer(auto_error=False)
@@ -20,6 +22,30 @@ security = HTTPBearer(auto_error=False)
 # write on literally every authenticated request (this app fires many per
 # page load) for a timestamp nobody needs to the second is wasted I/O.
 SESSION_LAST_SEEN_THROTTLE = timedelta(minutes=5)
+
+# Marks a bearer token as a long-lived API key rather than a JWT, so
+# get_current_user can tell them apart without ever attempting to
+# jwt.decode() a key (which would just fail) or vice versa.
+API_KEY_PREFIX = "wmk_"
+
+
+def generate_api_key() -> tuple[str, str, str]:
+    """Returns (raw_key, key_hash, key_prefix). The raw key is returned to
+    the caller exactly once (shown to the user at creation time); only its
+    hash is ever persisted, so a stolen database dump can't be used to
+    authenticate as anyone."""
+    raw_key = API_KEY_PREFIX + secrets.token_urlsafe(32)
+    key_hash = hash_api_key(raw_key)
+    key_prefix = raw_key[:12]
+    return raw_key, key_hash, key_prefix
+
+
+def hash_api_key(raw_key: str) -> str:
+    # A high-entropy random token (unlike a user-chosen password) needs no
+    # salt or slow KDF - a plain SHA-256 digest is standard practice here
+    # (same approach GitHub/Stripe-style API tokens use) and lets lookup use
+    # a direct indexed equality query instead of scanning every key.
+    return hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
 
 
 def hash_password(password: str) -> str:
@@ -78,6 +104,38 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 
+async def _get_user_for_api_key(token: str, db: AsyncSession) -> User:
+    """API keys never expire and carry no embedded claims - every request
+    re-checks the DB row directly, unlike a JWT which is trusted until its
+    own exp/jti check fails. Slower per-request, but keys are meant for a
+    handful of scripts/integrations, not the main app's request volume."""
+    key_hash = hash_api_key(token)
+    result = await db.execute(select(ApiKey).where(ApiKey.key_hash == key_hash))
+    api_key = result.scalar_one_or_none()
+    if not api_key or api_key.revoked:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or revoked API key",
+        )
+
+    now = datetime.now(timezone.utc)
+    last_used = api_key.last_used_at
+    if last_used and last_used.tzinfo is None:
+        last_used = last_used.replace(tzinfo=timezone.utc)
+    if not last_used or now - last_used > SESSION_LAST_SEEN_THROTTLE:
+        api_key.last_used_at = now
+        await db.commit()
+
+    result = await db.execute(select(User).where(User.id == api_key.user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+    return user
+
+
 async def get_current_user(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
@@ -99,6 +157,9 @@ async def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if token.startswith(API_KEY_PREFIX):
+        return await _get_user_for_api_key(token, db)
 
     payload = decode_token(token)
     if payload is None:

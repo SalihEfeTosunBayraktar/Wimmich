@@ -87,6 +87,9 @@ const API = {
     logout() { return this.request('/api/auth/logout', { method: 'POST' }); },
     getSessions() { return this.request('/api/auth/sessions'); },
     revokeSession(id) { return this.request(`/api/auth/sessions/${id}`, { method: 'DELETE' }); },
+    getApiKeys() { return this.request('/api/auth/api-keys'); },
+    createApiKey(name) { return this.request('/api/auth/api-keys', { method: 'POST', body: { name } }); },
+    revokeApiKey(id) { return this.request(`/api/auth/api-keys/${id}`, { method: 'DELETE' }); },
 
     // Assets
     async uploadFile(file) {
