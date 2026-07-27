@@ -21,6 +21,9 @@ registerTranslations({
         'admin_render.storage_limit_label': 'Server Total Storage Limit (MB - 0 for Unlimited)',
         'admin_render.tunnel_autostart_label': 'Automatically start the tunnel when the server starts',
         'admin_render.save_settings_btn': 'Save Settings',
+        'admin_render.reset_defaults_btn': 'Reset to Defaults',
+        'admin_render.confirm_reset_storage_settings': 'Reset the tunnel token, custom domain, auto-start, and storage limit to their defaults? The storage folder itself is left unchanged.',
+        'admin_render.confirm_reset_backup_settings': 'Reset backup settings (destination, interval, enabled) to their defaults?',
         'admin_render.db_location_hint': 'For database security, the database file is always stored at the fixed location {path}.',
         'admin_render.remote_access_heading': 'Remote Access (Cloudflare Tunnel)',
         'admin_render.remote_access_info_hint': 'Creates a public URL that forwards to this server, so you (or family/friends you share it with) can open your photos from outside your home network - no router configuration or open ports needed. Off by default; nothing is exposed until you start it here.',
@@ -133,6 +136,9 @@ registerTranslations({
         'admin_render.storage_limit_label': 'Sunucu Toplam Depolama Sınırı (MB - Sınırsız için 0)',
         'admin_render.tunnel_autostart_label': 'Sunucu açılırken tüneli otomatik başlat',
         'admin_render.save_settings_btn': 'Ayarları Kaydet',
+        'admin_render.reset_defaults_btn': 'Varsayılanlara Sıfırla',
+        'admin_render.confirm_reset_storage_settings': 'Tünel anahtarı, özel domain, otomatik başlatma ve depolama sınırı varsayılanlarına sıfırlansın mı? Depolama klasörünün kendisi değişmeden kalır.',
+        'admin_render.confirm_reset_backup_settings': 'Yedekleme ayarları (hedef, aralık, etkin) varsayılanlarına sıfırlansın mı?',
         'admin_render.db_location_hint': 'Veri tabanı güvenliği için veritabanı dosyası her zaman sabit olarak {path} konumunda saklanır.',
         'admin_render.remote_access_heading': 'Uzaktan Erişim (Cloudflare Tunnel)',
         'admin_render.remote_access_info_hint': 'Bu sunucuya yönlendiren herkese açık bir URL oluşturur - böylece siz (veya paylaştığınız aile/arkadaşlarınız) fotoğraflarınızı ev ağınızın dışından açabilirsiniz - router ayarı veya port açmaya gerek yok. Varsayılan olarak kapalıdır; burada başlatana kadar hiçbir şey dışarı açılmaz.',
@@ -245,6 +251,9 @@ registerTranslations({
         'admin_render.storage_limit_label': 'Limite de stockage totale du serveur (Mo - 0 pour illimité)',
         'admin_render.tunnel_autostart_label': 'Démarrer automatiquement le tunnel au démarrage du serveur',
         'admin_render.save_settings_btn': 'Enregistrer les paramètres',
+        'admin_render.reset_defaults_btn': 'Réinitialiser aux valeurs par défaut',
+        'admin_render.confirm_reset_storage_settings': 'Réinitialiser le jeton de tunnel, le domaine personnalisé, le démarrage automatique et la limite de stockage à leurs valeurs par défaut ? Le dossier de stockage lui-même reste inchangé.',
+        'admin_render.confirm_reset_backup_settings': 'Réinitialiser les paramètres de sauvegarde (destination, intervalle, activé) à leurs valeurs par défaut ?',
         'admin_render.db_location_hint': "Pour des raisons de sécurité, le fichier de base de données est toujours stocké à l'emplacement fixe {path}.",
         'admin_render.remote_access_heading': 'Accès à distance (tunnel Cloudflare)',
         'admin_render.remote_access_info_hint': "Crée une URL publique qui redirige vers ce serveur, pour que vous (ou la famille/des amis avec qui vous la partagez) puissiez ouvrir vos photos depuis l'extérieur de votre réseau domestique - aucune configuration du routeur ni de port à ouvrir. Désactivé par défaut ; rien n'est exposé tant que vous ne le démarrez pas ici.",
@@ -357,6 +366,9 @@ registerTranslations({
         'admin_render.storage_limit_label': 'Gesamtes Speicherlimit des Servers (MB - 0 für unbegrenzt)',
         'admin_render.tunnel_autostart_label': 'Tunnel beim Serverstart automatisch starten',
         'admin_render.save_settings_btn': 'Einstellungen speichern',
+        'admin_render.reset_defaults_btn': 'Auf Standard zurücksetzen',
+        'admin_render.confirm_reset_storage_settings': 'Tunnel-Token, benutzerdefinierte Domain, Autostart und Speicherlimit auf Standard zurücksetzen? Der Speicherordner selbst bleibt unverändert.',
+        'admin_render.confirm_reset_backup_settings': 'Backup-Einstellungen (Ziel, Intervall, aktiviert) auf Standard zurücksetzen?',
         'admin_render.db_location_hint': 'Aus Gründen der Datenbanksicherheit wird die Datenbankdatei immer am festen Speicherort {path} gespeichert.',
         'admin_render.remote_access_heading': 'Fernzugriff (Cloudflare-Tunnel)',
         'admin_render.remote_access_info_hint': 'Erstellt eine öffentliche URL, die auf diesen Server weiterleitet - so können Sie (oder Familie/Freunde, mit denen Sie sie teilen) Ihre Fotos von außerhalb Ihres Heimnetzwerks öffnen - keine Router-Konfiguration oder offene Ports nötig. Standardmäßig deaktiviert; nichts wird preisgegeben, bis Sie es hier starten.',
@@ -532,6 +544,7 @@ async function renderAdmin() {
                             <button class="btn btn-secondary btn-sm" onclick="applyJobConcurrencySuggestion()">
                                 ${t('admin_jobs.apply_suggestion_btn', { value: jobConcurrency.suggested })}
                             </button>
+                            <button class="btn btn-secondary btn-sm" onclick="resetJobConcurrency()">${icon('undo')} ${t('admin_jobs.reset_concurrency_btn')}</button>
                         </div>
                         <p class="text-muted admin-field-hint">${t('admin_jobs.concurrency_hint', {
                             cpu: jobConcurrency.system.cpu_count ?? '?',
@@ -594,7 +607,10 @@ async function renderAdmin() {
                                 <label class="admin-field-label">${t('admin_render.storage_limit_label')}</label>
                                 <input type="number" id="storage-limit-input" value="${storageConfig.total_storage_limit_mb || 0}" min="0" style="width:100%">
                             </div>
-                            <div><button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button></div>
+                            <div style="display:flex;gap:8px">
+                                <button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button>
+                                <button class="btn btn-secondary" onclick="resetStorageConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
+                            </div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">
                                 ${t('admin_render.db_location_hint', { path: `<code>${escHtml(storageConfig.db_dir)}</code>` })}
                             </p>
@@ -621,6 +637,7 @@ async function renderAdmin() {
                             </div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
                                 <button class="btn btn-primary" onclick="saveBackupConfig()">${t('admin_render.save_settings_btn')}</button>
+                                <button class="btn btn-secondary" onclick="resetBackupConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
                                 <button class="btn btn-secondary" onclick="runAdminJob('BACKUP')" title="${t('admin_render.backup_now_title')}">${icon('save')} ${t('admin_render.backup_now_btn')}</button>
                             </div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>

@@ -46,6 +46,8 @@ registerTranslations({
         'admin_jobs.apply_suggestion_btn': 'Use Suggested ({value})',
         'admin_jobs.invalid_concurrency': 'Enter a number of at least 1',
         'admin_jobs.concurrency_saved': 'Concurrency setting saved',
+        'admin_jobs.reset_concurrency_btn': 'Reset to Auto',
+        'admin_jobs.concurrency_reset_msg': 'Concurrency reset to automatic',
     },
     tr: {
         'admin_jobs.clip_title': 'CLIP Akıllı Arama İndeksleme',
@@ -91,6 +93,8 @@ registerTranslations({
         'admin_jobs.apply_suggestion_btn': 'Önerileni Kullan ({value})',
         'admin_jobs.invalid_concurrency': 'En az 1 olan bir sayı girin',
         'admin_jobs.concurrency_saved': 'Eş zamanlılık ayarı kaydedildi',
+        'admin_jobs.reset_concurrency_btn': 'Otomatiğe Sıfırla',
+        'admin_jobs.concurrency_reset_msg': 'Eş zamanlılık otomatik ayara sıfırlandı',
     },
     fr: {
         'admin_jobs.clip_title': 'Indexation de recherche intelligente CLIP',
@@ -136,6 +140,8 @@ registerTranslations({
         'admin_jobs.apply_suggestion_btn': 'Utiliser la suggestion ({value})',
         'admin_jobs.invalid_concurrency': 'Entrez un nombre d\'au moins 1',
         'admin_jobs.concurrency_saved': 'Paramètre de concurrence enregistré',
+        'admin_jobs.reset_concurrency_btn': 'Réinitialiser en automatique',
+        'admin_jobs.concurrency_reset_msg': 'Concurrence réinitialisée en automatique',
     },
     de: {
         'admin_jobs.clip_title': 'CLIP Intelligente Suchindizierung',
@@ -181,6 +187,8 @@ registerTranslations({
         'admin_jobs.apply_suggestion_btn': 'Vorschlag verwenden ({value})',
         'admin_jobs.invalid_concurrency': 'Geben Sie eine Zahl von mindestens 1 ein',
         'admin_jobs.concurrency_saved': 'Parallelitätseinstellung gespeichert',
+        'admin_jobs.reset_concurrency_btn': 'Auf Automatisch zurücksetzen',
+        'admin_jobs.concurrency_reset_msg': 'Parallelität auf automatisch zurückgesetzt',
     },
 });
 
@@ -314,6 +322,17 @@ async function saveJobConcurrency() {
     try {
         await API.updateJobConcurrency(value);
         toast(t('admin_jobs.concurrency_saved'), 'success');
+        renderAdmin();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function resetJobConcurrency() {
+    // Bypasses saveJobConcurrency()'s "at least 1" validation on purpose -
+    // that check only guards the manual-save path; null is the actual
+    // "use config.JOB_IMPORT_CONCURRENCY" default (see job_concurrency_service.py).
+    try {
+        await API.updateJobConcurrency(null);
+        toast(t('admin_jobs.concurrency_reset_msg'), 'success');
         renderAdmin();
     } catch (e) { toast(e.message, 'error'); }
 }

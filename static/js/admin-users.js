@@ -246,6 +246,26 @@ async function saveStorageConfig() {
     }
 }
 
+async function resetStorageConfigDefaults() {
+    if (!confirm(t('admin_render.confirm_reset_storage_settings'))) return;
+    // storage-path-input (the data folder) is deliberately left untouched -
+    // repointing it doesn't move any files, so "resetting" it would just
+    // make the app look at an empty folder instead of the real photos.
+    $('storage-token-input').value = '';
+    $('storage-domain-input').value = '';
+    $('storage-limit-input').value = 0;
+    $('storage-autostart-input').checked = false;
+    await saveStorageConfig();
+}
+
+async function resetBackupConfigDefaults() {
+    if (!confirm(t('admin_render.confirm_reset_backup_settings'))) return;
+    $('backup-dir-input').value = '';
+    $('backup-interval-input').value = 24;
+    $('backup-enabled-input').checked = false;
+    await saveBackupConfig();
+}
+
 async function saveBackupConfig() {
     const backupDir = $('backup-dir-input').value.trim();
     const intervalHours = parseInt($('backup-interval-input').value) || 24;
