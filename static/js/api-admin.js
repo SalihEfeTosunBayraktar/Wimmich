@@ -22,6 +22,7 @@ Object.assign(API, {
         return this.request('/api/admin/jobs/concurrency', { method: 'POST', body: { concurrency } });
     },
     shutdownServer() { return this.request('/api/admin/shutdown', { method: 'POST' }); },
+    restartServer() { return this.request('/api/admin/restart', { method: 'POST' }); },
     checkForUpdate() { return this.request('/api/admin/update/check'); },
     applyUpdate() { return this.request('/api/admin/update/apply', { method: 'POST' }); },
 

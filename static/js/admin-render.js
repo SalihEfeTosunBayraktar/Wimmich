@@ -88,6 +88,10 @@ registerTranslations({
         'admin_render.unknown_error': 'Unknown error',
         'admin_render.backup_success_status': 'Last successful backup: {when}',
         'admin_render.server_control_heading': 'Server Control',
+        'admin_render.restart_server_btn': 'Restart Server',
+        'admin_render.restart_server_hint': 'Cleanly stops background jobs and the tunnel, then relaunches the process - useful after a settings change, or if something seems stuck, without pulling any code update.',
+        'admin_render.confirm_restart': 'Restart the server now? Any running background job will be stopped first.',
+        'admin_render.restarting_message': 'Restarting - the server will be back in a few seconds...',
         'admin_render.shutdown_server_btn': 'Shut Down Server',
         'admin_render.shutdown_server_hint': 'Cleanly stops background jobs and the tunnel, frees GPU/CPU memory, then exits - the safe alternative to closing this window while a job is running.',
         'admin_render.confirm_shutdown': 'Shut down the server now? Any running background job will be stopped first.',
@@ -196,6 +200,10 @@ registerTranslations({
         'admin_render.unknown_error': 'Bilinmeyen hata',
         'admin_render.backup_success_status': 'Son başarılı yedekleme: {when}',
         'admin_render.server_control_heading': 'Sunucu Kontrolü',
+        'admin_render.restart_server_btn': 'Sunucuyu Yeniden Başlat',
+        'admin_render.restart_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, sonra süreci yeniden başlatır — bir ayar değişikliğinden sonra ya da bir şey takılmış gibi göründüğünde, kod güncellemesi çekmeden kullanışlıdır.',
+        'admin_render.confirm_restart': 'Sunucu şimdi yeniden başlatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
+        'admin_render.restarting_message': 'Yeniden başlatılıyor — sunucu birkaç saniye içinde geri dönecek...',
         'admin_render.shutdown_server_btn': 'Sunucuyu Kapat',
         'admin_render.shutdown_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, GPU/CPU belleğini boşaltır, sonra kapatır — bir iş çalışırken bu pencereyi kapatmaya güvenli bir alternatif.',
         'admin_render.confirm_shutdown': 'Sunucu şimdi kapatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
@@ -304,6 +312,10 @@ registerTranslations({
         'admin_render.unknown_error': 'Erreur inconnue',
         'admin_render.backup_success_status': 'Dernière sauvegarde réussie : {when}',
         'admin_render.server_control_heading': 'Contrôle du serveur',
+        'admin_render.restart_server_btn': 'Redémarrer le serveur',
+        'admin_render.restart_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, puis relance le processus - utile après un changement de paramètre ou si quelque chose semble bloqué, sans récupérer de mise à jour du code.",
+        'admin_render.confirm_restart': "Redémarrer le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
+        'admin_render.restarting_message': 'Redémarrage en cours - le serveur sera de retour dans quelques secondes...',
         'admin_render.shutdown_server_btn': 'Arrêter le serveur',
         'admin_render.shutdown_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, libère la mémoire GPU/CPU, puis quitte - l'alternative sûre à la fermeture de cette fenêtre pendant qu'une tâche est en cours.",
         'admin_render.confirm_shutdown': "Arrêter le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
@@ -412,6 +424,10 @@ registerTranslations({
         'admin_render.unknown_error': 'Unbekannter Fehler',
         'admin_render.backup_success_status': 'Letzte erfolgreiche Sicherung: {when}',
         'admin_render.server_control_heading': 'Serversteuerung',
+        'admin_render.restart_server_btn': 'Server neu starten',
+        'admin_render.restart_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber und startet den Prozess dann neu - nützlich nach einer Einstellungsänderung oder wenn etwas hängen geblieben zu sein scheint, ohne ein Code-Update zu ziehen.',
+        'admin_render.confirm_restart': 'Server jetzt neu starten? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
+        'admin_render.restarting_message': 'Wird neu gestartet - der Server ist in wenigen Sekunden wieder da...',
         'admin_render.shutdown_server_btn': 'Server herunterfahren',
         'admin_render.shutdown_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber, gibt GPU-/CPU-Speicher frei und beendet dann - die sichere Alternative zum Schließen dieses Fensters, während eine Aufgabe läuft.',
         'admin_render.confirm_shutdown': 'Server jetzt herunterfahren? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
@@ -673,7 +689,9 @@ async function renderAdmin() {
 
                     <div class="admin-status-card">
                         <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
-                        <p class="text-muted admin-field-hint">${t('admin_render.shutdown_server_hint')}</p>
+                        <p class="text-muted admin-field-hint">${t('admin_render.restart_server_hint')}</p>
+                        <button class="btn btn-secondary btn-sm" onclick="restartServer()">${icon('refresh')} ${t('admin_render.restart_server_btn')}</button>
+                        <p class="text-muted admin-field-hint" style="margin-top:12px">${t('admin_render.shutdown_server_hint')}</p>
                         <button class="btn btn-danger btn-sm" onclick="shutdownServer()">${icon('stop')} ${t('admin_render.shutdown_server_btn')}</button>
                     </div>
                 </div>

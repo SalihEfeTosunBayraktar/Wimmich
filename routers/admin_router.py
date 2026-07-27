@@ -125,6 +125,22 @@ async def shutdown_server(
     return {"message": "Sunucu kapatılıyor"}
 
 
+@router.post("/restart")
+async def restart_server(
+    admin: User = Depends(get_admin_user),
+):
+    """Same graceful cleanup as /shutdown, but exits with the "relaunch me"
+    code instead of the plain one - start.bat's loop (also used by
+    /update/apply) brings the process straight back up. For when a setting
+    change or a stuck background worker calls for a fresh process, without
+    wanting an actual code update."""
+    from services.shutdown_service import graceful_cleanup, schedule_exit, RESTART_EXIT_CODE
+
+    await graceful_cleanup()
+    schedule_exit(RESTART_EXIT_CODE)
+    return {"message": "Sunucu yeniden başlatılıyor"}
+
+
 @router.get("/update/check")
 async def check_for_update(
     admin: User = Depends(get_admin_user),

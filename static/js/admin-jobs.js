@@ -338,6 +338,17 @@ async function shutdownServer() {
     }
 }
 
+async function restartServer() {
+    if (!confirm(t('admin_render.confirm_restart'))) return;
+    toast(t('admin_render.restarting_message'), 'success');
+    try {
+        await API.restartServer();
+    } catch (e) {
+        // Same reasoning as shutdownServer() - the process exits mid-response
+        // on its way to being relaunched, so the fetch failing is expected.
+    }
+}
+
 async function checkForUpdate() {
     const container = $('update-status-container');
     container.innerHTML = `<p class="text-muted">${t('admin_render.checking_updates_msg')}</p>`;
