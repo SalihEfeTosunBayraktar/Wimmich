@@ -1,12 +1,13 @@
 """Auth Router - Registration, Login, Profile"""
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from models import User, Asset
-from auth import hash_password, verify_password, create_access_token, get_current_user
+from models import User, Asset, Session
+from auth import hash_password, verify_password, create_access_token, create_session, decode_token, get_current_user
 from services import login_rate_limit
 from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
 
@@ -46,7 +47,7 @@ class UpdateProfileRequest(BaseModel):
 
 
 @router.post("/register")
-async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+async def register(req: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
     """Register a new user. First user becomes admin."""
     if not is_password_strong_enough(req.password):
         raise HTTPException(status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
@@ -84,7 +85,10 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             "message": "Kayıt başarılı. Giriş yapabilmek için yönetici onayı bekleniyor."
         }
 
-    token = create_access_token(user.id, user.email, user.is_admin, user.priority)
+    jti = str(uuid.uuid4())
+    await create_session(db, user.id, jti, request)
+    await db.commit()
+    token = create_access_token(user.id, user.email, user.is_admin, user.priority, jti=jti)
 
     return {
         "token": token,
@@ -145,7 +149,10 @@ async def login(req: LoginRequest, request: Request, response: Response, db: Asy
     # Correct credentials - clear this identity's failure history so a few
     # earlier typos never accumulate toward a lockout.
     login_rate_limit.reset(rate_keys)
-    token = create_access_token(user.id, user.email, user.is_admin, user.priority)
+    jti = str(uuid.uuid4())
+    await create_session(db, user.id, jti, request)
+    await db.commit()
+    token = create_access_token(user.id, user.email, user.is_admin, user.priority, jti=jti)
 
     # Set cookie too
     response.set_cookie(
@@ -233,7 +240,74 @@ async def update_me(
 
 
 @router.post("/logout")
-async def logout(response: Response):
-    """Logout - clear cookie."""
+async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    """Logout - clears the cookie AND revokes the session server-side, so a
+    copy of the token that leaked or lingered somewhere stops working
+    immediately instead of staying valid until it naturally expires."""
+    auth_header = request.headers.get("authorization", "")
+    token = auth_header[7:] if auth_header.lower().startswith("bearer ") else request.cookies.get("wimmich_token")
+    if token:
+        payload = decode_token(token)
+        jti = payload.get("jti") if payload else None
+        if jti:
+            result = await db.execute(select(Session).where(Session.jti == jti))
+            session = result.scalar_one_or_none()
+            if session:
+                session.revoked = True
+                await db.commit()
     response.delete_cookie("wimmich_token")
     return {"message": "Logged out"}
+
+
+@router.get("/sessions")
+async def list_sessions(
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """This user's own active (non-revoked) sessions - never another
+    user's, regardless of who's asking."""
+    result = await db.execute(
+        select(Session).where(Session.user_id == user.id, Session.revoked == False)
+        .order_by(Session.last_seen_at.desc())
+    )
+    sessions = list(result.scalars().all())
+
+    auth_header = request.headers.get("authorization", "")
+    current_token = auth_header[7:] if auth_header.lower().startswith("bearer ") else request.cookies.get("wimmich_token")
+    current_payload = decode_token(current_token) if current_token else None
+    current_jti = current_payload.get("jti") if current_payload else None
+
+    return {
+        "sessions": [
+            {
+                "id": s.id,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+                "last_seen_at": s.last_seen_at.isoformat() if s.last_seen_at else None,
+                "user_agent": s.user_agent,
+                "ip_address": s.ip_address,
+                "is_current": s.jti == current_jti,
+            }
+            for s in sessions
+        ]
+    }
+
+
+@router.delete("/sessions/{session_id}")
+async def revoke_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Revoke one of THIS user's own sessions - scoped to user.id so there's
+    no way to pass another user's session id and sign them out."""
+    result = await db.execute(
+        select(Session).where(Session.id == session_id, Session.user_id == user.id)
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session.revoked = True
+    await db.commit()
+    return {"message": "Session revoked"}

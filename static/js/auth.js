@@ -12,6 +12,12 @@ registerTranslations({
         'profile.password_leave_blank': 'Leave blank to keep unchanged',
         'profile.updated': 'Profile updated',
         'profile.name_email_required': 'Name and email cannot be empty',
+        'profile.sessions_label': 'Active Sessions',
+        'profile.sessions_loading': 'Loading...',
+        'profile.sessions_this_device': 'This device',
+        'profile.sessions_sign_out': 'Sign out',
+        'profile.sessions_revoked': 'Session signed out',
+        'profile.sessions_last_seen': 'Last active {date}',
     },
     tr: {
         'profile.settings_title': 'Profil Ayarları',
@@ -23,6 +29,12 @@ registerTranslations({
         'profile.password_leave_blank': 'Değiştirmemek için boş bırakın',
         'profile.updated': 'Profil güncellendi',
         'profile.name_email_required': 'İsim ve e-posta boş olamaz',
+        'profile.sessions_label': 'Aktif Oturumlar',
+        'profile.sessions_loading': 'Yükleniyor...',
+        'profile.sessions_this_device': 'Bu cihaz',
+        'profile.sessions_sign_out': 'Çıkış Yap',
+        'profile.sessions_revoked': 'Oturum sonlandırıldı',
+        'profile.sessions_last_seen': 'Son aktif: {date}',
     },
     fr: {
         'profile.settings_title': 'Paramètres du profil',
@@ -34,6 +46,12 @@ registerTranslations({
         'profile.password_leave_blank': 'Laisser vide pour ne pas changer',
         'profile.updated': 'Profil mis à jour',
         'profile.name_email_required': "Le nom et l'e-mail ne peuvent pas être vides",
+        'profile.sessions_label': 'Sessions actives',
+        'profile.sessions_loading': 'Chargement...',
+        'profile.sessions_this_device': 'Cet appareil',
+        'profile.sessions_sign_out': 'Déconnecter',
+        'profile.sessions_revoked': 'Session déconnectée',
+        'profile.sessions_last_seen': 'Actif pour la dernière fois {date}',
     },
     de: {
         'profile.settings_title': 'Profileinstellungen',
@@ -45,6 +63,12 @@ registerTranslations({
         'profile.password_leave_blank': 'Leer lassen, um unverändert zu lassen',
         'profile.updated': 'Profil aktualisiert',
         'profile.name_email_required': 'Name und E-Mail dürfen nicht leer sein',
+        'profile.sessions_label': 'Aktive Sitzungen',
+        'profile.sessions_loading': 'Wird geladen...',
+        'profile.sessions_this_device': 'Dieses Gerät',
+        'profile.sessions_sign_out': 'Abmelden',
+        'profile.sessions_revoked': 'Sitzung abgemeldet',
+        'profile.sessions_last_seen': 'Zuletzt aktiv: {date}',
     },
 });
 
@@ -114,6 +138,61 @@ function showProfileModal() {
     $('profile-new-password').value = '';
     $('profile-modal').classList.remove('hidden');
     $('profile-name').focus();
+    renderProfileSessions();
+}
+
+// A rough, dependency-free read of the two things that actually matter for
+// "is this me" recognition (browser + OS) - not trying to be a complete
+// user-agent parser, just enough to tell devices apart at a glance.
+function _describeUserAgent(ua) {
+    if (!ua) return '?';
+    let browser = 'Unknown';
+    if (/edg/i.test(ua)) browser = 'Edge';
+    else if (/chrome/i.test(ua)) browser = 'Chrome';
+    else if (/firefox/i.test(ua)) browser = 'Firefox';
+    else if (/safari/i.test(ua)) browser = 'Safari';
+
+    let os = 'Unknown';
+    if (/windows/i.test(ua)) os = 'Windows';
+    else if (/android/i.test(ua)) os = 'Android';
+    else if (/iphone|ipad/i.test(ua)) os = 'iOS';
+    else if (/mac os/i.test(ua)) os = 'macOS';
+    else if (/linux/i.test(ua)) os = 'Linux';
+
+    return `${browser} · ${os}`;
+}
+
+async function renderProfileSessions() {
+    const container = $('profile-sessions-list');
+    if (!container) return;
+    container.innerHTML = `<p class="text-muted admin-field-hint">${t('profile.sessions_loading')}</p>`;
+    try {
+        const data = await API.getSessions();
+        container.innerHTML = data.sessions.map(s => `
+            <div class="profile-session-row">
+                <div>
+                    <div class="profile-session-agent">${escHtml(_describeUserAgent(s.user_agent))}${s.is_current ? ` <span class="badge badge-success">${t('profile.sessions_this_device')}</span>` : ''}</div>
+                    <div class="profile-session-meta">${escHtml(s.ip_address || '?')} · ${t('profile.sessions_last_seen', { date: formatDateShort(s.last_seen_at) })}</div>
+                </div>
+                ${!s.is_current ? `<button class="btn btn-danger btn-sm" data-session-id="${s.id}">${t('profile.sessions_sign_out')}</button>` : ''}
+            </div>
+        `).join('');
+        container.querySelectorAll('button[data-session-id]').forEach(btn => {
+            btn.onclick = () => revokeMySession(btn.dataset.sessionId);
+        });
+    } catch (e) {
+        container.innerHTML = `<p class="text-muted admin-field-hint">${e.message}</p>`;
+    }
+}
+
+async function revokeMySession(sessionId) {
+    try {
+        await API.revokeSession(sessionId);
+        toast(t('profile.sessions_revoked'), 'success');
+        renderProfileSessions();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
 }
 
 function initProfileModal() {

@@ -16,6 +16,7 @@ from models.duplicate_ignore import IgnoredDuplicateGroup
 from models.category_correction import CategoryCorrection
 from models.similar_asset import SimilarAsset
 from models.similar_ignore import IgnoredSimilarAsset
+from models.session import Session
 
 __all__ = [
     "Base",
@@ -34,4 +35,5 @@ __all__ = [
     "CategoryCorrection",
     "SimilarAsset",
     "IgnoredSimilarAsset",
+    "Session",
 ]
