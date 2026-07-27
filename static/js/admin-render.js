@@ -536,7 +536,10 @@ async function renderAdmin() {
                         <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">${icon('stop')} ${t('admin_render.cancel_all_jobs_btn')}</button>
                     </div>
                     <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">
-                        <label class="admin-field-label">${t('admin_jobs.concurrency_label')}</label>
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <label class="admin-field-label">${t('admin_jobs.concurrency_label')}</label>
+                            <button class="btn btn-secondary btn-sm" onclick="resetJobConcurrency()">${icon('undo')} ${t('admin_jobs.reset_concurrency_btn')}</button>
+                        </div>
                         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                             <input type="number" id="job-concurrency-input" min="1" max="32"
                                    value="${jobConcurrency.override ?? jobConcurrency.effective}" style="width:80px">
@@ -544,7 +547,6 @@ async function renderAdmin() {
                             <button class="btn btn-secondary btn-sm" onclick="applyJobConcurrencySuggestion()">
                                 ${t('admin_jobs.apply_suggestion_btn', { value: jobConcurrency.suggested })}
                             </button>
-                            <button class="btn btn-secondary btn-sm" onclick="resetJobConcurrency()">${icon('undo')} ${t('admin_jobs.reset_concurrency_btn')}</button>
                         </div>
                         <p class="text-muted admin-field-hint">${t('admin_jobs.concurrency_hint', {
                             cpu: jobConcurrency.system.cpu_count ?? '?',
@@ -576,7 +578,10 @@ async function renderAdmin() {
             <div id="admin-tab-storage" class="admin-tab-panel" ${activeAdminTab === 'storage' ? '' : 'hidden'}>
                 <div class="admin-row">
                     <div class="admin-status-card">
-                        <h4>📁 ${t('admin_render.storage_settings_heading')}</h4>
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h4>📁 ${t('admin_render.storage_settings_heading')}</h4>
+                            <button class="btn btn-secondary btn-sm" onclick="resetStorageConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
+                        </div>
                         <div id="storage-panel" style="display:flex;flex-direction:column;gap:12px">
                             <div>
                                 <label class="admin-field-label">${t('admin_render.main_storage_dir_label')}</label>
@@ -607,10 +612,7 @@ async function renderAdmin() {
                                 <label class="admin-field-label">${t('admin_render.storage_limit_label')}</label>
                                 <input type="number" id="storage-limit-input" value="${storageConfig.total_storage_limit_mb || 0}" min="0" style="width:100%">
                             </div>
-                            <div style="display:flex;gap:8px">
-                                <button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button>
-                                <button class="btn btn-secondary" onclick="resetStorageConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
-                            </div>
+                            <div><button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button></div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">
                                 ${t('admin_render.db_location_hint', { path: `<code>${escHtml(storageConfig.db_dir)}</code>` })}
                             </p>
@@ -618,7 +620,10 @@ async function renderAdmin() {
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>💾 ${t('admin_render.backup_heading')}</h4>
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h4>💾 ${t('admin_render.backup_heading')}</h4>
+                            <button class="btn btn-secondary btn-sm" onclick="resetBackupConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
+                        </div>
                         <div style="display:flex;flex-direction:column;gap:12px">
                             <div>
                                 <label class="admin-field-label">${t('admin_render.backup_dir_label')}</label>
@@ -637,7 +642,6 @@ async function renderAdmin() {
                             </div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
                                 <button class="btn btn-primary" onclick="saveBackupConfig()">${t('admin_render.save_settings_btn')}</button>
-                                <button class="btn btn-secondary" onclick="resetBackupConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
                                 <button class="btn btn-secondary" onclick="runAdminJob('BACKUP')" title="${t('admin_render.backup_now_title')}">${icon('save')} ${t('admin_render.backup_now_btn')}</button>
                             </div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">${renderBackupStatusLine(backupSettings)}</p>
