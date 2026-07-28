@@ -83,6 +83,14 @@ function escHtml(s) {
 
 function escAttr(s) { return s ? s.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : ''; }
 
+// escHtml() alone is NOT safe inside a double-quoted HTML attribute value -
+// confirmed directly that a <div> serializing its own textContent back to
+// innerHTML leaves a literal `"` untouched (only `&`/`<`/`>` are special in
+// HTML text nodes, not quote characters), so a value containing one breaks
+// out of the attribute early. Adds the one extra replace attribute
+// serialization actually needs.
+function escHtmlAttr(s) { return escHtml(s).replace(/"/g, '&quot;'); }
+
 function renderEmptyState(title, desc) {
     return `
         <div class="empty-state">

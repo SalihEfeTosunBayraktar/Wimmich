@@ -25,6 +25,14 @@ registerTranslations({
         'admin_render.confirm_reset_storage_settings': 'Reset the tunnel token, custom domain, auto-start, and storage limit to their defaults? The storage folder itself is left unchanged.',
         'admin_render.confirm_reset_backup_settings': 'Reset backup settings (destination, interval, enabled) to their defaults?',
         'admin_render.db_location_hint': 'For database security, the database file is always stored at the fixed location {path}.',
+        'admin_render.lan_access_heading': 'Local Network Access',
+        'admin_render.lan_access_info_hint': "Wimmich already listens for connections from any device on your home network, no setup needed - this just shows the address to type on your phone/tablet, and checks whether Windows Firewall is actually letting those connections through. Separate from Cloudflare Tunnel/Tailscale below, which are for access from OUTSIDE your home network.",
+        'admin_render.lan_access_hint': 'From another device on the same Wi-Fi/network, open one of these addresses:',
+        'admin_render.lan_no_ip_found': 'Could not detect a local network address.',
+        'admin_render.lan_firewall_ok': 'Firewall: allowed',
+        'admin_render.lan_firewall_blocked': 'Firewall: blocked',
+        'admin_render.lan_firewall_unknown': 'Firewall: could not check',
+        'admin_render.lan_firewall_fix_hint': 'Other devices on your network likely can\'t reach Wimmich right now. Run this command in an elevated (Administrator) PowerShell window to allow it - Wimmich cannot change firewall settings on its own:',
         'admin_render.remote_access_heading': 'Remote Access (Cloudflare Tunnel)',
         'admin_render.remote_access_info_hint': 'Creates a public URL that forwards to this server, so you (or family/friends you share it with) can open your photos from outside your home network - no router configuration or open ports needed. Off by default; nothing is exposed until you start it here.',
         'admin_render.backup_heading': 'Backup',
@@ -151,6 +159,14 @@ registerTranslations({
         'admin_render.confirm_reset_storage_settings': 'Tünel anahtarı, özel domain, otomatik başlatma ve depolama sınırı varsayılanlarına sıfırlansın mı? Depolama klasörünün kendisi değişmeden kalır.',
         'admin_render.confirm_reset_backup_settings': 'Yedekleme ayarları (hedef, aralık, etkin) varsayılanlarına sıfırlansın mı?',
         'admin_render.db_location_hint': 'Veri tabanı güvenliği için veritabanı dosyası her zaman sabit olarak {path} konumunda saklanır.',
+        'admin_render.lan_access_heading': 'Yerel Ağ Erişimi',
+        'admin_render.lan_access_info_hint': 'Wimmich, ev ağınızdaki herhangi bir cihazdan gelen bağlantıları zaten dinliyor, ekstra kurulum gerekmez - bu bölüm sadece telefonunuza/tabletinize yazacağınız adresi gösterir ve Windows Güvenlik Duvarı\'nın bu bağlantılara gerçekten izin verip vermediğini kontrol eder. Aşağıdaki Cloudflare Tunnel/Tailscale\'den farklıdır - onlar ev ağınızın DIŞINDAN erişim içindir.',
+        'admin_render.lan_access_hint': 'Aynı Wi-Fi/ağdaki başka bir cihazdan şu adreslerden birini açın:',
+        'admin_render.lan_no_ip_found': 'Bir yerel ağ adresi tespit edilemedi.',
+        'admin_render.lan_firewall_ok': 'Güvenlik Duvarı: izinli',
+        'admin_render.lan_firewall_blocked': 'Güvenlik Duvarı: engelli',
+        'admin_render.lan_firewall_unknown': 'Güvenlik Duvarı: kontrol edilemedi',
+        'admin_render.lan_firewall_fix_hint': 'Ağınızdaki diğer cihazlar şu anda muhtemelen Wimmich\'e erişemiyor. İzin vermek için yönetici olarak açılmış bir PowerShell penceresinde şu komutu çalıştırın - Wimmich güvenlik duvarı ayarlarını kendi başına değiştiremez:',
         'admin_render.remote_access_heading': 'Uzaktan Erişim (Cloudflare Tunnel)',
         'admin_render.remote_access_info_hint': 'Bu sunucuya yönlendiren herkese açık bir URL oluşturur - böylece siz (veya paylaştığınız aile/arkadaşlarınız) fotoğraflarınızı ev ağınızın dışından açabilirsiniz - router ayarı veya port açmaya gerek yok. Varsayılan olarak kapalıdır; burada başlatana kadar hiçbir şey dışarı açılmaz.',
         'admin_render.backup_heading': 'Yedekleme',
@@ -277,6 +293,14 @@ registerTranslations({
         'admin_render.confirm_reset_storage_settings': 'Réinitialiser le jeton de tunnel, le domaine personnalisé, le démarrage automatique et la limite de stockage à leurs valeurs par défaut ? Le dossier de stockage lui-même reste inchangé.',
         'admin_render.confirm_reset_backup_settings': 'Réinitialiser les paramètres de sauvegarde (destination, intervalle, activé) à leurs valeurs par défaut ?',
         'admin_render.db_location_hint': "Pour des raisons de sécurité, le fichier de base de données est toujours stocké à l'emplacement fixe {path}.",
+        'admin_render.lan_access_heading': 'Accès au réseau local',
+        'admin_render.lan_access_info_hint': "Wimmich écoute déjà les connexions de tout appareil sur votre réseau domestique, sans configuration nécessaire - ceci affiche simplement l'adresse à saisir sur votre téléphone/tablette, et vérifie si le pare-feu Windows laisse réellement passer ces connexions. Distinct du tunnel Cloudflare/Tailscale ci-dessous, qui sont pour l'accès DEPUIS l'extérieur de votre réseau domestique.",
+        'admin_render.lan_access_hint': 'Depuis un autre appareil sur le même Wi-Fi/réseau, ouvrez une de ces adresses :',
+        'admin_render.lan_no_ip_found': "Impossible de détecter une adresse réseau locale.",
+        'admin_render.lan_firewall_ok': 'Pare-feu : autorisé',
+        'admin_render.lan_firewall_blocked': 'Pare-feu : bloqué',
+        'admin_render.lan_firewall_unknown': 'Pare-feu : vérification impossible',
+        'admin_render.lan_firewall_fix_hint': "Les autres appareils de votre réseau ne peuvent probablement pas atteindre Wimmich actuellement. Exécutez cette commande dans une fenêtre PowerShell élevée (Administrateur) pour l'autoriser - Wimmich ne peut pas modifier les paramètres du pare-feu par lui-même :",
         'admin_render.remote_access_heading': 'Accès à distance (tunnel Cloudflare)',
         'admin_render.remote_access_info_hint': "Crée une URL publique qui redirige vers ce serveur, pour que vous (ou la famille/des amis avec qui vous la partagez) puissiez ouvrir vos photos depuis l'extérieur de votre réseau domestique - aucune configuration du routeur ni de port à ouvrir. Désactivé par défaut ; rien n'est exposé tant que vous ne le démarrez pas ici.",
         'admin_render.backup_heading': 'Sauvegarde',
@@ -403,6 +427,14 @@ registerTranslations({
         'admin_render.confirm_reset_storage_settings': 'Tunnel-Token, benutzerdefinierte Domain, Autostart und Speicherlimit auf Standard zurücksetzen? Der Speicherordner selbst bleibt unverändert.',
         'admin_render.confirm_reset_backup_settings': 'Backup-Einstellungen (Ziel, Intervall, aktiviert) auf Standard zurücksetzen?',
         'admin_render.db_location_hint': 'Aus Gründen der Datenbanksicherheit wird die Datenbankdatei immer am festen Speicherort {path} gespeichert.',
+        'admin_render.lan_access_heading': 'Zugriff im lokalen Netzwerk',
+        'admin_render.lan_access_info_hint': 'Wimmich nimmt bereits Verbindungen von jedem Gerät in Ihrem Heimnetzwerk an, ohne dass eine Einrichtung nötig ist - dies zeigt nur die Adresse, die Sie auf Ihrem Handy/Tablet eingeben, und prüft, ob die Windows-Firewall diese Verbindungen tatsächlich durchlässt. Getrennt von Cloudflare Tunnel/Tailscale unten, die für den Zugriff von AUSSERHALB Ihres Heimnetzwerks sind.',
+        'admin_render.lan_access_hint': 'Öffnen Sie von einem anderen Gerät im selben WLAN/Netzwerk eine dieser Adressen:',
+        'admin_render.lan_no_ip_found': 'Es konnte keine lokale Netzwerkadresse erkannt werden.',
+        'admin_render.lan_firewall_ok': 'Firewall: erlaubt',
+        'admin_render.lan_firewall_blocked': 'Firewall: blockiert',
+        'admin_render.lan_firewall_unknown': 'Firewall: konnte nicht geprüft werden',
+        'admin_render.lan_firewall_fix_hint': 'Andere Geräte in Ihrem Netzwerk können Wimmich wahrscheinlich gerade nicht erreichen. Führen Sie diesen Befehl in einem PowerShell-Fenster mit erhöhten Rechten (Administrator) aus, um dies zu erlauben - Wimmich kann die Firewall-Einstellungen nicht selbst ändern:',
         'admin_render.remote_access_heading': 'Fernzugriff (Cloudflare-Tunnel)',
         'admin_render.remote_access_info_hint': 'Erstellt eine öffentliche URL, die auf diesen Server weiterleitet - so können Sie (oder Familie/Freunde, mit denen Sie sie teilen) Ihre Fotos von außerhalb Ihres Heimnetzwerks öffnen - keine Router-Konfiguration oder offene Ports nötig. Standardmäßig deaktiviert; nichts wird preisgegeben, bis Sie es hier starten.',
         'admin_render.backup_heading': 'Sicherung',
@@ -513,7 +545,7 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
@@ -523,6 +555,7 @@ async function renderAdmin() {
             API.getReferenceRoots().catch(() => ({ references: [] })),
             API.getJobConcurrency().catch(() => ({ effective: 4, override: null, default: 4, suggested: 4, system: { cpu_count: null, total_ram_gb: null } })),
             API.getAuditLog(1, auditLogLimit).catch(() => ({ entries: [], total: 0 })),
+            API.getNetworkStatus().catch(() => ({ lan_ips: [], port: null, firewall_rule_found: null })),
         ]);
 
         pc.innerHTML = `
@@ -742,6 +775,11 @@ async function renderAdmin() {
             <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
                 <div class="admin-status-matrix">
                     <div class="admin-status-card">
+                        <h4>🏠 ${t('admin_render.lan_access_heading')} ${infoBtn(t('admin_render.lan_access_info_hint'))}</h4>
+                        <div id="network-status-panel">${renderNetworkStatusPanel(networkStatus)}</div>
+                    </div>
+
+                    <div class="admin-status-card">
                         <h4>🌐 ${t('admin_render.remote_access_heading')} ${infoBtn(t('admin_render.remote_access_info_hint'))}</h4>
                         <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
                         <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
@@ -897,6 +935,58 @@ function switchAdminTab(tabName) {
         el.classList.toggle('active', el.dataset.tab === tabName);
     });
 }
+
+// Copy buttons here carry their text in a data-copy-text attribute rather
+// than an inline onclick string - the firewall fix command contains its own
+// double quotes ("Wimmich", the python.exe path), which would otherwise
+// collide with the onclick="..." attribute's own quoting. Reading it back
+// via .dataset instead sidesteps that entirely (the browser already
+// decodes HTML entities for us), rather than juggling escAttr/escHtml
+// stacked on top of each other for a string with both delimiters in it.
+function renderNetworkStatusPanel(status) {
+    const urls = (status.lan_ips || []).map(ip => `http://${ip}:${status.port}`);
+    const urlsHtml = urls.length
+        ? urls.map(url => `
+            <div class="tunnel-url-row" style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <code style="flex:1;overflow-x:auto;white-space:nowrap">${escHtml(url)}</code>
+                <button type="button" class="btn-icon copy-to-clipboard-btn" data-copy-text="${escHtmlAttr(url)}" title="${t('common.copy')}">${icon('copy', 14)}</button>
+            </div>
+        `).join('')
+        : `<p class="text-muted admin-field-hint">${t('admin_render.lan_no_ip_found')}</p>`;
+
+    let firewallHtml;
+    if (status.firewall_rule_found === true) {
+        firewallHtml = `<span class="badge badge-success">${t('admin_render.lan_firewall_ok')}</span>`;
+    } else if (status.firewall_rule_found === false) {
+        const fixCmd = `New-NetFirewallRule -DisplayName "Wimmich" -Direction Inbound -Program "${status.python_exe || 'python.exe'}" -Action Allow -Profile Any`;
+        firewallHtml = `
+            <span class="badge badge-danger">${t('admin_render.lan_firewall_blocked')}</span>
+            <p class="text-muted admin-field-hint" style="margin-top:6px">${t('admin_render.lan_firewall_fix_hint')}</p>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                <code style="flex:1;overflow-x:auto;white-space:nowrap;font-size:11px">${escHtml(fixCmd)}</code>
+                <button type="button" class="btn-icon copy-to-clipboard-btn" data-copy-text="${escHtmlAttr(fixCmd)}" title="${t('common.copy')}">${icon('copy', 14)}</button>
+            </div>
+        `;
+    } else {
+        firewallHtml = `<span class="badge badge-warning">${t('admin_render.lan_firewall_unknown')}</span>`;
+    }
+
+    return `
+        <p class="text-muted admin-field-hint">${t('admin_render.lan_access_hint')}</p>
+        ${urlsHtml}
+        <div style="margin-top:12px">${firewallHtml}</div>
+    `;
+}
+
+// Delegated on #page-content (present for the whole admin panel's
+// lifetime) rather than re-bound after every renderNetworkStatusPanel()
+// call, since that HTML is rebuilt wholesale on every admin poll tick.
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.copy-to-clipboard-btn');
+    if (!btn) return;
+    navigator.clipboard.writeText(btn.dataset.copyText);
+    toast(t('common.copied'), 'success');
+});
 
 function renderAuditLogEntries(entries) {
     if (!entries || entries.length === 0) {

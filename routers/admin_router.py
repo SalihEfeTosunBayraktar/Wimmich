@@ -1,5 +1,7 @@
 """Admin Router - server statistics and user listing."""
+import asyncio
 import shutil
+import sys
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +13,7 @@ from auth import get_admin_user
 from services.ml_service import get_ml_status
 from services.job_service import job_worker
 from services.audit_log_service import log_action
+from services.network_status_service import get_lan_ips, check_firewall_rule_exists
 from utils.video_utils import is_ffmpeg_available
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -101,6 +104,23 @@ async def get_server_stats(
         "ml": get_ml_status(),
         "ffmpeg_available": is_ffmpeg_available(),
         "storage_warning": _get_storage_warning(total_size),
+    }
+
+
+@router.get("/network-status")
+async def get_network_status(admin: User = Depends(get_admin_user)):
+    """LAN URL(s) to try from another device, and a best-effort check for
+    whether Windows Firewall actually allows inbound connections to THIS
+    exact python.exe - the server already listens on 0.0.0.0 regardless,
+    but a missing firewall rule for this specific interpreter (as opposed
+    to some other Python install on the machine) silently blocks every
+    other device on the network while localhost keeps working fine."""
+    firewall_found = await asyncio.to_thread(check_firewall_rule_exists)
+    return {
+        "lan_ips": get_lan_ips(),
+        "port": config.PORT,
+        "firewall_rule_found": firewall_found,
+        "python_exe": sys.executable,
     }
 
 

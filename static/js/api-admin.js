@@ -25,6 +25,7 @@ Object.assign(API, {
     shutdownServer() { return this.request('/api/admin/shutdown', { method: 'POST' }); },
     restartServer() { return this.request('/api/admin/restart', { method: 'POST' }); },
     getAuditLog(page = 1, perPage = 20) { return this.request(`/api/admin/audit-log?page=${page}&per_page=${perPage}`); },
+    getNetworkStatus() { return this.request('/api/admin/network-status'); },
     checkForUpdate() { return this.request('/api/admin/update/check'); },
     applyUpdate() { return this.request('/api/admin/update/apply', { method: 'POST' }); },
 
