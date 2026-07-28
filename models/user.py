@@ -35,6 +35,13 @@ class User(Base):
     # not "never delete" (an explicit override is the only way to disable
     # the default, this column existing at all doesn't opt anyone out).
     trash_days = Column(Integer, nullable=True)
+    # A guest account can view/browse everything a normal account can
+    # (including albums shared to them) but can never upload their own
+    # photos - for family/friends you want to give access to without them
+    # adding content of their own. Enforced at the upload endpoint, not a
+    # blanket read-only flag, since favoriting/tagging/downloading what's
+    # shared to them is still meant to work normally.
+    is_guest = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")

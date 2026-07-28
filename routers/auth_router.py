@@ -114,6 +114,7 @@ async def register(req: RegisterRequest, request: Request, db: AsyncSession = De
             "email": user.email,
             "name": user.name,
             "is_admin": user.is_admin,
+            "is_guest": user.is_guest,
             "is_approved": user.is_approved,
         }
     }
@@ -196,6 +197,7 @@ async def login(req: LoginRequest, request: Request, response: Response, db: Asy
             "email": user.email,
             "name": user.name,
             "is_admin": user.is_admin,
+            "is_guest": user.is_guest,
             "is_approved": user.is_approved,
         }
     }
@@ -221,6 +223,7 @@ async def get_me(user: User = Depends(get_current_user), db: AsyncSession = Depe
         "email": user.email,
         "name": user.name,
         "is_admin": user.is_admin,
+        "is_guest": user.is_guest,
         "is_approved": user.is_approved,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "asset_count": asset_count,
@@ -521,6 +524,7 @@ async def login_verify_2fa(
             "email": user.email,
             "name": user.name,
             "is_admin": user.is_admin,
+            "is_guest": user.is_guest,
             "is_approved": user.is_approved,
         }
     }

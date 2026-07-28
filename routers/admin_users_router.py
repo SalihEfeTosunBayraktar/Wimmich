@@ -18,6 +18,7 @@ class CreateUserRequest(BaseModel):
     password: str
     name: str
     is_admin: bool = False
+    is_guest: bool = False
     storage_quota_mb: int = 0
 
 
@@ -31,6 +32,10 @@ class ApproveUserRequest(BaseModel):
 
 class UpdateAdminRequest(BaseModel):
     is_admin: bool
+
+
+class UpdateGuestRequest(BaseModel):
+    is_guest: bool
 
 
 class UpdatePriorityRequest(BaseModel):
@@ -60,6 +65,7 @@ async def create_user(
         password_hash=hash_password(req.password),
         name=req.name,
         is_admin=req.is_admin,
+        is_guest=req.is_guest and not req.is_admin,
         is_approved=True,  # Users manually created by admin are pre-approved
         storage_quota_mb=req.storage_quota_mb,
     )
@@ -231,6 +237,34 @@ async def update_user_admin(
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     user.is_admin = req.is_admin
+    if req.is_admin:
+        user.is_guest = False  # an admin bypassing their own upload block makes no sense
     await log_action(db, admin, "user.set_admin", "user", user.id, {"email": user.email, "is_admin": req.is_admin})
     await db.commit()
     return {"message": "Kullanıcı yöneticilik durumu güncellendi", "is_admin": user.is_admin}
+
+
+@router.put("/users/{user_id}/guest")
+async def update_user_guest(
+    user_id: str,
+    req: UpdateGuestRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Toggle the view-only guest restriction - blocks the account from
+    uploading its own photos, without touching anything else it can do
+    (viewing/downloading whatever's shared to them, favoriting, etc.)."""
+    if user_id == admin.id:
+        raise HTTPException(status_code=400, detail="Kendi hesabınızı misafir yapamazsınız.")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if user.is_admin and req.is_guest:
+        raise HTTPException(status_code=400, detail="Bir yönetici misafir yapılamaz.")
+
+    user.is_guest = req.is_guest
+    await log_action(db, admin, "user.set_guest", "user", user.id, {"email": user.email, "is_guest": req.is_guest})
+    await db.commit()
+    return {"message": "Kullanıcı misafir durumu güncellendi", "is_guest": user.is_guest}

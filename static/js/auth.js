@@ -603,6 +603,10 @@ function showApp() {
     _updateSidebarUserInfo();
     if (!state.user.is_admin) $('nav-admin').classList.add('hidden');
     else $('nav-admin').classList.remove('hidden');
+    // A guest can view/download whatever's shared to them, but never
+    // upload their own content - hides the affordance rather than just
+    // relying on the server rejecting the request after the fact.
+    $('upload-btn').classList.toggle('hidden', !!state.user.is_guest);
     updateSidebarStorage();
     loadAppVersion();
     refreshPendingBadge();

@@ -32,6 +32,14 @@ registerTranslations({
         'admin_users.confirm_remove_admin': "Remove this user's admin access?",
         'admin_users.admin_granted': 'Admin access granted',
         'admin_users.admin_revoked': 'Admin access removed',
+        'admin_users.is_guest_checkbox': "Guest (view-only, can't upload)",
+        'admin_users.badge_guest': 'Guest',
+        'admin_users.make_guest': 'Make Guest',
+        'admin_users.remove_guest': 'Remove Guest',
+        'admin_users.confirm_make_guest': "Make this account a guest? They'll keep access to everything already shared with them, but won't be able to upload their own photos anymore.",
+        'admin_users.confirm_remove_guest': 'Remove the guest restriction? This account will be able to upload its own photos again.',
+        'admin_users.guest_granted': 'Account set to guest (view-only)',
+        'admin_users.guest_revoked': 'Guest restriction removed',
         'admin_users.new_user_button': '+ New User',
         'admin_users.create_user_title': 'Create User',
         'admin_users.name_label': 'Name',
@@ -81,6 +89,14 @@ registerTranslations({
         'admin_users.confirm_remove_admin': 'Bu kullanıcının yöneticilik yetkisi kaldırılsın mı?',
         'admin_users.admin_granted': 'Yöneticilik yetkisi verildi',
         'admin_users.admin_revoked': 'Yöneticilik yetkisi kaldırıldı',
+        'admin_users.is_guest_checkbox': 'Misafir (sadece görüntüleme, yükleme yapamaz)',
+        'admin_users.badge_guest': 'Misafir',
+        'admin_users.make_guest': 'Misafir Yap',
+        'admin_users.remove_guest': 'Misafirlikten Çıkar',
+        'admin_users.confirm_make_guest': 'Bu hesap misafir yapılsın mı? Kendisiyle paylaşılan her şeye erişimi devam edecek, ama artık kendi fotoğrafını yükleyemeyecek.',
+        'admin_users.confirm_remove_guest': 'Misafir kısıtlaması kaldırılsın mı? Bu hesap tekrar kendi fotoğrafını yükleyebilecek.',
+        'admin_users.guest_granted': 'Hesap misafir (sadece görüntüleme) yapıldı',
+        'admin_users.guest_revoked': 'Misafir kısıtlaması kaldırıldı',
         'admin_users.new_user_button': '+ Yeni Kullanıcı',
         'admin_users.create_user_title': 'Kullanıcı Oluştur',
         'admin_users.name_label': 'İsim',
@@ -130,6 +146,14 @@ registerTranslations({
         'admin_users.confirm_remove_admin': "Retirer les droits d'administrateur de cet utilisateur ?",
         'admin_users.admin_granted': "Droits d'administrateur accordés",
         'admin_users.admin_revoked': "Droits d'administrateur retirés",
+        'admin_users.is_guest_checkbox': "Invité (lecture seule, ne peut pas téléverser)",
+        'admin_users.badge_guest': 'Invité',
+        'admin_users.make_guest': 'Rendre invité',
+        'admin_users.remove_guest': "Retirer le statut d'invité",
+        'admin_users.confirm_make_guest': "Rendre ce compte invité ? Il conservera l'accès à tout ce qui est déjà partagé avec lui, mais ne pourra plus téléverser ses propres photos.",
+        'admin_users.confirm_remove_guest': "Retirer la restriction d'invité ? Ce compte pourra à nouveau téléverser ses propres photos.",
+        'admin_users.guest_granted': 'Compte défini comme invité (lecture seule)',
+        'admin_users.guest_revoked': "Restriction d'invité retirée",
         'admin_users.new_user_button': '+ Nouvel utilisateur',
         'admin_users.create_user_title': 'Créer un utilisateur',
         'admin_users.name_label': 'Nom',
@@ -179,6 +203,14 @@ registerTranslations({
         'admin_users.confirm_remove_admin': 'Admin-Zugriff dieses Benutzers entziehen?',
         'admin_users.admin_granted': 'Admin-Zugriff gewährt',
         'admin_users.admin_revoked': 'Admin-Zugriff entzogen',
+        'admin_users.is_guest_checkbox': 'Gast (nur Ansicht, kein Hochladen)',
+        'admin_users.badge_guest': 'Gast',
+        'admin_users.make_guest': 'Zu Gast machen',
+        'admin_users.remove_guest': 'Gast-Status entfernen',
+        'admin_users.confirm_make_guest': 'Dieses Konto zu einem Gast machen? Es behält Zugriff auf alles, was bereits mit ihm geteilt wurde, kann aber keine eigenen Fotos mehr hochladen.',
+        'admin_users.confirm_remove_guest': 'Gast-Beschränkung entfernen? Dieses Konto kann dann wieder eigene Fotos hochladen.',
+        'admin_users.guest_granted': 'Konto auf Gast (nur Ansicht) gesetzt',
+        'admin_users.guest_revoked': 'Gast-Beschränkung entfernt',
         'admin_users.new_user_button': '+ Neuer Benutzer',
         'admin_users.create_user_title': 'Benutzer erstellen',
         'admin_users.name_label': 'Name',
@@ -215,6 +247,7 @@ function renderUserList(users) {
                             </span>
                         ` : ''}
                         ${u.totp_enabled ? `<span class="badge badge-success" style="margin-left:4px">${t('admin_users.badge_2fa')}</span>` : ''}
+                        ${u.is_guest ? `<span class="badge badge-warning" style="margin-left:4px">${t('admin_users.badge_guest')}</span>` : ''}
                     </div>
                     <div class="user-item-email">${u.email}</div>
                 </div>
@@ -238,6 +271,11 @@ function renderUserList(users) {
                 ${u.id !== state.user.id ? `
                     <button class="btn btn-secondary btn-sm" onclick="toggleUserAdmin('${u.id}', ${u.is_admin})">
                         ${icon('crown')} ${u.is_admin ? t('admin_users.remove_admin') : t('admin_users.make_admin')}
+                    </button>
+                ` : ''}
+                ${u.id !== state.user.id && !u.is_admin ? `
+                    <button class="btn btn-secondary btn-sm" onclick="toggleUserGuest('${u.id}', ${u.is_guest})">
+                        ${icon('eyeOff')} ${u.is_guest ? t('admin_users.remove_guest') : t('admin_users.make_guest')}
                     </button>
                 ` : ''}
                 ${!u.is_admin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">${t('common.delete')}</button>` : ''}
@@ -395,6 +433,10 @@ function showCreateUserModal() {
                 <input type="checkbox" id="create-user-admin">
                 ${t('admin_users.is_admin_checkbox')}
             </label>
+            <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
+                <input type="checkbox" id="create-user-guest">
+                ${t('admin_users.is_guest_checkbox')}
+            </label>
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px">
                 <button class="btn btn-secondary btn-sm" id="create-user-cancel">${t('common.cancel')}</button>
                 <button class="btn btn-primary btn-sm" id="create-user-save">${t('admin_users.create')}</button>
@@ -424,6 +466,7 @@ async function createUserAction(close) {
     const email = $('create-user-email').value.trim();
     const password = $('create-user-password').value;
     const isAdmin = $('create-user-admin').checked;
+    const isGuest = $('create-user-guest').checked;
     const quota = parseInt($('create-user-quota').value) || 0;
 
     if (!name || !email || !password) {
@@ -432,7 +475,7 @@ async function createUserAction(close) {
     }
 
     try {
-        await API.createUser({ name, email, password, is_admin: isAdmin, storage_quota_mb: quota });
+        await API.createUser({ name, email, password, is_admin: isAdmin, is_guest: isGuest, storage_quota_mb: quota });
         close();
         toast(t('admin_users.user_created'), 'success');
         renderAdmin();
@@ -494,6 +537,18 @@ async function toggleUserAdmin(userId, currentStatus) {
     try {
         await API.updateUserAdmin(userId, !currentStatus);
         toast(!currentStatus ? t('admin_users.admin_granted') : t('admin_users.admin_revoked'), 'success');
+        renderAdmin();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+async function toggleUserGuest(userId, currentStatus) {
+    const confirmMsg = currentStatus ? t('admin_users.confirm_remove_guest') : t('admin_users.confirm_make_guest');
+    if (!confirm(confirmMsg)) return;
+    try {
+        await API.updateUserGuest(userId, !currentStatus);
+        toast(!currentStatus ? t('admin_users.guest_granted') : t('admin_users.guest_revoked'), 'success');
         renderAdmin();
     } catch (e) {
         toast(e.message, 'error');

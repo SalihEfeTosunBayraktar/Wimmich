@@ -58,6 +58,8 @@ async def upload_assets(
     sending, aligned by index with `files`) is optional - older clients that
     don't send it just skip the integrity check, same as before this existed.
     """
+    if user.is_guest:
+        raise HTTPException(status_code=403, detail="Misafir hesaplar fotoğraf yükleyemez.")
     return await asset_mutation_service.upload_files(db, user, files, last_modified, checksums)
 
 @router.post("/process-pending")

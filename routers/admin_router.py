@@ -155,6 +155,7 @@ async def list_users(
             "storage_quota_mb": u.storage_quota_mb,
             "priority": u.priority,
             "totp_enabled": u.totp_enabled,
+            "is_guest": u.is_guest,
         })
 
     return {"users": user_list}

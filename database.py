@@ -129,6 +129,12 @@ async def init_db():
         except Exception:
             pass
 
+        # Automatic column migration for the view-only guest role
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN is_guest BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+
         # Automatic column migration for TOTP two-factor authentication
         try:
             await conn.execute(text("ALTER TABLE users ADD COLUMN totp_secret VARCHAR(32)"))
