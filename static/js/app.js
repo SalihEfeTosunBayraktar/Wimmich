@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initShareModal();
     initAlbumShareModal();
     initProfileModal();
+    initProfileAvatar();
     initShortcutsModal();
 
     // A shared-link visitor never has (or needs) an auth session - dispatch

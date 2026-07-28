@@ -126,6 +126,47 @@ def create_thumbnail(
         return False
 
 
+def create_avatar(source_path: str, output_path: str, size: int = 256, quality: int = 85) -> bool:
+    """Center-cropped, exactly-square profile picture - unlike
+    create_thumbnail (which fits within a box, preserving aspect ratio), an
+    avatar always renders in a fixed circular/square frame in the UI, so a
+    non-square source would otherwise squash instead of just filling it."""
+    if not HAS_PILLOW:
+        return False
+
+    try:
+        path = Path(source_path)
+        if not path.exists():
+            return False
+
+        with _open_any_image(source_path) as img:
+            img = ImageOps.exif_transpose(img)
+
+            if img.mode in ("RGBA", "P", "LA"):
+                background = Image.new("RGB", img.size, (0, 0, 0))
+                if img.mode == "P":
+                    img = img.convert("RGBA")
+                background.paste(img, mask=img.split()[-1] if "A" in img.mode else None)
+                img = background
+            elif img.mode != "RGB":
+                img = img.convert("RGB")
+
+            w, h = img.size
+            side = min(w, h)
+            left = (w - side) // 2
+            top = (h - side) // 2
+            img = img.crop((left, top, left + side, top + side))
+            img = img.resize((size, size), Image.Resampling.LANCZOS)
+
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            img.save(output_path, format="WEBP", quality=quality, optimize=True)
+            return True
+
+    except Exception as e:
+        print(f"Avatar error for {source_path}: {e}")
+        return False
+
+
 def get_image_dimensions(file_path: str) -> Tuple[Optional[int], Optional[int]]:
     """Get image width and height."""
     if not HAS_PILLOW:

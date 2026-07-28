@@ -14,12 +14,13 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 THUMB_DIR = DATA_DIR / "thumbs"
 ENCODED_DIR = DATA_DIR / "encoded"
 ML_DIR = DATA_DIR / "ml"
+AVATAR_DIR = DATA_DIR / "avatars"
 
 # Local DB directory (independent of movable data directory to prevent db locks)
 DB_DIR = BASE_DIR / "data"
 
 # Create directories
-for d in [DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, DB_DIR]:
+for d in [DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, AVATAR_DIR, DB_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 
@@ -31,15 +32,16 @@ def update_config(
     custom_domain: str = "",
 ) -> None:
     """Updates the data directory, tunnel token/domain, and total storage limit at runtime and saves them to .env file."""
-    global DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, TUNNEL_TOKEN, TOTAL_STORAGE_LIMIT_MB, AUTO_START_TUNNEL, TUNNEL_CUSTOM_DOMAIN
+    global DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, AVATAR_DIR, TUNNEL_TOKEN, TOTAL_STORAGE_LIMIT_MB, AUTO_START_TUNNEL, TUNNEL_CUSTOM_DOMAIN
     new_path = Path(new_path_str).resolve()
 
     new_upload = new_path / "uploads"
     new_thumb = new_path / "thumbs"
     new_encoded = new_path / "encoded"
     new_ml = new_path / "ml"
+    new_avatar = new_path / "avatars"
 
-    for d in [new_path, new_upload, new_thumb, new_encoded, new_ml]:
+    for d in [new_path, new_upload, new_thumb, new_encoded, new_ml, new_avatar]:
         d.mkdir(parents=True, exist_ok=True)
 
     DATA_DIR = new_path
@@ -47,6 +49,7 @@ def update_config(
     THUMB_DIR = new_thumb
     ENCODED_DIR = new_encoded
     ML_DIR = new_ml
+    AVATAR_DIR = new_avatar
     TUNNEL_TOKEN = new_token_str.strip()
     TOTAL_STORAGE_LIMIT_MB = total_limit_mb
     AUTO_START_TUNNEL = auto_start

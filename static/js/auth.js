@@ -312,6 +312,7 @@ function showProfileModal() {
     renderProfileSessions();
     renderProfileApiKeys();
     renderProfile2FASection();
+    renderProfileAvatarPreview();
 }
 
 async function saveTrashRetention() {
@@ -593,7 +594,7 @@ function showAuth() {
 function _updateSidebarUserInfo() {
     $('user-name').textContent = state.user.name;
     $('user-email').textContent = state.user.email;
-    $('user-avatar').textContent = state.user.name.charAt(0).toUpperCase();
+    renderAvatarInto($('user-avatar'), state.user);
 }
 
 function showApp() {

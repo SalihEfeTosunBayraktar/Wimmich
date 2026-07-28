@@ -1,9 +1,12 @@
 """Auth Router - Registration, Login, Profile"""
+import asyncio
 import base64
 import io
 import uuid
+from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, UploadFile, File
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +22,9 @@ from auth import (
 )
 from services import login_rate_limit
 from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
+from utils.image_utils import create_avatar
+from utils.file_signature import matches_claimed_type
+from utils.path_utils import resolve_data_path
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -221,6 +227,7 @@ async def get_me(user: User = Depends(get_current_user), db: AsyncSession = Depe
         "total_size": total_size,
         "storage_quota_mb": user.storage_quota_mb,
         "totp_enabled": user.totp_enabled,
+        "has_profile_image": bool(user.profile_image_path),
         "trash_days": user.trash_days,
         "trash_days_effective": user.trash_days or config.TRASH_DAYS,
     }
@@ -283,6 +290,110 @@ async def update_trash_retention(
     user.trash_days = req.days
     await db.commit()
     return {"trash_days": user.trash_days, "trash_days_effective": user.trash_days or config.TRASH_DAYS}
+
+
+@router.post("/profile-image")
+async def upload_profile_image(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Sets the profile picture from a directly uploaded file - center-
+    cropped to a square avatar, same processing as the library-photo path
+    below so it looks consistent regardless of source."""
+    data = await file.read()
+    if not matches_claimed_type(file.filename or "", data):
+        raise HTTPException(status_code=400, detail="Dosya türü uzantısıyla eşleşmiyor")
+
+    suffix = Path(file.filename or "").suffix or ".jpg"
+    tmp_path = config.AVATAR_DIR / f"_upload_{user.id}{suffix}"
+    tmp_path.write_bytes(data)
+
+    output_path = config.AVATAR_DIR / f"{user.id}.webp"
+    try:
+        ok = await asyncio.to_thread(create_avatar, str(tmp_path), str(output_path))
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    if not ok:
+        raise HTTPException(status_code=400, detail="Resim işlenemedi - desteklenmeyen veya bozuk dosya")
+
+    user.profile_image_path = str(output_path)
+    await db.commit()
+    return {"message": "Profil resmi güncellendi"}
+
+
+class ProfileImageFromAssetRequest(BaseModel):
+    asset_id: str
+
+
+@router.post("/profile-image/from-asset")
+async def set_profile_image_from_asset(
+    req: ProfileImageFromAssetRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Sets the profile picture from a photo already in the user's own
+    library - scoped to their own assets, same as every other per-asset
+    action, so an asset id from someone else's library 404s instead of
+    leaking whether it exists."""
+    result = await db.execute(select(Asset).where(Asset.id == req.asset_id, Asset.user_id == user.id))
+    asset = result.scalar_one_or_none()
+    if not asset:
+        raise HTTPException(status_code=404, detail="Fotoğraf bulunamadı")
+    if asset.file_type != "IMAGE":
+        raise HTTPException(status_code=400, detail="Sadece fotoğraflar profil resmi olarak kullanılabilir")
+
+    source_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
+    if not source_path or not source_path.exists():
+        raise HTTPException(status_code=404, detail="Kaynak dosya bulunamadı")
+
+    output_path = config.AVATAR_DIR / f"{user.id}.webp"
+    ok = await asyncio.to_thread(create_avatar, str(source_path), str(output_path))
+    if not ok:
+        raise HTTPException(status_code=400, detail="Resim işlenemedi")
+
+    user.profile_image_path = str(output_path)
+    await db.commit()
+    return {"message": "Profil resmi güncellendi"}
+
+
+@router.delete("/profile-image")
+async def delete_profile_image(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if user.profile_image_path:
+        path = resolve_data_path(user.profile_image_path, config.AVATAR_DIR)
+        if path and path.exists():
+            try:
+                path.unlink()
+            except OSError:
+                pass
+        user.profile_image_path = None
+        await db.commit()
+    return {"message": "Profil resmi kaldırıldı"}
+
+
+@router.get("/profile-image/{user_id}")
+async def get_profile_image(
+    user_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Any authenticated user can view any other user's avatar - not
+    sensitive data, same reasoning as a forum/chat profile picture being
+    visible to other members."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    target = result.scalar_one_or_none()
+    if not target or not target.profile_image_path:
+        raise HTTPException(status_code=404, detail="Profil resmi yok")
+
+    path = resolve_data_path(target.profile_image_path, config.AVATAR_DIR)
+    if not path or not path.exists():
+        raise HTTPException(status_code=404, detail="Profil resmi yok")
+
+    return FileResponse(path, media_type="image/webp")
 
 
 class TwoFactorVerifyRequest(BaseModel):

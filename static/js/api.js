@@ -85,6 +85,16 @@ const API = {
     getMe() { return this.request('/api/auth/me'); },
     updateMe(data) { return this.request('/api/auth/me', { method: 'PUT', body: data }); },
     updateTrashRetention(days) { return this.request('/api/auth/trash-retention', { method: 'PUT', body: { days } }); },
+    async uploadProfileImage(file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        return this.request('/api/auth/profile-image', { method: 'POST', body: fd });
+    },
+    setProfileImageFromAsset(assetId) {
+        return this.request('/api/auth/profile-image/from-asset', { method: 'POST', body: { asset_id: assetId } });
+    },
+    deleteProfileImage() { return this.request('/api/auth/profile-image', { method: 'DELETE' }); },
+    getProfileImageUrl(userId) { return `/api/auth/profile-image/${userId}`; },
     logout() { return this.request('/api/auth/logout', { method: 'POST' }); },
     getSessions() { return this.request('/api/auth/sessions'); },
     revokeSession(id) { return this.request(`/api/auth/sessions/${id}`, { method: 'DELETE' }); },
