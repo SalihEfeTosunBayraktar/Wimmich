@@ -55,6 +55,14 @@ class Asset(Base):
     # EXIF (stored as JSON string)
     exif_data = Column(Text, nullable=True)
 
+    # OCR text extracted from screenshot/document assets (see
+    # smart_category, services/job_handlers/ocr_handler.py) - matched
+    # against by search_service.py alongside filename/city/country. NULL
+    # means "not processed yet" (still eligible for the OCR job); an empty
+    # string is the sentinel for "processed, no text found" so it isn't
+    # retried forever.
+    ocr_text = Column(Text, nullable=True)
+
     # Thumbnails
     thumb_small_path = Column(String(1000), nullable=True)
     thumb_medium_path = Column(String(1000), nullable=True)

@@ -16,7 +16,7 @@ from services.audit_log_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-VALID_JOB_TYPES = ["THUMBNAIL", "CLIP", "FACE", "SCAN", "CLEANUP", "GEOCODE", "TRANSCODE", "RECLUSTER", "CATEGORIZE", "BACKUP", "SIMILARITY", "REPAIR"]
+VALID_JOB_TYPES = ["THUMBNAIL", "CLIP", "FACE", "SCAN", "CLEANUP", "GEOCODE", "TRANSCODE", "RECLUSTER", "CATEGORIZE", "BACKUP", "SIMILARITY", "REPAIR", "OCR"]
 
 
 @router.get("/jobs")

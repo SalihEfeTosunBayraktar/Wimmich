@@ -19,6 +19,9 @@ qrcode>=7.4.0  # renders the 2FA setup QR code server-side (built on Pillow, alr
 Pillow>=11.0.0
 opencv-python-headless>=4.10.0,<5.0.0  # 5.x removed the legacy CascadeClassifier/Haar Cascade API we depend on
 rawpy>=0.27.0  # camera RAW (.dng/.cr2/.nef/...) - Pillow can't decode RAW at all; extracts the embedded preview instead
+pytesseract>=0.3.13  # thin wrapper around the Tesseract OCR binary (see utils/ocr_setup.py) - not bundled, install
+                     # separately from https://github.com/UB-Mannheim/tesseract/releases (Windows installer, no
+                     # simple portable zip exists like ffmpeg's); OCR job/search auto-disable if it's missing
 
 # EXIF
 exifread>=3.0.0

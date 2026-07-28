@@ -75,6 +75,8 @@ registerTranslations({
         'admin_render.badge_person_clustering': 'Person Matching: {status}',
         'admin_render.badge_ffmpeg': 'FFmpeg: {status}',
         'admin_render.badge_geocoding': 'Location Tagging: {status}',
+        'admin_render.badge_ocr': 'OCR Text Search: {status}',
+        'admin_render.ocr_unavailable_hint': 'Tesseract OCR is not installed - screenshot/document text search is disabled. Install it from https://github.com/UB-Mannheim/tesseract/releases and restart the server.',
         'admin_render.person_clustering_hint': 'Person matching requires the <code>face_recognition</code> library to be installed; without it, faces are detected but not grouped into people.',
         'admin_render.background_jobs_heading': 'Background Jobs',
         'admin_render.jobs_pending_badge': '{count} Pending',
@@ -93,6 +95,8 @@ registerTranslations({
         'admin_render.job_categorize_title': 'Automatically sorts photos that have a CLIP embedding into categories like screenshot/document/nature/pet.',
         'admin_render.job_repair_btn': 'Repair Broken Files',
         'admin_render.job_repair_title': 'Checks every reference-linked and imported-copy photo/video for a missing or broken file - re-fixes it from the original source if still available, or moves it to trash if the source is gone too. Runs automatically after every scan/import as well.',
+        'admin_render.job_ocr_btn': 'Extract Text (OCR)',
+        'admin_render.job_ocr_title': 'Extracts visible text from screenshot and document photos so it can be found by search - requires Tesseract OCR to be installed.',
         'admin_render.cancel_all_jobs_btn': 'Cancel All Jobs',
         'admin_render.cancel_all_jobs_title': 'Cancels all pending/running jobs - use this if a stuck or unwanted job is blocking you.',
         'admin_render.recent_jobs_label': 'Recent Jobs',
@@ -209,6 +213,8 @@ registerTranslations({
         'admin_render.badge_person_clustering': 'Kişi Eşleştirme: {status}',
         'admin_render.badge_ffmpeg': 'FFmpeg: {status}',
         'admin_render.badge_geocoding': 'Konum Etiketleme: {status}',
+        'admin_render.badge_ocr': 'OCR Metin Arama: {status}',
+        'admin_render.ocr_unavailable_hint': 'Tesseract OCR yüklü değil - ekran görüntüsü/belge metin araması devre dışı. https://github.com/UB-Mannheim/tesseract/releases adresinden yükleyip sunucuyu yeniden başlatın.',
         'admin_render.person_clustering_hint': 'Kişi eşleştirme için <code>face_recognition</code> kütüphanesinin kurulu olması gerekir; olmadan yüzler tespit edilir ama kişilere gruplanmaz.',
         'admin_render.background_jobs_heading': 'Arka Plan İşleri',
         'admin_render.jobs_pending_badge': '{count} Bekliyor',
@@ -227,6 +233,8 @@ registerTranslations({
         'admin_render.job_categorize_title': "CLIP embedding'i olan fotoğrafları ekran görüntüsü/belge/doğa/evcil hayvan gibi kategorilere otomatik ayırır",
         'admin_render.job_repair_btn': 'Bozuk Dosyaları Onar',
         'admin_render.job_repair_title': 'Referans bağlantılı ve içe aktarılan (kopya) her fotoğraf/videoyu eksik veya bozuk dosya için kontrol eder - kaynağı hâlâ mevcutsa yeniden düzeltir, kaynak da yoksa çöp kutusuna taşır. Her tarama/içe aktarma sonrası otomatik olarak da çalışır.',
+        'admin_render.job_ocr_btn': 'Metin Çıkar (OCR)',
+        'admin_render.job_ocr_title': 'Ekran görüntüsü ve belge fotoğraflarındaki görünür metni çıkarır, böylece arama ile bulunabilir - Tesseract OCR yüklü olmasını gerektirir.',
         'admin_render.cancel_all_jobs_btn': 'Tüm İşlemleri İptal Et',
         'admin_render.cancel_all_jobs_title': 'Bekleyen/çalışan tüm işlemleri iptal eder - takılan veya istenmeyen bir işlem sizi engelliyorsa kullanın',
         'admin_render.recent_jobs_label': 'Son İşler',
@@ -343,6 +351,8 @@ registerTranslations({
         'admin_render.badge_person_clustering': 'Correspondance des personnes : {status}',
         'admin_render.badge_ffmpeg': 'FFmpeg : {status}',
         'admin_render.badge_geocoding': 'Étiquetage de localisation : {status}',
+        'admin_render.badge_ocr': 'Recherche de texte OCR : {status}',
+        'admin_render.ocr_unavailable_hint': "Tesseract OCR n'est pas installé - la recherche de texte dans les captures d'écran/documents est désactivée. Installez-le depuis https://github.com/UB-Mannheim/tesseract/releases et redémarrez le serveur.",
         'admin_render.person_clustering_hint': "La correspondance des personnes nécessite l'installation de la bibliothèque <code>face_recognition</code> ; sans elle, les visages sont détectés mais non regroupés en personnes.",
         'admin_render.background_jobs_heading': 'Tâches en arrière-plan',
         'admin_render.jobs_pending_badge': '{count} en attente',
@@ -361,6 +371,8 @@ registerTranslations({
         'admin_render.job_categorize_title': "Trie automatiquement les photos disposant d'un embedding CLIP en catégories telles que capture d'écran/document/nature/animal.",
         'admin_render.job_repair_btn': 'Réparer les fichiers cassés',
         'admin_render.job_repair_title': "Vérifie chaque photo/vidéo en référence ou importée (copie) pour un fichier manquant ou cassé - le répare depuis la source d'origine si elle est encore disponible, ou le déplace vers la corbeille si la source a aussi disparu. S'exécute aussi automatiquement après chaque scan/import.",
+        'admin_render.job_ocr_btn': 'Extraire le texte (OCR)',
+        'admin_render.job_ocr_title': "Extrait le texte visible des captures d'écran et des photos de documents pour qu'il soit trouvable par la recherche - nécessite que Tesseract OCR soit installé.",
         'admin_render.cancel_all_jobs_btn': 'Annuler toutes les tâches',
         'admin_render.cancel_all_jobs_title': 'Annule toutes les tâches en attente/en cours - utilisez ceci si une tâche bloquée ou indésirable vous gêne.',
         'admin_render.recent_jobs_label': 'Tâches récentes',
@@ -477,6 +489,8 @@ registerTranslations({
         'admin_render.badge_person_clustering': 'Personenzuordnung: {status}',
         'admin_render.badge_ffmpeg': 'FFmpeg: {status}',
         'admin_render.badge_geocoding': 'Standort-Kennzeichnung: {status}',
+        'admin_render.badge_ocr': 'OCR-Textsuche: {status}',
+        'admin_render.ocr_unavailable_hint': 'Tesseract OCR ist nicht installiert - die Textsuche in Screenshots/Dokumenten ist deaktiviert. Installieren Sie es von https://github.com/UB-Mannheim/tesseract/releases und starten Sie den Server neu.',
         'admin_render.person_clustering_hint': 'Für die Personenzuordnung muss die Bibliothek <code>face_recognition</code> installiert sein; ohne sie werden Gesichter erkannt, aber nicht zu Personen gruppiert.',
         'admin_render.background_jobs_heading': 'Hintergrundaufgaben',
         'admin_render.jobs_pending_badge': '{count} ausstehend',
@@ -495,6 +509,8 @@ registerTranslations({
         'admin_render.job_categorize_title': 'Sortiert Fotos mit einem CLIP-Embedding automatisch in Kategorien wie Screenshot/Dokument/Natur/Haustier.',
         'admin_render.job_repair_btn': 'Defekte Dateien reparieren',
         'admin_render.job_repair_title': 'Prüft jedes referenzierte und importierte (kopierte) Foto/Video auf eine fehlende oder defekte Datei - repariert sie aus der Originalquelle, falls noch vorhanden, oder verschiebt sie in den Papierkorb, wenn die Quelle ebenfalls fehlt. Läuft auch automatisch nach jedem Scan/Import.',
+        'admin_render.job_ocr_btn': 'Text extrahieren (OCR)',
+        'admin_render.job_ocr_title': 'Extrahiert sichtbaren Text aus Screenshot- und Dokumentfotos, damit er über die Suche gefunden werden kann - erfordert eine installierte Tesseract OCR.',
         'admin_render.cancel_all_jobs_btn': 'Alle Aufgaben abbrechen',
         'admin_render.cancel_all_jobs_title': 'Bricht alle ausstehenden/laufenden Aufgaben ab - verwenden Sie dies, wenn eine feststeckende oder unerwünschte Aufgabe Sie blockiert.',
         'admin_render.recent_jobs_label': 'Letzte Aufgaben',
@@ -587,7 +603,11 @@ async function renderAdmin() {
                         <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
                         <span class="badge ${stats.ffmpeg_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ffmpeg', { status: stats.ffmpeg_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
                         <span class="badge ${stats.ml.geocoding_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_geocoding', { status: stats.ml.geocoding_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                        <span class="badge ${stats.ml.ocr_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ocr', { status: stats.ml.ocr_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
                     </div>
+                    ${!stats.ml.ocr_available ? `
+                        <p class="text-muted admin-field-hint">${t('admin_render.ocr_unavailable_hint')}</p>
+                    ` : ''}
                     ${!stats.ml.person_clustering_available ? `
                         <p class="text-muted admin-field-hint">${t('admin_render.person_clustering_hint')}</p>
                     ` : ''}
@@ -622,6 +642,7 @@ async function renderAdmin() {
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">${icon('repeat')} ${t('admin_render.job_recluster_btn')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">${icon('category')} ${t('admin_render.job_categorize_btn')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="runAdminJob('REPAIR')" title="${t('admin_render.job_repair_title')}">${icon('wrench')} ${t('admin_render.job_repair_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('OCR')" title="${t('admin_render.job_ocr_title')}" ${!stats.ml.ocr_available ? 'disabled' : ''}>${icon('file')} ${t('admin_render.job_ocr_btn')}</button>
                         <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">${icon('stop')} ${t('admin_render.cancel_all_jobs_btn')}</button>
                     </div>
                     <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">

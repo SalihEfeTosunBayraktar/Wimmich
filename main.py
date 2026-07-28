@@ -91,6 +91,14 @@ async def lifespan(app: FastAPI):
     else:
         warn("BOOT", "FFmpeg not found (video thumbnails disabled)")
 
+    # Check Tesseract OCR (off the event loop - shells out to check the
+    # binary, same reasoning as the FFmpeg check above).
+    from utils.ocr_setup import check_tesseract_available
+    if await asyncio.to_thread(check_tesseract_available):
+        success("BOOT", "Tesseract OCR available (screenshot/document text search enabled)")
+    else:
+        warn("BOOT", "Tesseract not found (OCR text search disabled)")
+
     # Start background job worker
     await job_worker.start()
     success("BOOT", "Background job worker started")

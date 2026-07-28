@@ -31,6 +31,7 @@ async def search_metadata(
                 Asset.original_file_name.ilike(f"%{query}%"),
                 Asset.city.ilike(f"%{query}%"),
                 Asset.country.ilike(f"%{query}%"),
+                Asset.ocr_text.ilike(f"%{query}%"),
             )
         )
 

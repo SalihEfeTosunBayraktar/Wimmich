@@ -43,6 +43,7 @@ __all__ = [
 
 def get_ml_status() -> dict:
     """Get ML feature availability status."""
+    from utils.ocr_setup import OCR_AVAILABLE
     return {
         "ml_available": ML_AVAILABLE,
         "clip_available": CLIP_AVAILABLE,
@@ -51,4 +52,5 @@ def get_ml_status() -> dict:
         "person_clustering_available": FACE_AVAILABLE,  # crude OpenCV embedding can't reliably tell people apart
         "clip_model": config.ML_CLIP_MODEL if CLIP_AVAILABLE else None,
         "geocoding_available": GEOCODING_AVAILABLE,
+        "ocr_available": OCR_AVAILABLE,
     }

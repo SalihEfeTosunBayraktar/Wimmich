@@ -168,3 +168,10 @@ async def init_db():
             ))
         except Exception:
             pass
+
+        # Automatic column migration for OCR text search (screenshots/
+        # documents) - see models/asset.py's ocr_text.
+        try:
+            await conn.execute(text("ALTER TABLE assets ADD COLUMN ocr_text TEXT"))
+        except Exception:
+            pass
