@@ -13,6 +13,7 @@ from services.job_handlers.categorize_handler import handle_job_categorize
 from services.job_handlers.backup_handler import handle_job_backup
 from services.job_handlers.similarity_handler import handle_job_similarity
 from services.job_handlers.repair_handler import handle_job_repair
+from services.job_handlers.export_handler import handle_job_export
 
 JOB_HANDLERS = {
     "THUMBNAIL": handle_job_thumbnail,
@@ -28,6 +29,7 @@ JOB_HANDLERS = {
     "BACKUP": handle_job_backup,
     "SIMILARITY": handle_job_similarity,
     "REPAIR": handle_job_repair,
+    "EXPORT": handle_job_export,
 }
 
 __all__ = ["JOB_HANDLERS", "handle_cleanup_trash"]

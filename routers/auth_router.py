@@ -2,6 +2,7 @@
 import asyncio
 import base64
 import io
+import json
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -15,12 +16,13 @@ import qrcode
 
 import config
 from database import get_db
-from models import User, Asset, Session
+from models import User, Asset, Session, Job
 from auth import (
     hash_password, verify_password, create_access_token, create_session, decode_token,
     get_current_user, create_2fa_pending_token,
 )
 from services import login_rate_limit
+from services.job_service import create_job, JobAlreadyExistsException
 from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
 from utils.image_utils import create_avatar
 from utils.file_signature import matches_claimed_type
@@ -397,6 +399,81 @@ async def get_profile_image(
         raise HTTPException(status_code=404, detail="Profil resmi yok")
 
     return FileResponse(path, media_type="image/webp")
+
+
+async def _get_latest_export_job(db: AsyncSession, user_id: str) -> Optional[Job]:
+    """No indexed user_id column on Job (only asset_id, see job_service.py's
+    docstring) - EXPORT jobs are rare enough per user that a small scan of
+    just this job_type ordered by recency is fine, same tradeoff the
+    per-user duplicate check in create_job() already makes."""
+    result = await db.execute(
+        select(Job).where(Job.job_type == "EXPORT").order_by(Job.created_at.desc())
+    )
+    for job in result.scalars().all():
+        if job.data.get("user_id") == user_id:
+            return job
+    return None
+
+
+@router.post("/export")
+async def request_data_export(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Queues a background job that zips this user's own photos/videos plus
+    a JSON metadata manifest - see export_handler.py. Kept as a job (not a
+    synchronous request) because a whole-library zip can take a while."""
+    try:
+        job = await create_job(db, "EXPORT", {"user_id": user.id})
+    except JobAlreadyExistsException as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    return {"job_id": job.id, "status": job.status}
+
+
+@router.get("/export/status")
+async def get_export_status(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    job = await _get_latest_export_job(db, user.id)
+    if not job:
+        return {"job": None}
+    return {
+        "job": {
+            "id": job.id,
+            "status": job.status,
+            "progress": job.progress,
+            "error_message": job.error_message,
+            "created_at": job.created_at.isoformat() if job.created_at else None,
+        }
+    }
+
+
+@router.get("/export/download")
+async def download_data_export(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Serves the most recently COMPLETED export for this user - not
+    necessarily the latest job overall, since the latest one could be a
+    still-RUNNING re-request or a FAILED retry."""
+    result = await db.execute(
+        select(Job).where(Job.job_type == "EXPORT", Job.status == "COMPLETED").order_by(Job.created_at.desc())
+    )
+    archive_path = None
+    for job in result.scalars().all():
+        if job.data.get("user_id") != user.id:
+            continue
+        try:
+            archive_path = Path(json.loads(job.result_json).get("archive_path"))
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            continue
+        break
+
+    if not archive_path or not archive_path.exists():
+        raise HTTPException(status_code=404, detail="Henüz tamamlanmış bir veri dışa aktarma bulunamadı")
+
+    return FileResponse(archive_path, media_type="application/zip", filename=archive_path.name)
 
 
 class TwoFactorVerifyRequest(BaseModel):

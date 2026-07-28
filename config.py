@@ -15,12 +15,17 @@ THUMB_DIR = DATA_DIR / "thumbs"
 ENCODED_DIR = DATA_DIR / "encoded"
 ML_DIR = DATA_DIR / "ml"
 AVATAR_DIR = DATA_DIR / "avatars"
+# Personal data exports (Profile Settings' "Request My Data") - deliberately
+# NOT under the movable data dir's uploads/thumbs tree, same reasoning as
+# DB_DIR: an export is a point-in-time snapshot, not part of the live
+# library, so it shouldn't move around if the data dir is later repointed.
+EXPORT_DIR = BASE_DIR / "data" / "exports"
 
 # Local DB directory (independent of movable data directory to prevent db locks)
 DB_DIR = BASE_DIR / "data"
 
 # Create directories
-for d in [DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, AVATAR_DIR, DB_DIR]:
+for d in [DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, AVATAR_DIR, EXPORT_DIR, DB_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 

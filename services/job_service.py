@@ -74,6 +74,24 @@ async def create_job(
                     raise JobAlreadyExistsException("Bu klasör için zaten devam eden bir içe aktarma var.")
             except (json.JSONDecodeError, TypeError):
                 continue
+    elif job_type == "EXPORT" and data and data.get("user_id"):
+        # Same shape as IMPORT above and for the same reason: asset_id is
+        # always None for this job type (it's a whole-library export, not
+        # tied to one asset), so the generic asset_id-based check below
+        # would treat any two different users' export requests as
+        # duplicates of each other. Scoped to this one user's own
+        # data_json instead - the active-EXPORT-jobs set is always small.
+        existing_exports = await db.execute(
+            select(Job.data_json).where(
+                and_(Job.job_type == "EXPORT", or_(Job.status == "PENDING", Job.status == "RUNNING"))
+            )
+        )
+        for (existing_json,) in existing_exports:
+            try:
+                if existing_json and json.loads(existing_json).get("user_id") == data["user_id"]:
+                    raise JobAlreadyExistsException("Zaten devam eden bir veri dışa aktarma isteğiniz var.")
+            except (json.JSONDecodeError, TypeError):
+                continue
     else:
         existing = await db.execute(
             select(Job.id).where(

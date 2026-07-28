@@ -51,6 +51,16 @@ registerTranslations({
         'profile.twofa_disabled_toast': 'Two-factor authentication disabled',
         'profile.twofa_disable_confirm_hint': 'Enter your password to disable two-factor authentication.',
         'profile.twofa_password_placeholder': 'Current password',
+        'profile.export_label': 'My Data',
+        'profile.export_hint': 'Download a zip of all your own photos/videos plus a JSON file with their metadata (dates, location, tags, albums).',
+        'profile.export_request_btn': 'Request My Data',
+        'profile.export_download_btn': 'Download',
+        'profile.export_requested_toast': 'Export started - this can take a while for large libraries',
+        'profile.export_pending': 'Preparing your export...',
+        'profile.export_running': 'Preparing your export... {progress}%',
+        'profile.export_failed': 'Last export failed: {error}',
+        'profile.export_completed': 'Your last export is ready to download.',
+        'profile.export_already_pending': 'You already have an export in progress',
     },
     tr: {
         'profile.settings_title': 'Profil Ayarları',
@@ -101,6 +111,16 @@ registerTranslations({
         'profile.twofa_disabled_toast': 'İki adımlı doğrulama devre dışı bırakıldı',
         'profile.twofa_disable_confirm_hint': 'İki adımlı doğrulamayı devre dışı bırakmak için şifrenizi girin.',
         'profile.twofa_password_placeholder': 'Mevcut şifre',
+        'profile.export_label': 'Verilerim',
+        'profile.export_hint': 'Tüm fotoğraf/videolarınızın ve meta verilerinin (tarih, konum, etiket, albüm) yer aldığı bir JSON dosyasıyla birlikte zip olarak indirin.',
+        'profile.export_request_btn': 'Verilerimi İste',
+        'profile.export_download_btn': 'İndir',
+        'profile.export_requested_toast': 'Dışa aktarma başladı - büyük kütüphaneler için biraz zaman alabilir',
+        'profile.export_pending': 'Dışa aktarmanız hazırlanıyor...',
+        'profile.export_running': 'Dışa aktarmanız hazırlanıyor... %{progress}',
+        'profile.export_failed': 'Son dışa aktarma başarısız oldu: {error}',
+        'profile.export_completed': 'Son dışa aktarmanız indirilmeye hazır.',
+        'profile.export_already_pending': 'Zaten devam eden bir dışa aktarmanız var',
     },
     fr: {
         'profile.settings_title': 'Paramètres du profil',
@@ -151,6 +171,16 @@ registerTranslations({
         'profile.twofa_disabled_toast': 'Authentification à deux facteurs désactivée',
         'profile.twofa_disable_confirm_hint': "Entrez votre mot de passe pour désactiver l'authentification à deux facteurs.",
         'profile.twofa_password_placeholder': 'Mot de passe actuel',
+        'profile.export_label': 'Mes données',
+        'profile.export_hint': 'Téléchargez un zip de toutes vos photos/vidéos ainsi qu\'un fichier JSON contenant leurs métadonnées (dates, position, tags, albums).',
+        'profile.export_request_btn': 'Demander mes données',
+        'profile.export_download_btn': 'Télécharger',
+        'profile.export_requested_toast': "L'export a démarré - cela peut prendre du temps pour de grandes bibliothèques",
+        'profile.export_pending': 'Préparation de votre export...',
+        'profile.export_running': 'Préparation de votre export... {progress}%',
+        'profile.export_failed': "Le dernier export a échoué : {error}",
+        'profile.export_completed': 'Votre dernier export est prêt à être téléchargé.',
+        'profile.export_already_pending': 'Un export est déjà en cours',
     },
     de: {
         'profile.settings_title': 'Profileinstellungen',
@@ -201,6 +231,16 @@ registerTranslations({
         'profile.twofa_disabled_toast': 'Zwei-Faktor-Authentifizierung deaktiviert',
         'profile.twofa_disable_confirm_hint': 'Geben Sie Ihr Passwort ein, um die Zwei-Faktor-Authentifizierung zu deaktivieren.',
         'profile.twofa_password_placeholder': 'Aktuelles Passwort',
+        'profile.export_label': 'Meine Daten',
+        'profile.export_hint': 'Laden Sie ein Zip mit all Ihren Fotos/Videos sowie eine JSON-Datei mit deren Metadaten (Datum, Standort, Tags, Alben) herunter.',
+        'profile.export_request_btn': 'Meine Daten anfordern',
+        'profile.export_download_btn': 'Herunterladen',
+        'profile.export_requested_toast': 'Export gestartet - das kann bei großen Bibliotheken eine Weile dauern',
+        'profile.export_pending': 'Ihr Export wird vorbereitet...',
+        'profile.export_running': 'Ihr Export wird vorbereitet... {progress}%',
+        'profile.export_failed': 'Letzter Export fehlgeschlagen: {error}',
+        'profile.export_completed': 'Ihr letzter Export ist zum Herunterladen bereit.',
+        'profile.export_already_pending': 'Sie haben bereits einen laufenden Export',
     },
 });
 
@@ -313,6 +353,63 @@ function showProfileModal() {
     renderProfileApiKeys();
     renderProfile2FASection();
     renderProfileAvatarPreview();
+    renderProfileExportStatus();
+}
+
+let _exportPollTimer = null;
+
+async function renderProfileExportStatus() {
+    clearTimeout(_exportPollTimer);
+    const container = $('profile-export-status');
+    const btn = $('profile-export-request-btn');
+    if (!container || !btn) return;
+
+    let job;
+    try {
+        ({ job } = await API.getExportStatus());
+    } catch (e) {
+        return;
+    }
+
+    if (!job) {
+        container.innerHTML = '';
+        btn.disabled = false;
+        return;
+    }
+
+    if (job.status === 'PENDING' || job.status === 'RUNNING') {
+        btn.disabled = true;
+        const msg = job.status === 'RUNNING'
+            ? t('profile.export_running', { progress: job.progress || 0 })
+            : t('profile.export_pending');
+        container.innerHTML = `<p class="text-muted admin-field-hint">${escHtml(msg)}</p>`;
+        _exportPollTimer = setTimeout(renderProfileExportStatus, 3000);
+    } else if (job.status === 'COMPLETED') {
+        btn.disabled = false;
+        container.innerHTML = `<p class="text-muted admin-field-hint">${escHtml(t('profile.export_completed'))}</p>
+            <a class="btn btn-secondary btn-sm" href="${API.getExportDownloadUrl()}" download>${escHtml(t('profile.export_download_btn'))}</a>`;
+    } else if (job.status === 'FAILED') {
+        btn.disabled = false;
+        container.innerHTML = `<p class="text-muted admin-field-hint">${escHtml(t('profile.export_failed', { error: job.error_message || '' }))}</p>`;
+    } else {
+        btn.disabled = false;
+        container.innerHTML = '';
+    }
+}
+
+async function requestDataExport() {
+    try {
+        await API.requestDataExport();
+        toast(t('profile.export_requested_toast'), 'success');
+        renderProfileExportStatus();
+    } catch (e) {
+        if (e.status === 409) {
+            toast(t('profile.export_already_pending'), 'warning');
+        } else {
+            toast(e.message, 'error');
+        }
+        renderProfileExportStatus();
+    }
 }
 
 async function saveTrashRetention() {
@@ -540,11 +637,15 @@ async function revokeProfileApiKey(id) {
 }
 
 function initProfileModal() {
-    const close = () => $('profile-modal').classList.add('hidden');
+    const close = () => {
+        clearTimeout(_exportPollTimer);
+        $('profile-modal').classList.add('hidden');
+    };
     $('profile-modal-close').onclick = close;
     $('profile-modal-cancel').onclick = close;
     $('profile-api-key-create-btn').onclick = createProfileApiKey;
     $('profile-trash-days-save-btn').onclick = saveTrashRetention;
+    $('profile-export-request-btn').onclick = requestDataExport;
 
     $('profile-modal-save').onclick = async () => {
         const name = $('profile-name').value.trim();
