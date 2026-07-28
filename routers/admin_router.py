@@ -10,6 +10,7 @@ from models import User, Asset, Album, Job, Person, SharedLink
 from auth import get_admin_user
 from services.ml_service import get_ml_status
 from services.job_service import job_worker
+from services.audit_log_service import log_action
 from utils.video_utils import is_ffmpeg_available
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -141,6 +142,7 @@ async def list_users(
 @router.post("/shutdown")
 async def shutdown_server(
     admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Cleanly stop background work and release GPU/CPU memory, then exit
     the process - the safe alternative to closing the console window while
@@ -152,6 +154,8 @@ async def shutdown_server(
     """
     from services.shutdown_service import graceful_cleanup, schedule_exit
 
+    await log_action(db, admin, "server.shutdown")
+    await db.commit()
     await graceful_cleanup()
     schedule_exit(0)
     return {"message": "Sunucu kapatılıyor"}
@@ -160,6 +164,7 @@ async def shutdown_server(
 @router.post("/restart")
 async def restart_server(
     admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Same graceful cleanup as /shutdown, but exits with the "relaunch me"
     code instead of the plain one - start.bat's loop (also used by
@@ -168,6 +173,8 @@ async def restart_server(
     wanting an actual code update."""
     from services.shutdown_service import graceful_cleanup, schedule_exit, RESTART_EXIT_CODE
 
+    await log_action(db, admin, "server.restart")
+    await db.commit()
     await graceful_cleanup()
     schedule_exit(RESTART_EXIT_CODE)
     return {"message": "Sunucu yeniden başlatılıyor"}
@@ -187,6 +194,7 @@ async def check_for_update(
 @router.post("/update/apply")
 async def apply_update(
     admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Pull the latest code + reinstall base dependencies, then restart the
     process - start.bat's loop relaunches it automatically on the special
@@ -200,6 +208,8 @@ async def apply_update(
     except RuntimeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    await log_action(db, admin, "server.update_apply", detail=result)
+    await db.commit()
     await graceful_cleanup()
     schedule_exit(RESTART_EXIT_CODE)
     return result

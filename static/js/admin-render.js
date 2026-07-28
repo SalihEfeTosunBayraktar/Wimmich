@@ -102,6 +102,9 @@ registerTranslations({
         'admin_render.shutdown_server_hint': 'Cleanly stops background jobs and the tunnel, frees GPU/CPU memory, then exits - the safe alternative to closing this window while a job is running.',
         'admin_render.confirm_shutdown': 'Shut down the server now? Any running background job will be stopped first.',
         'admin_render.shutting_down_message': 'Shutting down - freeing memory and stopping the server...',
+        'admin_render.audit_log_heading': 'Audit Log',
+        'admin_render.audit_log_empty': 'No admin actions recorded yet.',
+        'admin_render.load_more_btn': 'Load More',
         'admin_render.updates_heading': 'Updates',
         'admin_render.check_update_btn': 'Check for Updates',
         'admin_render.checking_updates_msg': 'Checking for updates...',
@@ -220,6 +223,9 @@ registerTranslations({
         'admin_render.shutdown_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, GPU/CPU belleğini boşaltır, sonra kapatır — bir iş çalışırken bu pencereyi kapatmaya güvenli bir alternatif.',
         'admin_render.confirm_shutdown': 'Sunucu şimdi kapatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
         'admin_render.shutting_down_message': 'Kapatılıyor — bellek boşaltılıyor ve sunucu durduruluyor...',
+        'admin_render.audit_log_heading': 'İşlem Günlüğü',
+        'admin_render.audit_log_empty': 'Henüz kaydedilmiş bir yönetici işlemi yok.',
+        'admin_render.load_more_btn': 'Daha Fazla Yükle',
         'admin_render.updates_heading': 'Güncellemeler',
         'admin_render.check_update_btn': 'Güncellemeleri Kontrol Et',
         'admin_render.checking_updates_msg': 'Güncellemeler kontrol ediliyor...',
@@ -338,6 +344,9 @@ registerTranslations({
         'admin_render.shutdown_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, libère la mémoire GPU/CPU, puis quitte - l'alternative sûre à la fermeture de cette fenêtre pendant qu'une tâche est en cours.",
         'admin_render.confirm_shutdown': "Arrêter le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
         'admin_render.shutting_down_message': 'Arrêt en cours - libération de la mémoire et arrêt du serveur...',
+        'admin_render.audit_log_heading': "Journal d'audit",
+        'admin_render.audit_log_empty': "Aucune action d'administration enregistrée pour le moment.",
+        'admin_render.load_more_btn': 'Charger plus',
         'admin_render.updates_heading': 'Mises à jour',
         'admin_render.check_update_btn': 'Vérifier les mises à jour',
         'admin_render.checking_updates_msg': 'Vérification des mises à jour...',
@@ -456,6 +465,9 @@ registerTranslations({
         'admin_render.shutdown_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber, gibt GPU-/CPU-Speicher frei und beendet dann - die sichere Alternative zum Schließen dieses Fensters, während eine Aufgabe läuft.',
         'admin_render.confirm_shutdown': 'Server jetzt herunterfahren? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
         'admin_render.shutting_down_message': 'Wird heruntergefahren - Speicher wird freigegeben und der Server gestoppt...',
+        'admin_render.audit_log_heading': 'Prüfprotokoll',
+        'admin_render.audit_log_empty': 'Noch keine Admin-Aktionen aufgezeichnet.',
+        'admin_render.load_more_btn': 'Mehr laden',
         'admin_render.updates_heading': 'Updates',
         'admin_render.check_update_btn': 'Nach Updates suchen',
         'admin_render.checking_updates_msg': 'Suche nach Updates...',
@@ -481,7 +493,7 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
@@ -490,6 +502,7 @@ async function renderAdmin() {
             API.getBackupSettings().catch(() => ({ backup_dir: '', interval_hours: 24, enabled: false, last_backup_at: null, last_backup_status: null, last_backup_error: null })),
             API.getReferenceRoots().catch(() => ({ references: [] })),
             API.getJobConcurrency().catch(() => ({ effective: 4, override: null, default: 4, suggested: 4, system: { cpu_count: null, total_ram_gb: null } })),
+            API.getAuditLog(1, auditLogLimit).catch(() => ({ entries: [], total: 0 })),
         ]);
 
         pc.innerHTML = `
@@ -738,6 +751,14 @@ async function renderAdmin() {
                         <p class="text-muted admin-field-hint" style="margin-top:12px">${t('admin_render.shutdown_server_hint')}</p>
                         <button class="btn btn-danger btn-sm" onclick="shutdownServer()">${icon('stop')} ${t('admin_render.shutdown_server_btn')}</button>
                     </div>
+
+                    <div class="admin-status-card">
+                        <h4>📜 ${t('admin_render.audit_log_heading')}</h4>
+                        <div id="audit-log-list">${renderAuditLogEntries(auditLog.entries)}</div>
+                        ${auditLog.entries.length < auditLog.total ? `
+                            <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="loadMoreAuditLog()">${t('admin_render.load_more_btn')}</button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -845,6 +866,7 @@ function _setStatValue(id, value) {
 }
 
 let activeAdminTab = 'overview';
+let auditLogLimit = 20;
 
 function switchAdminTab(tabName) {
     activeAdminTab = tabName;
@@ -854,6 +876,34 @@ function switchAdminTab(tabName) {
     document.querySelectorAll('.admin-tab-btn').forEach(el => {
         el.classList.toggle('active', el.dataset.tab === tabName);
     });
+}
+
+function renderAuditLogEntries(entries) {
+    if (!entries || entries.length === 0) {
+        return `<p class="text-muted admin-field-hint">${t('admin_render.audit_log_empty')}</p>`;
+    }
+    return `<div style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto">` +
+        entries.map(e => `
+            <div style="font-size:12px;padding:6px 8px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">
+                <div style="display:flex;justify-content:space-between;gap:8px">
+                    <span style="font-weight:600">${escHtml(e.action)}</span>
+                    <span class="text-muted">${formatDate(e.created_at)}</span>
+                </div>
+                <div class="text-muted">${escHtml(e.actor_email)}${e.target_type ? ` &middot; ${escHtml(e.target_type)}${e.target_id ? ': ' + escHtml(String(e.target_id).slice(0, 8)) : ''}` : ''}</div>
+                ${e.detail ? `<div class="text-muted" style="font-family:monospace;font-size:11px">${escHtml(JSON.stringify(e.detail))}</div>` : ''}
+            </div>
+        `).join('') +
+    `</div>`;
+}
+
+async function loadMoreAuditLog() {
+    auditLogLimit += 20;
+    try {
+        const data = await API.getAuditLog(1, auditLogLimit);
+        $('audit-log-list').innerHTML = renderAuditLogEntries(data.entries);
+        const btn = document.querySelector('#admin-tab-system button[onclick="loadMoreAuditLog()"]');
+        if (btn && data.entries.length >= data.total) btn.remove();
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderBackupStatusLine(backupSettings) {

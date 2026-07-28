@@ -3,8 +3,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_db
 from models import User
 from auth import get_admin_user
+from services.audit_log_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -32,7 +36,11 @@ async def get_config(admin: User = Depends(get_admin_user)):
 
 
 @router.post("/config")
-async def update_config(req: UpdateConfigParameters, admin: User = Depends(get_admin_user)):
+async def update_config(
+    req: UpdateConfigParameters,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Update server data directory configuration."""
     import config
 
@@ -48,6 +56,16 @@ async def update_config(req: UpdateConfigParameters, admin: User = Depends(get_a
             bool(req.auto_start_tunnel),
             req.tunnel_custom_domain or "",
         )
+        # tunnel_token is a credential - record only whether one is set, never
+        # the value itself.
+        await log_action(db, admin, "config.update", "config", None, {
+            "data_dir": path_str,
+            "tunnel_token_set": bool(req.tunnel_token),
+            "total_storage_limit_mb": req.total_storage_limit_mb or 0,
+            "auto_start_tunnel": bool(req.auto_start_tunnel),
+            "tunnel_custom_domain": req.tunnel_custom_domain or "",
+        })
+        await db.commit()
         return {
             "message": "Ayarlar başarıyla güncellendi",
             "data_dir": str(config.DATA_DIR),

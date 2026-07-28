@@ -12,6 +12,7 @@ from models import User, Job
 from auth import get_admin_user
 from services.job_service import create_job
 from services import job_concurrency_service
+from services.audit_log_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -98,6 +99,7 @@ async def cancel_all_jobs(
         job.status = "CANCELLED"
         job.completed_at = now
         job.error_message = "Tüm işlemler kullanıcı tarafından sıfırlandı."
+    await log_action(db, admin, "jobs.cancel_all", detail={"count": len(jobs)})
     await db.commit()
     return {"message": f"{len(jobs)} işlem iptal edildi", "count": len(jobs)}
 

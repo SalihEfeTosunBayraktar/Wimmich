@@ -8,6 +8,7 @@ from database import get_db
 from models import User, Asset
 from auth import get_admin_user, hash_password
 from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
+from services.audit_log_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -63,6 +64,8 @@ async def create_user(
         storage_quota_mb=req.storage_quota_mb,
     )
     db.add(user)
+    await db.flush()
+    await log_action(db, admin, "user.create", "user", user.id, {"email": user.email, "is_admin": user.is_admin})
     await db.commit()
 
     return {"message": "User created", "user_id": user.id}
@@ -88,7 +91,9 @@ async def delete_user(
     for asset in assets_result.scalars().all():
         delete_asset_files(asset, delete_reference_source=True)
 
+    deleted_email = user.email
     await db.delete(user)
+    await log_action(db, admin, "user.delete", "user", user_id, {"email": deleted_email})
     await db.commit()
     return {"message": "User deleted"}
 
@@ -107,6 +112,7 @@ async def update_user_quota(
         raise HTTPException(status_code=404, detail="User not found")
 
     user.storage_quota_mb = req.storage_quota_mb
+    await log_action(db, admin, "user.set_quota", "user", user.id, {"email": user.email, "storage_quota_mb": req.storage_quota_mb})
     await db.commit()
     return {"message": "Kullanıcı kotası güncellendi", "storage_quota_mb": user.storage_quota_mb}
 
@@ -130,6 +136,7 @@ async def update_user_priority(
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     user.priority = req.priority
+    await log_action(db, admin, "user.set_priority", "user", user.id, {"email": user.email, "priority": req.priority})
     await db.commit()
     return {"message": "Kullanıcı önceliği güncellendi", "priority": user.priority}
 
@@ -151,6 +158,7 @@ async def approve_user(
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     user.is_approved = req.is_approved
+    await log_action(db, admin, "user.set_approved", "user", user.id, {"email": user.email, "is_approved": req.is_approved})
     await db.commit()
     return {"message": "Kullanıcı onay durumu güncellendi", "is_approved": user.is_approved}
 
@@ -174,6 +182,8 @@ async def set_user_password(
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     user.password_hash = hash_password(req.new_password)
+    # No password content in the detail - just that a reset happened and by whom/to whom.
+    await log_action(db, admin, "user.set_password", "user", user.id, {"email": user.email})
     await db.commit()
     return {"message": "Kullanıcı şifresi güncellendi"}
 
@@ -198,5 +208,6 @@ async def update_user_admin(
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     user.is_admin = req.is_admin
+    await log_action(db, admin, "user.set_admin", "user", user.id, {"email": user.email, "is_admin": req.is_admin})
     await db.commit()
     return {"message": "Kullanıcı yöneticilik durumu güncellendi", "is_admin": user.is_admin}
