@@ -446,6 +446,14 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label for="profile-trash-days" data-i18n="profile.trash_retention_label"></label>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <input type="number" id="profile-trash-days" min="1" max="365" data-i18n-placeholder="profile.trash_retention_placeholder" style="flex:1">
+                        <button type="button" class="btn btn-secondary btn-sm" id="profile-trash-days-save-btn" data-i18n="common.save"></button>
+                    </div>
+                    <p class="text-muted admin-field-hint" data-i18n="profile.trash_retention_hint"></p>
+                </div>
+                <div class="form-group">
                     <label data-i18n="profile.sessions_label"></label>
                     <div id="profile-sessions-list" class="profile-sessions-list"></div>
                 </div>

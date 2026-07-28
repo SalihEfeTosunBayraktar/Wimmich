@@ -30,6 +30,11 @@ class User(Base):
     # must never silently turn on 2FA on its own.
     totp_secret = Column(String(32), nullable=True)
     totp_enabled = Column(Boolean, default=False, nullable=False)
+    # How many days this user's own trashed items are kept before permanent
+    # deletion - None means "use the server-wide config.TRASH_DAYS default",
+    # not "never delete" (an explicit override is the only way to disable
+    # the default, this column existing at all doesn't opt anyone out).
+    trash_days = Column(Integer, nullable=True)
 
     # Relationships
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")

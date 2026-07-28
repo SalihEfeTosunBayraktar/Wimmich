@@ -84,6 +84,7 @@ const API = {
     },
     getMe() { return this.request('/api/auth/me'); },
     updateMe(data) { return this.request('/api/auth/me', { method: 'PUT', body: data }); },
+    updateTrashRetention(days) { return this.request('/api/auth/trash-retention', { method: 'PUT', body: { days } }); },
     logout() { return this.request('/api/auth/logout', { method: 'POST' }); },
     getSessions() { return this.request('/api/auth/sessions'); },
     revokeSession(id) { return this.request(`/api/auth/sessions/${id}`, { method: 'DELETE' }); },

@@ -3,7 +3,7 @@
  */
 registerTranslations({
     en: {
-        'trash.auto_delete_warning': 'Items in the trash are permanently deleted after 30 days.',
+        'trash.auto_delete_warning': 'Items in the trash are permanently deleted after {days} days.',
         'trash.empty_trash_btn': 'Empty Trash',
         'trash.empty_title': 'Trash is empty',
         'trash.confirm_permanent_delete': 'Are you sure you want to PERMANENTLY delete {count} item(s) in the trash? This action cannot be undone.',
@@ -11,7 +11,7 @@ registerTranslations({
         'trash.emptied_success': 'Trash emptied.',
     },
     tr: {
-        'trash.auto_delete_warning': 'Çöp kutusundaki öğeler 30 gün sonra kalıcı olarak silinir.',
+        'trash.auto_delete_warning': 'Çöp kutusundaki öğeler {days} gün sonra kalıcı olarak silinir.',
         'trash.empty_trash_btn': 'Çöp Kutusunu Boşalt',
         'trash.empty_title': 'Çöp kutusu boş',
         'trash.confirm_permanent_delete': 'Çöp kutusundaki {count} öğeyi KALICI OLARAK silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
@@ -19,7 +19,7 @@ registerTranslations({
         'trash.emptied_success': 'Çöp kutusu boşaltıldı.',
     },
     fr: {
-        'trash.auto_delete_warning': 'Les éléments de la corbeille sont définitivement supprimés après 30 jours.',
+        'trash.auto_delete_warning': 'Les éléments de la corbeille sont définitivement supprimés après {days} jours.',
         'trash.empty_trash_btn': 'Vider la corbeille',
         'trash.empty_title': 'La corbeille est vide',
         'trash.confirm_permanent_delete': 'Voulez-vous vraiment supprimer DÉFINITIVEMENT {count} élément(s) de la corbeille ? Cette action est irréversible.',
@@ -27,7 +27,7 @@ registerTranslations({
         'trash.emptied_success': 'Corbeille vidée.',
     },
     de: {
-        'trash.auto_delete_warning': 'Elemente im Papierkorb werden nach 30 Tagen endgültig gelöscht.',
+        'trash.auto_delete_warning': 'Elemente im Papierkorb werden nach {days} Tagen endgültig gelöscht.',
         'trash.empty_trash_btn': 'Papierkorb leeren',
         'trash.empty_title': 'Papierkorb ist leer',
         'trash.confirm_permanent_delete': 'Möchten Sie {count} Element(e) im Papierkorb wirklich ENDGÜLTIG löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.',
@@ -42,7 +42,7 @@ async function renderTrash() {
         const pc = $('page-content');
         pc.innerHTML = `
             <div class="trash-info">
-                <span>⚠️ ${t('trash.auto_delete_warning')}</span>
+                <span>⚠️ ${t('trash.auto_delete_warning', { days: state.user.trash_days_effective })}</span>
                 ${data.assets.length ? `<button id="trash-empty-btn" class="btn btn-sm btn-danger">${icon('trash')} ${t('trash.empty_trash_btn')}</button>` : ''}
             </div>
         `;

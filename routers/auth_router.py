@@ -2,6 +2,7 @@
 import base64
 import io
 import uuid
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select, func
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import pyotp
 import qrcode
 
+import config
 from database import get_db
 from models import User, Asset, Session
 from auth import (
@@ -219,6 +221,8 @@ async def get_me(user: User = Depends(get_current_user), db: AsyncSession = Depe
         "total_size": total_size,
         "storage_quota_mb": user.storage_quota_mb,
         "totp_enabled": user.totp_enabled,
+        "trash_days": user.trash_days,
+        "trash_days_effective": user.trash_days or config.TRASH_DAYS,
     }
 
 
@@ -256,6 +260,29 @@ async def update_me(
         "name": user.name,
         "is_admin": user.is_admin,
     }}
+
+
+class TrashRetentionRequest(BaseModel):
+    # None/omitted = go back to using the server-wide default.
+    days: Optional[int] = None
+
+
+@router.put("/trash-retention")
+async def update_trash_retention(
+    req: TrashRetentionRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """How long THIS user's own trashed items are kept before permanent
+    deletion - independent of every other user's setting and of the
+    server-wide config.TRASH_DAYS default, which only applies when this is
+    left unset."""
+    if req.days is not None and not (1 <= req.days <= 365):
+        raise HTTPException(status_code=400, detail="Days must be between 1 and 365")
+
+    user.trash_days = req.days
+    await db.commit()
+    return {"trash_days": user.trash_days, "trash_days_effective": user.trash_days or config.TRASH_DAYS}
 
 
 class TwoFactorVerifyRequest(BaseModel):

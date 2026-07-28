@@ -123,6 +123,12 @@ async def init_db():
         except Exception:
             pass
 
+        # Automatic column migration for per-user trash retention override
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN trash_days INTEGER"))
+        except Exception:
+            pass
+
         # Automatic column migration for TOTP two-factor authentication
         try:
             await conn.execute(text("ALTER TABLE users ADD COLUMN totp_secret VARCHAR(32)"))
