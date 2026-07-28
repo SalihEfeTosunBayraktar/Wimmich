@@ -8,7 +8,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
-from models import Asset, User
+from models import Asset
 from utils.path_utils import resolve_data_path
 
 
@@ -22,10 +22,13 @@ def _build_zip_sync(file_paths_and_names: List[tuple]) -> io.BytesIO:
     return buffer
 
 
-async def build_zip_archive(db: AsyncSession, user: User, asset_ids: List[str]) -> io.BytesIO:
-    """Build an in-memory zip of the given assets' original files (ownership-checked)."""
+async def build_zip_archive(db: AsyncSession, user_id: str, asset_ids: List[str]) -> io.BytesIO:
+    """Build an in-memory zip of the given assets' original files, scoped to
+    one owner - takes a bare user_id (not a User object) so a public share
+    endpoint can pass the share owner's id without needing to load their
+    User row at all."""
     result = await db.execute(
-        select(Asset).where(and_(Asset.id.in_(asset_ids), Asset.user_id == user.id))
+        select(Asset).where(and_(Asset.id.in_(asset_ids), Asset.user_id == user_id))
     )
     assets = list(result.scalars().all())
 

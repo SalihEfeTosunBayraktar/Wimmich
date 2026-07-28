@@ -21,6 +21,7 @@ registerTranslations({
         'shared.empty': 'This share has no photos',
         'shared.download': 'Download',
         'shared.download_disabled': 'Downloads are disabled for this share',
+        'shared.download_all': 'Download All',
     },
     tr: {
         'shared.not_found': 'Bu paylaşım bağlantısı bulunamadı',
@@ -36,6 +37,7 @@ registerTranslations({
         'shared.empty': 'Bu paylaşımda fotoğraf yok',
         'shared.download': 'İndir',
         'shared.download_disabled': 'Bu paylaşım için indirme kapalı',
+        'shared.download_all': 'Tümünü İndir',
     },
     fr: {
         'shared.not_found': 'Ce lien de partage est introuvable',
@@ -51,6 +53,7 @@ registerTranslations({
         'shared.empty': 'Ce partage ne contient aucune photo',
         'shared.download': 'Télécharger',
         'shared.download_disabled': 'Le téléchargement est désactivé pour ce partage',
+        'shared.download_all': 'Tout télécharger',
     },
     de: {
         'shared.not_found': 'Dieser Freigabelink wurde nicht gefunden',
@@ -66,6 +69,7 @@ registerTranslations({
         'shared.empty': 'Diese Freigabe enthält keine Fotos',
         'shared.download': 'Herunterladen',
         'shared.download_disabled': 'Downloads sind für diese Freigabe deaktiviert',
+        'shared.download_all': 'Alle herunterladen',
     },
 });
 
@@ -144,12 +148,24 @@ function _sharedMediaUrl(kind, assetId, extraParams) {
     return `/api/shared/${_sharedKey}/assets/${assetId}/${kind}${qs ? '?' + qs : ''}`;
 }
 
+function _sharedDownloadZipUrl() {
+    const params = new URLSearchParams();
+    if (_sharedPassword) params.set('password', _sharedPassword);
+    const qs = params.toString();
+    return `/api/shared/${_sharedKey}/download-zip${qs ? '?' + qs : ''}`;
+}
+
 function _renderSharedGrid(data) {
     const root = $('shared-view-root');
     root.innerHTML = `
         <header class="shared-view-header">
-            <h2>${escHtml(data.description || t('shared.default_title'))}</h2>
-            <span class="text-muted">${t('shared.item_count', { count: data.total })}</span>
+            <div>
+                <h2>${escHtml(data.description || t('shared.default_title'))}</h2>
+                <span class="text-muted">${t('shared.item_count', { count: data.total })}</span>
+            </div>
+            ${data.allow_download && _sharedAssets.length ? `
+                <a class="btn btn-secondary btn-sm" href="${_sharedDownloadZipUrl()}" download>${icon('download')} ${t('shared.download_all')}</a>
+            ` : ''}
         </header>
         ${_sharedAssets.length ? `
             <div class="photo-grid" id="shared-photo-grid">

@@ -3,6 +3,7 @@ import secrets
 from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models import User, Asset, Album, AlbumAsset, SharedLink
 from auth import get_current_user, get_optional_user, hash_password, verify_password
-from services import asset_media_service
+from services import asset_media_service, download_service
 
 router = APIRouter(tags=["shares"])
 
@@ -183,6 +184,38 @@ async def _require_share_asset_access(db: AsyncSession, key: str, asset_id: str,
         raise HTTPException(status_code=404, detail="Asset not found")
 
     return share, asset
+
+
+@router.get("/api/shared/{key}/download-zip")
+async def download_shared_zip(
+    key: str,
+    password: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Zip-download every asset in this share's scope - public, no auth
+    required. Blocked entirely when the share was created with "allow
+    download" off, same as the per-asset /file endpoint. Password checked
+    before the allow_download check, same reasoning as
+    _require_share_asset_access: a wrong password should never leak
+    whether downloads happen to be enabled."""
+    share = await _get_share_or_404(db, key)
+
+    if share.password_hash and not (password and verify_password(password, share.password_hash)):
+        raise HTTPException(status_code=403, detail="Password required or incorrect")
+
+    if not share.allow_download:
+        raise HTTPException(status_code=403, detail="Downloads are disabled for this share")
+
+    asset_ids = await _resolve_share_asset_ids(db, share)
+    if not asset_ids:
+        raise HTTPException(status_code=404, detail="No assets in this share")
+
+    buffer = await download_service.build_zip_archive(db, share.user_id, list(asset_ids))
+    return StreamingResponse(
+        buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=wimmich_shared.zip"},
+    )
 
 
 @router.get("/api/shared/{key}/assets/{asset_id}/thumbnail")

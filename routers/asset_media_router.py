@@ -121,7 +121,7 @@ async def download_zip(
     db: AsyncSession = Depends(get_db),
 ):
     """Download multiple selected assets as a single zip file."""
-    buffer = await download_service.build_zip_archive(db, user, ids)
+    buffer = await download_service.build_zip_archive(db, user.id, ids)
     return StreamingResponse(
         buffer,
         media_type="application/zip",
