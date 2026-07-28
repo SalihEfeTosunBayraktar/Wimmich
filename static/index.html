@@ -498,6 +498,31 @@
         </div>
     </div>
 
+    <!-- Crop Profile Picture Modal -->
+    <div class="modal-overlay hidden" id="avatar-crop-modal">
+        <div class="modal" style="max-width:400px">
+            <div class="modal-header">
+                <h3 data-i18n="profile.avatar_crop_title"></h3>
+                <button class="btn-icon modal-close" id="avatar-crop-modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="avatar-crop-stage" id="avatar-crop-stage">
+                    <canvas id="avatar-crop-canvas" width="320" height="320"></canvas>
+                </div>
+                <div class="avatar-crop-zoom-row">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="range" id="avatar-crop-zoom" min="100" max="300" value="100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="avatar-crop-cancel" data-i18n="common.cancel"></button>
+                <button class="btn btn-primary" id="avatar-crop-save" data-i18n="common.save"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Choose Profile Picture from Library Modal -->
     <div class="modal-overlay hidden" id="avatar-picker-modal">
         <div class="modal" style="max-width:640px">

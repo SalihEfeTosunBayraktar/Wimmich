@@ -87,7 +87,11 @@ const API = {
     updateTrashRetention(days) { return this.request('/api/auth/trash-retention', { method: 'PUT', body: { days } }); },
     async uploadProfileImage(file) {
         const fd = new FormData();
-        fd.append('file', file);
+        // Explicit filename covers the cropped-canvas Blob case (no
+        // inherent .name) as well as a plain File - matches_claimed_type()
+        // on the server only validates known extensions anyway (see
+        // file_signature.py), so a generic name is safe either way.
+        fd.append('file', file, file.name || 'avatar.jpg');
         return this.request('/api/auth/profile-image', { method: 'POST', body: fd });
     },
     setProfileImageFromAsset(assetId) {

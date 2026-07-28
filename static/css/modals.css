@@ -294,6 +294,39 @@ kbd {
     min-height: 0;
 }
 
+.avatar-crop-stage {
+    width: 320px;
+    height: 320px;
+    margin: 0 auto;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    cursor: grab;
+    /* Prevents the browser's own touch scroll/pinch from fighting the
+       canvas's own pointer-drag panning on mobile. */
+    touch-action: none;
+}
+
+.avatar-crop-stage:active {
+    cursor: grabbing;
+}
+
+.avatar-crop-stage canvas {
+    display: block;
+}
+
+.avatar-crop-zoom-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    color: var(--text-muted);
+}
+
+.avatar-crop-zoom-row input[type="range"] {
+    flex: 1;
+}
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;
