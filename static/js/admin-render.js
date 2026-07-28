@@ -55,6 +55,9 @@ registerTranslations({
         'admin_render.ping_checking': 'Checking...',
         'admin_render.ping_label': 'Ping: {ms}ms',
         'admin_render.ping_offline': 'Unreachable',
+        'admin_render.badge_disk_free': 'Disk: {free} / {total} GB free',
+        'admin_render.badge_quota_usage': 'Quota: {used} / {limit}',
+        'admin_render.storage_warning_hint': 'Storage space is running low - see the Storage tab to adjust the limit or free up space.',
         'admin_render.ml_status_heading': 'ML Status',
         'admin_render.status_active': 'Active',
         'admin_render.status_active_opencv': 'Active (OpenCV)',
@@ -170,6 +173,9 @@ registerTranslations({
         'admin_render.ping_checking': 'Kontrol ediliyor...',
         'admin_render.ping_label': 'Ping: {ms}ms',
         'admin_render.ping_offline': 'Erişilemiyor',
+        'admin_render.badge_disk_free': 'Disk: {free} / {total} GB boş',
+        'admin_render.badge_quota_usage': 'Kota: {used} / {limit}',
+        'admin_render.storage_warning_hint': 'Depolama alanı azalıyor - limiti ayarlamak veya yer açmak için Depolama sekmesine bakın.',
         'admin_render.ml_status_heading': 'ML Durumu',
         'admin_render.status_active': 'Aktif',
         'admin_render.status_active_opencv': 'Aktif (OpenCV)',
@@ -285,6 +291,9 @@ registerTranslations({
         'admin_render.ping_checking': 'Vérification...',
         'admin_render.ping_label': 'Ping : {ms}ms',
         'admin_render.ping_offline': 'Injoignable',
+        'admin_render.badge_disk_free': 'Disque : {free} / {total} Go libres',
+        'admin_render.badge_quota_usage': 'Quota : {used} / {limit}',
+        'admin_render.storage_warning_hint': "L'espace de stockage se réduit - consultez l'onglet Stockage pour ajuster la limite ou libérer de l'espace.",
         'admin_render.ml_status_heading': 'État du ML',
         'admin_render.status_active': 'Actif',
         'admin_render.status_active_opencv': 'Actif (OpenCV)',
@@ -400,6 +409,9 @@ registerTranslations({
         'admin_render.ping_checking': 'Wird geprüft...',
         'admin_render.ping_label': 'Ping: {ms}ms',
         'admin_render.ping_offline': 'Nicht erreichbar',
+        'admin_render.badge_disk_free': 'Speicher: {free} / {total} GB frei',
+        'admin_render.badge_quota_usage': 'Kontingent: {used} / {limit}',
+        'admin_render.storage_warning_hint': 'Der Speicherplatz wird knapp - siehe den Tab Speicher, um das Limit anzupassen oder Platz freizugeben.',
         'admin_render.ml_status_heading': 'ML-Status',
         'admin_render.status_active': 'Aktiv',
         'admin_render.status_active_opencv': 'Aktiv (OpenCV)',
@@ -512,6 +524,17 @@ async function renderAdmin() {
                     </div>
                     ${!stats.ml.person_clustering_available ? `
                         <p class="text-muted admin-field-hint">${t('admin_render.person_clustering_hint')}</p>
+                    ` : ''}
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                        ${stats.storage_warning.disk_free_gb != null ? `
+                            <span class="badge ${stats.storage_warning.disk_warning ? 'badge-danger' : 'badge-success'}">${t('admin_render.badge_disk_free', { free: stats.storage_warning.disk_free_gb, total: stats.storage_warning.disk_total_gb })}</span>
+                        ` : ''}
+                        ${stats.storage_warning.total_storage_limit_mb > 0 ? `
+                            <span class="badge ${stats.storage_warning.quota_warning ? 'badge-danger' : 'badge-success'}">${t('admin_render.badge_quota_usage', { used: formatSize(stats.total_size), limit: (stats.storage_warning.total_storage_limit_mb / 1024).toFixed(1) + ' GB' })}</span>
+                        ` : ''}
+                    </div>
+                    ${(stats.storage_warning.disk_warning || stats.storage_warning.quota_warning) ? `
+                        <p class="text-muted admin-field-hint" style="color:var(--danger)">${t('admin_render.storage_warning_hint')}</p>
                     ` : ''}
                 </div>
 

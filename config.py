@@ -104,6 +104,15 @@ TUNNEL_CUSTOM_DOMAIN = os.getenv("WIMMICH_TUNNEL_CUSTOM_DOMAIN", "")
 TOTAL_STORAGE_LIMIT_MB = int(os.getenv("WIMMICH_TOTAL_STORAGE_LIMIT_MB", "0"))
 AUTO_START_TUNNEL = os.getenv("WIMMICH_AUTO_START_TUNNEL", "false").lower() == "true"
 
+# Storage warnings shown in the admin panel, checked independently: the
+# quota one only ever fires if an admin bothered to set
+# TOTAL_STORAGE_LIMIT_MB (most installs leave it at 0/unlimited), while the
+# free-disk-space one is a physical shutil.disk_usage() check on the data
+# volume - it fires regardless of quota configuration, since a drive can
+# fill up even with no quota set at all.
+STORAGE_WARN_PERCENT = int(os.getenv("WIMMICH_STORAGE_WARN_PERCENT", "90"))
+DISK_WARN_FREE_GB = float(os.getenv("WIMMICH_DISK_WARN_FREE_GB", "10"))
+
 # Database
 DATABASE_URL = os.getenv("WIMMICH_DB_URL", f"sqlite+aiosqlite:///{DB_DIR / 'wimmich.db'}")
 

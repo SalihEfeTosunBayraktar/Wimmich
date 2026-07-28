@@ -1,8 +1,10 @@
 """Admin Router - server statistics and user listing."""
+import shutil
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from database import get_db
 from models import User, Asset, Album, Job, Person, SharedLink
 from auth import get_admin_user
@@ -11,6 +13,35 @@ from services.job_service import job_worker
 from utils.video_utils import is_ffmpeg_available
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+def _get_storage_warning(total_size: int) -> dict:
+    """Two independent checks - see config.py's STORAGE_WARN_PERCENT/
+    DISK_WARN_FREE_GB comment for why neither alone is sufficient."""
+    quota_warning = False
+    limit_mb = config.TOTAL_STORAGE_LIMIT_MB
+    if limit_mb > 0:
+        used_percent = (total_size / (limit_mb * 1024 * 1024)) * 100
+        quota_warning = used_percent >= config.STORAGE_WARN_PERCENT
+
+    disk_warning = False
+    disk_free_gb = None
+    disk_total_gb = None
+    try:
+        usage = shutil.disk_usage(config.DATA_DIR)
+        disk_free_gb = round(usage.free / (1024 ** 3), 1)
+        disk_total_gb = round(usage.total / (1024 ** 3), 1)
+        disk_warning = disk_free_gb < config.DISK_WARN_FREE_GB
+    except OSError:
+        pass  # data dir on an unreachable/disconnected volume - not fatal, just no disk reading
+
+    return {
+        "quota_warning": quota_warning,
+        "disk_warning": disk_warning,
+        "disk_free_gb": disk_free_gb,
+        "disk_total_gb": disk_total_gb,
+        "total_storage_limit_mb": limit_mb,
+    }
 
 
 @router.get("/stats")
@@ -68,6 +99,7 @@ async def get_server_stats(
         },
         "ml": get_ml_status(),
         "ffmpeg_available": is_ffmpeg_available(),
+        "storage_warning": _get_storage_warning(total_size),
     }
 
 
