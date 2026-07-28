@@ -198,15 +198,18 @@ from routers.tailscale_router import router as tailscale_router
 from routers.import_router import router as import_router
 from routers.api_keys_router import router as api_keys_router
 from routers.admin_audit_router import router as admin_audit_router
+from routers.tag_router import router as tag_router
 
 app.include_router(auth_router)
 app.include_router(api_keys_router)
 app.include_router(admin_audit_router)
-# asset_media_router must be registered before asset_router: it has literal
-# paths like /download-zip, and asset_router's GET /{asset_id} catch-all
-# would otherwise swallow them (Starlette matches routes in registration
-# order, and /{asset_id} matches literally any single path segment).
+# asset_media_router and tag_router (PUT /api/assets/bulk-tags) must be
+# registered before asset_router: it has literal paths like /download-zip
+# and /bulk-tags, and asset_router's GET/PUT /{asset_id} catch-all would
+# otherwise swallow them (Starlette matches routes in registration order,
+# and /{asset_id} matches literally any single path segment).
 app.include_router(asset_media_router)
+app.include_router(tag_router)
 app.include_router(asset_router)
 app.include_router(album_router)
 app.include_router(search_router)

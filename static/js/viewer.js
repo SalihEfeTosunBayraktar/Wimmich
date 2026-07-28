@@ -8,6 +8,10 @@ registerTranslations({
         'viewer.removed_from_favorites': 'Removed from favorites',
         'viewer.archived': 'Archived',
         'viewer.unarchived': 'Removed from archive',
+        'viewer.tags_title': 'Tags',
+        'viewer.tags_add_placeholder': 'Add a tag...',
+        'viewer.tag_add_error': 'Could not add tag',
+        'viewer.tag_remove_error': 'Could not remove tag',
         'viewer.file_info_title': 'File Info',
         'viewer.label_name': 'Name',
         'viewer.label_type': 'Type',
@@ -50,6 +54,10 @@ registerTranslations({
         'viewer.removed_from_favorites': 'Favorilerden çıkarıldı',
         'viewer.archived': 'Arşivlendi',
         'viewer.unarchived': 'Arşivden çıkarıldı',
+        'viewer.tags_title': 'Etiketler',
+        'viewer.tags_add_placeholder': 'Etiket ekle...',
+        'viewer.tag_add_error': 'Etiket eklenemedi',
+        'viewer.tag_remove_error': 'Etiket kaldırılamadı',
         'viewer.file_info_title': 'Dosya Bilgileri',
         'viewer.label_name': 'Ad',
         'viewer.label_type': 'Tür',
@@ -92,6 +100,10 @@ registerTranslations({
         'viewer.removed_from_favorites': 'Retiré des favoris',
         'viewer.archived': 'Archivé',
         'viewer.unarchived': "Retiré des archives",
+        'viewer.tags_title': 'Étiquettes',
+        'viewer.tags_add_placeholder': 'Ajouter une étiquette...',
+        'viewer.tag_add_error': "Impossible d'ajouter l'étiquette",
+        'viewer.tag_remove_error': "Impossible de supprimer l'étiquette",
         'viewer.file_info_title': 'Informations sur le fichier',
         'viewer.label_name': 'Nom',
         'viewer.label_type': 'Type',
@@ -134,6 +146,10 @@ registerTranslations({
         'viewer.removed_from_favorites': 'Aus Favoriten entfernt',
         'viewer.archived': 'Archiviert',
         'viewer.unarchived': 'Aus dem Archiv entfernt',
+        'viewer.tags_title': 'Tags',
+        'viewer.tags_add_placeholder': 'Tag hinzufügen...',
+        'viewer.tag_add_error': 'Tag konnte nicht hinzugefügt werden',
+        'viewer.tag_remove_error': 'Tag konnte nicht entfernt werden',
         'viewer.file_info_title': 'Dateiinfo',
         'viewer.label_name': 'Name',
         'viewer.label_type': 'Typ',
@@ -182,6 +198,7 @@ async function openViewer(assetId) {
     // fetch for it is still in flight.
     _viewerSimilarAssets = [];
     _updateSimilarBadge([]);
+    _viewerTags = [];
 
     try {
         const asset = await API.getAsset(assetId);
@@ -201,6 +218,7 @@ async function openViewer(assetId) {
             renderViewerInfo(asset);
         }
         _loadSimilarForViewer(assetId);
+        _loadTagsForViewer(assetId);
     } catch (e) { toast(e.message, 'error'); closeViewer(); }
 }
 
@@ -527,6 +545,14 @@ function renderViewerInfo(asset) {
             ${asset.width ? `<div class="viewer-info-row"><span class="label">${t('viewer.label_resolution')}</span><span class="value">${asset.width} × ${asset.height}</span></div>` : ''}
             ${asset.duration_seconds ? `<div class="viewer-info-row"><span class="label">${t('viewer.label_duration')}</span><span class="value">${formatDuration(asset.duration_seconds)}</span></div>` : ''}
         </div>
+        <div class="viewer-info-section">
+            <h4>${t('viewer.tags_title')}</h4>
+            <div id="viewer-tags-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+            <div style="display:flex;gap:6px">
+                <input type="text" id="viewer-tag-input" placeholder="${t('viewer.tags_add_placeholder')}" style="flex:1">
+                <button class="btn btn-secondary btn-sm" id="viewer-tag-add-btn">${icon('plus')}</button>
+            </div>
+        </div>
         ${asset.smart_category && asset.smart_category !== 'none' ? `
         <div class="viewer-info-section">
             <div class="viewer-info-section-header">
@@ -589,6 +615,12 @@ function renderViewerInfo(asset) {
     // _loadSimilarForViewer, triggered from openViewer) - not a new fetch,
     // this just renders it if/when the sidebar happens to be open.
     _renderSimilarStrip(_viewerSimilarAssets);
+
+    _renderViewerTags(asset.id, _viewerTags);
+    $('viewer-tag-add-btn').onclick = () => _addViewerTag(asset.id);
+    $('viewer-tag-input').onkeydown = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); _addViewerTag(asset.id); }
+    };
 }
 
 async function correctCategoryAction(asset) {
@@ -613,6 +645,60 @@ async function correctCategoryAction(asset) {
 // Drives both the floating badge above the close button and (if the info
 // sidebar happens to be open) its "Benzer Fotoğraflar" strip, off one
 // fetch instead of two.
+let _viewerTags = [];
+
+async function _loadTagsForViewer(assetId) {
+    try {
+        const data = await API.getAssetTags(assetId);
+        if (!state.viewerAsset || state.viewerAsset.id !== assetId) return;
+        _viewerTags = data.tags || [];
+        _renderViewerTags(assetId, _viewerTags);
+    } catch (e) { /* non-critical - just don't show anything */ }
+}
+
+function _renderViewerTags(assetId, tags) {
+    const list = $('viewer-tags-list');
+    if (!list) return;
+    list.innerHTML = tags.map(tag => `
+        <span class="badge" style="display:inline-flex;align-items:center;gap:4px">
+            ${escHtml(tag.name)}
+            <button type="button" data-tag-id="${tag.id}" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;display:flex">${icon('close', 12)}</button>
+        </span>
+    `).join('');
+    list.querySelectorAll('button[data-tag-id]').forEach(btn => {
+        btn.onclick = () => _removeViewerTag(assetId, btn.dataset.tagId);
+    });
+}
+
+async function _addViewerTag(assetId) {
+    const input = $('viewer-tag-input');
+    const name = input.value.trim();
+    if (!name) return;
+    try {
+        const data = await API.addAssetTags(assetId, [name]);
+        _viewerTags = data.tags;
+        input.value = '';
+        _renderViewerTags(assetId, _viewerTags);
+    } catch (e) {
+        toast(t('viewer.tag_add_error'), 'error');
+    }
+}
+
+async function _removeViewerTag(assetId, tagId) {
+    // Optimistic - removed from the visible list immediately, restored
+    // only if the request actually fails.
+    const previous = _viewerTags;
+    _viewerTags = _viewerTags.filter(t => t.id !== tagId);
+    _renderViewerTags(assetId, _viewerTags);
+    try {
+        await API.removeAssetTag(assetId, tagId);
+    } catch (e) {
+        _viewerTags = previous;
+        _renderViewerTags(assetId, _viewerTags);
+        toast(t('viewer.tag_remove_error'), 'error');
+    }
+}
+
 let _viewerSimilarAssets = [];
 
 async function _loadSimilarForViewer(assetId) {

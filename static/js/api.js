@@ -131,6 +131,13 @@ const API = {
     bulkUpdateMetadata(assetIds, data) {
         return this.request('/api/assets/bulk-metadata', { method: 'PUT', body: { asset_ids: assetIds, ...data } });
     },
+
+    // Tags
+    getTags() { return this.request('/api/tags'); },
+    getAssetTags(assetId) { return this.request(`/api/assets/${assetId}/tags`); },
+    addAssetTags(assetId, names) { return this.request(`/api/assets/${assetId}/tags`, { method: 'POST', body: { names } }); },
+    removeAssetTag(assetId, tagId) { return this.request(`/api/assets/${assetId}/tags/${tagId}`, { method: 'DELETE' }); },
+    bulkAddTags(assetIds, names) { return this.request('/api/assets/bulk-tags', { method: 'PUT', body: { asset_ids: assetIds, names } }); },
     getTrash() { return this.request('/api/assets/trash'); },
     getDuplicates(sortBy = 'date_desc', fileType = '', location = '', mode = 'exact') {
         let url = `/api/assets/duplicates?sort_by=${sortBy}&mode=${mode}`;

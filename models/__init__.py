@@ -19,6 +19,7 @@ from models.similar_ignore import IgnoredSimilarAsset
 from models.session import Session
 from models.api_key import ApiKey
 from models.audit_log import AuditLog
+from models.tag import Tag, AssetTag
 
 __all__ = [
     "Base",
@@ -40,4 +41,6 @@ __all__ = [
     "Session",
     "ApiKey",
     "AuditLog",
+    "Tag",
+    "AssetTag",
 ]

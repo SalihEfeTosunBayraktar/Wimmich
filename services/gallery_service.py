@@ -8,7 +8,7 @@ from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
-from models import Asset, AlbumAsset, User
+from models import Asset, AlbumAsset, Tag, AssetTag, User
 from utils.serializers import asset_to_dict
 
 SORT_COLUMNS = {
@@ -38,7 +38,7 @@ SMART_CATEGORIES = ("screenshot", "document", "nature", "pet", "food", "car", "t
 MONTH_CELL_CAP = 36
 
 
-def _apply_filter(conditions: list, filter_by: str) -> None:
+def _apply_filter(conditions: list, filter_by: str, user_id: str) -> None:
     if filter_by == "no_album":
         conditions.append(~Asset.id.in_(select(AlbumAsset.asset_id)))
     elif filter_by == "image":
@@ -57,6 +57,12 @@ def _apply_filter(conditions: list, filter_by: str) -> None:
             conditions.append(Asset.smart_category == category)
     elif filter_by.startswith("city_"):
         conditions.append(Asset.city == filter_by[len("city_"):])
+    elif filter_by.startswith("tag_"):
+        tag_name = filter_by[len("tag_"):]
+        conditions.append(Asset.id.in_(
+            select(AssetTag.asset_id).join(Tag, Tag.id == AssetTag.tag_id)
+            .where(Tag.user_id == user_id, func.lower(Tag.name) == tag_name.lower())
+        ))
     # "all" (default): no extra condition - includes archived, unlike Timeline
 
 
@@ -93,7 +99,7 @@ async def _get_year_month_grid(
     slots (including empty ones), so this paginates by YEAR instead of by
     asset count."""
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
-    _apply_filter(conditions, filter_by)
+    _apply_filter(conditions, filter_by, user.id)
 
     # Only the list of years that actually have photos is needed up front -
     # every asset in the library doesn't need to be loaded (as full ORM
@@ -166,7 +172,7 @@ async def get_month_assets(
     front-loading every month's complete asset list into the year-grid
     response just to render a fixed 36-thumbnail mosaic per month."""
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
-    _apply_filter(conditions, filter_by)
+    _apply_filter(conditions, filter_by, user.id)
 
     date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
     month_start = datetime(year, month, 1)
@@ -201,7 +207,7 @@ async def _get_year_grid(
     page always means the next year, never entangled with the current
     year's overflow."""
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
-    _apply_filter(conditions, filter_by)
+    _apply_filter(conditions, filter_by, user.id)
 
     date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
     years_result = await db.execute(
@@ -244,7 +250,7 @@ async def get_year_assets(
     fetched only when the user actually clicks it (see get_month_assets,
     same reasoning)."""
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
-    _apply_filter(conditions, filter_by)
+    _apply_filter(conditions, filter_by, user.id)
 
     date_expr = func.coalesce(Asset.taken_at, Asset.created_at)
     year_start = datetime(year, 1, 1)
@@ -273,7 +279,7 @@ async def get_gallery_data(
         return await _get_year_grid(db, user, sort_by, filter_by, page)
 
     conditions = [Asset.user_id == user.id, Asset.is_trashed == False]
-    _apply_filter(conditions, filter_by)
+    _apply_filter(conditions, filter_by, user.id)
 
     total = (await db.execute(select(func.count(Asset.id)).where(and_(*conditions)))).scalar()
 

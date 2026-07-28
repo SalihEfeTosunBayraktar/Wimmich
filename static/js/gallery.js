@@ -412,8 +412,11 @@ function _renderSearchSuggestions(query) {
         // the full menu - typing anything reveals the rest below.
         matches = GALLERY_SEARCH_SUGGESTIONS.filter(([v]) => GALLERY_DEFAULT_SUGGESTION_FILTERS.includes(v));
     } else {
+        _ensureUserTags();
+        const tagSuggestions = (_userTags || []).map(tag => ['tag_' + tag.name, 'category', tag.name]);
         matches = GALLERY_SEARCH_SUGGESTIONS
             .filter(([v]) => v !== 'all')
+            .concat(tagSuggestions)
             .map(([v, iconName, label]) => [v, iconName, label, label.toLocaleLowerCase(_DATE_LOCALES[getLanguage()]).indexOf(q)])
             .filter(([, , , idx]) => idx !== -1)
             .sort((a, b) => a[3] - b[3]);
@@ -426,9 +429,14 @@ function _renderSearchSuggestions(query) {
 
     _ensureSmartCategoryCounts();
     suggestions.innerHTML = matches.map(([v, iconName, label]) => {
-        const countSuffix = (_smartCategoryCounts && v.startsWith('category_'))
-            ? ` (${_smartCategoryCounts[v.slice('category_'.length)] ?? 0})`
-            : '';
+        let countSuffix = '';
+        if (_smartCategoryCounts && v.startsWith('category_')) {
+            countSuffix = ` (${_smartCategoryCounts[v.slice('category_'.length)] ?? 0})`;
+        } else if (_userTags && v.startsWith('tag_')) {
+            const tagName = v.slice('tag_'.length);
+            const tag = _userTags.find(t => t.name === tagName);
+            if (tag) countSuffix = ` (${tag.count})`;
+        }
         return `<button type="button" class="search-suggestion-row" data-filter="${v}">${icon(iconName)} <span>${label}${countSuffix}</span></button>`;
     }).join('');
     suggestions.classList.remove('hidden');
@@ -470,6 +478,26 @@ function _ensureSmartCategoryCounts() {
             }
         });
     return _smartCategoryCountsPromise;
+}
+
+// User's tags, shown as search suggestions ("tag_<name>") once the query
+// matches one - same lazy-fetch-and-recheck shape as _ensureSmartCategoryCounts.
+let _userTags = null;
+let _userTagsPromise = null;
+
+function _ensureUserTags() {
+    if (_userTags || _userTagsPromise) return _userTagsPromise;
+    _userTagsPromise = API.getTags()
+        .then(data => { _userTags = data.tags; })
+        .catch(() => { _userTags = []; })
+        .then(() => {
+            const searchInput = $('gallery-search-input');
+            const suggestions = $('gallery-search-suggestions');
+            if (searchInput && suggestions && !suggestions.classList.contains('hidden')) {
+                _renderSearchSuggestions(searchInput.value);
+            }
+        });
+    return _userTagsPromise;
 }
 
 // Cached after the first check so every debounced keystroke doesn't cost
