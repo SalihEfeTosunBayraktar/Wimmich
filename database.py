@@ -123,6 +123,15 @@ async def init_db():
         except Exception:
             pass
 
+        # Automatic column migration for letting a share visitor upload
+        # into the shared album - this column was added to the SharedLink
+        # model but had no migration, so any database created before it
+        # existed was missing it entirely.
+        try:
+            await conn.execute(text("ALTER TABLE shared_links ADD COLUMN allow_upload BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+
         # Automatic column migration for the jobs table's denormalized
         # asset_id (see models/job.py) - backfilled from the still-active
         # jobs' data_json in the same pass, via SQLite's own JSON1

@@ -22,6 +22,10 @@ registerTranslations({
         'shared.download': 'Download',
         'shared.download_disabled': 'Downloads are disabled for this share',
         'shared.download_all': 'Download All',
+        'shared.upload_btn': 'Add Your Photos',
+        'shared.uploading': 'Uploading...',
+        'shared.upload_success': '{count} photo(s) added',
+        'shared.upload_error': 'Upload failed',
     },
     tr: {
         'shared.not_found': 'Bu paylaşım bağlantısı bulunamadı',
@@ -38,6 +42,10 @@ registerTranslations({
         'shared.download': 'İndir',
         'shared.download_disabled': 'Bu paylaşım için indirme kapalı',
         'shared.download_all': 'Tümünü İndir',
+        'shared.upload_btn': 'Fotoğraflarınızı Ekleyin',
+        'shared.uploading': 'Yükleniyor...',
+        'shared.upload_success': '{count} fotoğraf eklendi',
+        'shared.upload_error': 'Yükleme başarısız oldu',
     },
     fr: {
         'shared.not_found': 'Ce lien de partage est introuvable',
@@ -54,6 +62,10 @@ registerTranslations({
         'shared.download': 'Télécharger',
         'shared.download_disabled': 'Le téléchargement est désactivé pour ce partage',
         'shared.download_all': 'Tout télécharger',
+        'shared.upload_btn': 'Ajouter vos photos',
+        'shared.uploading': 'Téléchargement...',
+        'shared.upload_success': '{count} photo(s) ajoutée(s)',
+        'shared.upload_error': "Échec de l'envoi",
     },
     de: {
         'shared.not_found': 'Dieser Freigabelink wurde nicht gefunden',
@@ -70,6 +82,10 @@ registerTranslations({
         'shared.download': 'Herunterladen',
         'shared.download_disabled': 'Downloads sind für diese Freigabe deaktiviert',
         'shared.download_all': 'Alle herunterladen',
+        'shared.upload_btn': 'Eigene Fotos hinzufügen',
+        'shared.uploading': 'Wird hochgeladen...',
+        'shared.upload_success': '{count} Foto(s) hinzugefügt',
+        'shared.upload_error': 'Upload fehlgeschlagen',
     },
 });
 
@@ -163,9 +179,15 @@ function _renderSharedGrid(data) {
                 <h2>${escHtml(data.description || t('shared.default_title'))}</h2>
                 <span class="text-muted">${t('shared.item_count', { count: data.total })}</span>
             </div>
-            ${data.allow_download && _sharedAssets.length ? `
-                <a class="btn btn-secondary btn-sm" href="${_sharedDownloadZipUrl()}" download>${icon('download')} ${t('shared.download_all')}</a>
-            ` : ''}
+            <div style="display:flex;gap:8px">
+                ${data.allow_download && _sharedAssets.length ? `
+                    <a class="btn btn-secondary btn-sm" href="${_sharedDownloadZipUrl()}" download>${icon('download')} ${t('shared.download_all')}</a>
+                ` : ''}
+                ${data.allow_upload ? `
+                    <input type="file" id="shared-upload-input" accept="image/*,video/*" multiple class="hidden">
+                    <button type="button" class="btn btn-primary btn-sm" id="shared-upload-btn">${icon('upload')} ${t('shared.upload_btn')}</button>
+                ` : ''}
+            </div>
         </header>
         ${_sharedAssets.length ? `
             <div class="photo-grid" id="shared-photo-grid">
@@ -176,6 +198,41 @@ function _renderSharedGrid(data) {
     root.querySelectorAll('.shared-photo-card').forEach((card) => {
         card.querySelector('img').onclick = () => _openSharedLightbox(parseInt(card.dataset.index, 10));
     });
+
+    const uploadBtn = $('shared-upload-btn');
+    if (uploadBtn) {
+        uploadBtn.onclick = () => $('shared-upload-input').click();
+        $('shared-upload-input').onchange = (e) => _uploadToSharedAlbum(e.target.files);
+    }
+}
+
+async function _uploadToSharedAlbum(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    const btn = $('shared-upload-btn');
+    const originalLabel = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = t('shared.uploading');
+
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    if (_sharedPassword) formData.append('password', _sharedPassword);
+
+    try {
+        const resp = await fetch(`/api/shared/${_sharedKey}/upload`, { method: 'POST', body: formData });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || t('shared.upload_error'));
+        }
+        const result = await resp.json();
+        toast(t('shared.upload_success', { count: result.uploaded }), 'success');
+        await _loadSharedView(_sharedPassword);
+    } catch (e) {
+        toast(e.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalLabel;
+    }
 }
 
 function _sharedPhotoCardHtml(asset, index) {

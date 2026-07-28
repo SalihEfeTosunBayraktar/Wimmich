@@ -10,6 +10,8 @@ registerTranslations({
         'sharing.link_copied_success': 'Link copied!',
         'sharing.link_deleted_success': 'Link deleted',
         'sharing.link_created_success': 'Share link created and copied!',
+        'sharing.allow_upload': 'Allow visitors to upload photos to this album',
+        'sharing.allow_upload_hint': 'Anyone with the link (and password, if set) can add their own photos straight into this album - useful for collecting everyone\'s photos from an event in one place.',
     },
     tr: {
         'sharing.empty_title': 'Paylaşım linki yok',
@@ -19,6 +21,8 @@ registerTranslations({
         'sharing.link_copied_success': 'Link kopyalandı!',
         'sharing.link_deleted_success': 'Link silindi',
         'sharing.link_created_success': 'Paylaşım linki oluşturuldu ve kopyalandı!',
+        'sharing.allow_upload': 'Ziyaretçiler bu albüme fotoğraf yükleyebilsin',
+        'sharing.allow_upload_hint': 'Linke (ve varsa şifreye) sahip herkes kendi fotoğraflarını doğrudan bu albüme ekleyebilir - bir etkinlikteki herkesin fotoğraflarını tek yerde toplamak için kullanışlıdır.',
     },
     fr: {
         'sharing.empty_title': 'Aucun lien de partage',
@@ -28,6 +32,8 @@ registerTranslations({
         'sharing.link_copied_success': 'Lien copié !',
         'sharing.link_deleted_success': 'Lien supprimé',
         'sharing.link_created_success': 'Lien de partage créé et copié !',
+        'sharing.allow_upload': 'Autoriser les visiteurs à ajouter des photos à cet album',
+        'sharing.allow_upload_hint': "Toute personne disposant du lien (et du mot de passe, le cas échéant) peut ajouter ses propres photos directement dans cet album - utile pour rassembler les photos de tout le monde après un événement.",
     },
     de: {
         'sharing.empty_title': 'Noch keine Freigabelinks',
@@ -37,6 +43,8 @@ registerTranslations({
         'sharing.link_copied_success': 'Link kopiert!',
         'sharing.link_deleted_success': 'Link gelöscht',
         'sharing.link_created_success': 'Freigabelink erstellt und kopiert!',
+        'sharing.allow_upload': 'Besuchern erlauben, Fotos zu diesem Album hochzuladen',
+        'sharing.allow_upload_hint': 'Jeder mit dem Link (und Passwort, falls gesetzt) kann eigene Fotos direkt zu diesem Album hinzufügen - nützlich, um die Fotos aller Teilnehmer einer Veranstaltung an einem Ort zu sammeln.',
     },
 });
 
@@ -84,6 +92,10 @@ function showShareModal(linkType, payload) {
     $('share-password').value = '';
     $('share-expire').value = '';
     $('share-download').checked = true;
+    $('share-upload').checked = false;
+    // Only meaningful for an ALBUM share - there's no album for an
+    // ASSET-type share's visitor upload to land in.
+    $('share-upload-group').classList.toggle('hidden', linkType !== 'ALBUM');
     $('share-modal').classList.remove('hidden');
 }
 
@@ -101,6 +113,7 @@ function initShareModal() {
                 password: $('share-password').value.trim() || null,
                 expires_in_days: expireVal ? parseInt(expireVal) : null,
                 allow_download: $('share-download').checked,
+                allow_upload: _pendingShare.link_type === 'ALBUM' && $('share-upload').checked,
             });
             $('share-modal').classList.add('hidden');
             const url = `${location.origin}/shared/${share.key}`;

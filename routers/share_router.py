@@ -2,7 +2,7 @@
 import secrets
 from datetime import datetime, timezone
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select, and_
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models import User, Asset, Album, AlbumAsset, SharedLink
 from auth import get_current_user, get_optional_user, hash_password, verify_password
-from services import asset_media_service, download_service
+from services import asset_media_service, download_service, asset_mutation_service, album_service
 
 router = APIRouter(tags=["shares"])
 
@@ -23,6 +23,7 @@ class ShareCreateRequest(BaseModel):
     password: Optional[str] = None
     expires_in_days: Optional[int] = None
     allow_download: bool = True
+    allow_upload: bool = False
     description: Optional[str] = None
 
 
@@ -40,6 +41,7 @@ def _share_to_dict(share: SharedLink) -> dict:
         "has_password": share.password_hash is not None,
         "expires_at": share.expires_at.isoformat() if share.expires_at else None,
         "allow_download": share.allow_download,
+        "allow_upload": share.allow_upload,
         "description": share.description,
         "view_count": share.view_count,
         "created_at": share.created_at.isoformat() if share.created_at else None,
@@ -61,6 +63,9 @@ async def create_share(
         key=key,
         link_type=req.link_type,
         allow_download=req.allow_download,
+        # Only meaningful for an ALBUM share (there's no "album" for an
+        # ASSET-type share's visitor upload to land in).
+        allow_upload=req.allow_upload if req.link_type == "ALBUM" else False,
         description=req.description,
     )
 
@@ -298,6 +303,42 @@ async def view_shared(
         "description": share.description,
         "link_type": share.link_type,
         "allow_download": share.allow_download,
+        "allow_upload": share.allow_upload,
         "assets": assets,
         "total": len(assets),
     }
+
+
+@router.post("/api/shared/{key}/upload")
+async def upload_to_shared_album(
+    key: str,
+    files: List[UploadFile] = File(...),
+    password: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lets a visitor with the (optional) share password add their own
+    photos straight into the shared album - for collecting everyone's
+    photos from one event into a single place. Only meaningful for an
+    ALBUM share with allow_upload set; uploads are attributed to the
+    album owner's own account (an anonymous visitor has none of their
+    own), so the owner's usual quota/file-validation checks apply exactly
+    as if they'd uploaded it themselves."""
+    share = await _get_share_or_404(db, key)
+
+    if share.password_hash and not (password and verify_password(password, share.password_hash)):
+        raise HTTPException(status_code=403, detail="Password required or incorrect")
+
+    if share.link_type != "ALBUM" or not share.album_id or not share.allow_upload:
+        raise HTTPException(status_code=403, detail="Uploads are not allowed for this share")
+
+    owner_result = await db.execute(select(User).where(User.id == share.user_id))
+    owner = owner_result.scalar_one_or_none()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Share owner not found")
+
+    result = await asset_mutation_service.upload_files(db, owner, files)
+    new_asset_ids = [r["asset"]["id"] for r in result["results"] if r["status"] == "uploaded"]
+    if new_asset_ids:
+        await album_service.add_assets_to_album(db, share.album_id, owner.id, new_asset_ids)
+
+    return {"uploaded": len(new_asset_ids), "errors": result["errors"]}
