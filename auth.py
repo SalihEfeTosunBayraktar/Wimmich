@@ -78,6 +78,25 @@ def create_access_token(user_id: str, email: str, is_admin: bool = False, priori
     return jwt.encode(payload, config.JWT_SECRET, algorithm=config.JWT_ALGORITHM)
 
 
+# Marks a token as "password was correct, but 2FA still needs to be
+# confirmed" - deliberately NOT a real access token (get_current_user
+# rejects anything carrying this claim, see below), so it's useless for
+# calling any other endpoint even if it leaked. Short-lived since its only
+# job is to survive the few seconds between the login form and the 6-digit
+# code form.
+TWO_FA_PENDING_EXPIRE_MINUTES = 5
+
+
+def create_2fa_pending_token(user_id: str) -> str:
+    payload = {
+        "sub": user_id,
+        "purpose": "2fa_pending",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=TWO_FA_PENDING_EXPIRE_MINUTES),
+        "iat": datetime.now(timezone.utc),
+    }
+    return jwt.encode(payload, config.JWT_SECRET, algorithm=config.JWT_ALGORITHM)
+
+
 async def create_session(db: AsyncSession, user_id: str, jti: str, request: Request) -> Session:
     """Creates the server-side row a token's `jti` claim is checked against
     on every request (see get_current_user) - what actually lets a session
@@ -166,6 +185,15 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
+        )
+
+    # A 2FA-pending token (issued by /login when the password was right but
+    # the TOTP code hasn't been entered yet) must never work as a real
+    # bearer token - only /auth/2fa/login-verify is allowed to consume it.
+    if payload.get("purpose") == "2fa_pending":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Two-factor verification required",
         )
 
     user_id = payload.get("sub")

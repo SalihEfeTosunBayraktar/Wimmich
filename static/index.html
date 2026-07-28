@@ -103,6 +103,21 @@
                 </p>
             </form>
 
+            <!-- 2FA code entry - shown after a correct password on a 2FA-enabled account -->
+            <form id="login-2fa-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-2fa-code" data-i18n="auth.twofa_code_label"></label>
+                    <input type="text" id="login-2fa-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required autofocus>
+                    <p class="text-muted admin-field-hint" data-i18n="auth.twofa_code_hint"></p>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="login-2fa-btn">
+                    <span data-i18n="auth.twofa_verify_btn"></span>
+                </button>
+                <p class="auth-switch">
+                    <a href="#" id="login-2fa-back"><span data-i18n="auth.twofa_back"></span></a>
+                </p>
+            </form>
+
             <!-- Register Form -->
             <form id="register-form" class="auth-form">
                 <div class="form-group">
@@ -442,6 +457,10 @@
                         <input type="text" id="profile-api-key-name" maxlength="255" data-i18n-placeholder="profile.api_keys_name_placeholder">
                         <button type="button" class="btn btn-secondary btn-sm" id="profile-api-key-create-btn" data-i18n="profile.api_keys_create"></button>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="profile.twofa_label"></label>
+                    <div id="profile-2fa-section"></div>
                 </div>
             </div>
             <div class="modal-footer">

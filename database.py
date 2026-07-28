@@ -123,6 +123,16 @@ async def init_db():
         except Exception:
             pass
 
+        # Automatic column migration for TOTP two-factor authentication
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN totp_secret VARCHAR(32)"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+
         # Automatic column migration for letting a share visitor upload
         # into the shared album - this column was added to the SharedLink
         # model but had no migration, so any database created before it

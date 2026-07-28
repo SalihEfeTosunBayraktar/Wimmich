@@ -90,6 +90,14 @@ const API = {
     getApiKeys() { return this.request('/api/auth/api-keys'); },
     createApiKey(name) { return this.request('/api/auth/api-keys', { method: 'POST', body: { name } }); },
     revokeApiKey(id) { return this.request(`/api/auth/api-keys/${id}`, { method: 'DELETE' }); },
+    setup2FA() { return this.request('/api/auth/2fa/setup', { method: 'POST' }); },
+    verify2FA(code) { return this.request('/api/auth/2fa/verify', { method: 'POST', body: { code } }); },
+    disable2FA(password) { return this.request('/api/auth/2fa/disable', { method: 'POST', body: { password } }); },
+    login2FAVerify(preAuthToken, code) {
+        return this.request('/api/auth/2fa/login-verify', {
+            method: 'POST', body: { pre_auth_token: preAuthToken, code }, skipAuthReload: true,
+        });
+    },
 
     // Assets
     async uploadFile(file) {

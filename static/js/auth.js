@@ -33,6 +33,19 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'API key revoked',
         'profile.api_keys_name_required': 'Enter a name for the key',
         'profile.api_keys_empty': 'No API keys yet',
+        'profile.twofa_label': 'Two-Factor Authentication',
+        'profile.twofa_enabled_hint': 'Two-factor authentication is enabled - a code from your authenticator app is required at login.',
+        'profile.twofa_disabled_hint': 'Add an extra step at login using an authenticator app (Google Authenticator, Authy, etc.), on top of your password.',
+        'profile.twofa_enable_btn': 'Enable 2FA',
+        'profile.twofa_disable_btn': 'Disable 2FA',
+        'profile.twofa_setup_hint': 'Scan this QR code with your authenticator app, then enter the 6-digit code it shows to confirm.',
+        'profile.twofa_manual_secret': "Can't scan it? Enter this code manually: {secret}",
+        'profile.twofa_code_placeholder': '6-digit code',
+        'profile.twofa_confirm_btn': 'Confirm',
+        'profile.twofa_enabled_toast': 'Two-factor authentication enabled',
+        'profile.twofa_disabled_toast': 'Two-factor authentication disabled',
+        'profile.twofa_disable_confirm_hint': 'Enter your password to disable two-factor authentication.',
+        'profile.twofa_password_placeholder': 'Current password',
     },
     tr: {
         'profile.settings_title': 'Profil Ayarları',
@@ -65,6 +78,19 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'API anahtarı iptal edildi',
         'profile.api_keys_name_required': 'Anahtar için bir isim girin',
         'profile.api_keys_empty': 'Henüz API anahtarı yok',
+        'profile.twofa_label': 'İki Adımlı Doğrulama',
+        'profile.twofa_enabled_hint': 'İki adımlı doğrulama etkin - girişte kimlik doğrulama uygulamanızdan bir kod gerekir.',
+        'profile.twofa_disabled_hint': 'Şifrenize ek olarak bir kimlik doğrulama uygulaması (Google Authenticator, Authy vb.) ile girişe ekstra bir adım ekleyin.',
+        'profile.twofa_enable_btn': '2FA Etkinleştir',
+        'profile.twofa_disable_btn': '2FA Devre Dışı Bırak',
+        'profile.twofa_setup_hint': 'Bu QR kodunu kimlik doğrulama uygulamanızla tarayın, ardından gösterdiği 6 haneli kodu onaylamak için girin.',
+        'profile.twofa_manual_secret': 'Tarayamıyor musunuz? Bu kodu elle girin: {secret}',
+        'profile.twofa_code_placeholder': '6 haneli kod',
+        'profile.twofa_confirm_btn': 'Onayla',
+        'profile.twofa_enabled_toast': 'İki adımlı doğrulama etkinleştirildi',
+        'profile.twofa_disabled_toast': 'İki adımlı doğrulama devre dışı bırakıldı',
+        'profile.twofa_disable_confirm_hint': 'İki adımlı doğrulamayı devre dışı bırakmak için şifrenizi girin.',
+        'profile.twofa_password_placeholder': 'Mevcut şifre',
     },
     fr: {
         'profile.settings_title': 'Paramètres du profil',
@@ -97,6 +123,19 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'Clé API révoquée',
         'profile.api_keys_name_required': 'Entrez un nom pour la clé',
         'profile.api_keys_empty': 'Aucune clé API pour le moment',
+        'profile.twofa_label': 'Authentification à deux facteurs',
+        'profile.twofa_enabled_hint': "L'authentification à deux facteurs est activée - un code de votre application d'authentification est requis à la connexion.",
+        'profile.twofa_disabled_hint': "Ajoutez une étape supplémentaire à la connexion à l'aide d'une application d'authentification (Google Authenticator, Authy, etc.), en plus de votre mot de passe.",
+        'profile.twofa_enable_btn': 'Activer la 2FA',
+        'profile.twofa_disable_btn': 'Désactiver la 2FA',
+        'profile.twofa_setup_hint': "Scannez ce code QR avec votre application d'authentification, puis entrez le code à 6 chiffres affiché pour confirmer.",
+        'profile.twofa_manual_secret': 'Impossible de scanner ? Entrez ce code manuellement : {secret}',
+        'profile.twofa_code_placeholder': 'Code à 6 chiffres',
+        'profile.twofa_confirm_btn': 'Confirmer',
+        'profile.twofa_enabled_toast': 'Authentification à deux facteurs activée',
+        'profile.twofa_disabled_toast': 'Authentification à deux facteurs désactivée',
+        'profile.twofa_disable_confirm_hint': "Entrez votre mot de passe pour désactiver l'authentification à deux facteurs.",
+        'profile.twofa_password_placeholder': 'Mot de passe actuel',
     },
     de: {
         'profile.settings_title': 'Profileinstellungen',
@@ -129,15 +168,44 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'API-Schlüssel widerrufen',
         'profile.api_keys_name_required': 'Geben Sie einen Namen für den Schlüssel ein',
         'profile.api_keys_empty': 'Noch keine API-Schlüssel',
+        'profile.twofa_label': 'Zwei-Faktor-Authentifizierung',
+        'profile.twofa_enabled_hint': 'Zwei-Faktor-Authentifizierung ist aktiviert - beim Login ist ein Code aus Ihrer Authenticator-App erforderlich.',
+        'profile.twofa_disabled_hint': 'Fügen Sie mit einer Authenticator-App (Google Authenticator, Authy usw.) einen zusätzlichen Schritt beim Login hinzu, zusätzlich zu Ihrem Passwort.',
+        'profile.twofa_enable_btn': '2FA aktivieren',
+        'profile.twofa_disable_btn': '2FA deaktivieren',
+        'profile.twofa_setup_hint': 'Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie dann den angezeigten 6-stelligen Code zur Bestätigung ein.',
+        'profile.twofa_manual_secret': 'Können Sie nicht scannen? Geben Sie diesen Code manuell ein: {secret}',
+        'profile.twofa_code_placeholder': '6-stelliger Code',
+        'profile.twofa_confirm_btn': 'Bestätigen',
+        'profile.twofa_enabled_toast': 'Zwei-Faktor-Authentifizierung aktiviert',
+        'profile.twofa_disabled_toast': 'Zwei-Faktor-Authentifizierung deaktiviert',
+        'profile.twofa_disable_confirm_hint': 'Geben Sie Ihr Passwort ein, um die Zwei-Faktor-Authentifizierung zu deaktivieren.',
+        'profile.twofa_password_placeholder': 'Aktuelles Passwort',
     },
 });
 
 function initAuth() {
+    // Set by a successful password check on a 2FA-enabled account -
+    // remembered here (not in the form) so the 2FA form's submit handler
+    // knows which pending login it's completing, and _remember2FALogin so
+    // "remember me" survives from the first step to the second.
+    let _pending2FAToken = null;
+    let _remember2FALogin = false;
+
     $('login-form').onsubmit = async (e) => {
         e.preventDefault();
         try {
             const remember = $('login-remember').checked;
             const r = await API.login($('login-email').value, $('login-password').value);
+            if (r.requires_2fa) {
+                _pending2FAToken = r.pre_auth_token;
+                _remember2FALogin = remember;
+                $('login-2fa-code').value = '';
+                $('login-form').classList.remove('active');
+                $('login-2fa-form').classList.add('active');
+                $('login-2fa-code').focus();
+                return;
+            }
             API.setToken(r.token, remember);
             state.user = r.user;
             toast(t('auth.login_success'), 'success');
@@ -149,6 +217,27 @@ function initAuth() {
             // localized backend messages, so surface those as-is.
             toast(err.status === 401 ? t('auth.login_failed') : err.message, 'error');
         }
+    };
+
+    $('login-2fa-form').onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const code = $('login-2fa-code').value.trim();
+            const r = await API.login2FAVerify(_pending2FAToken, code);
+            API.setToken(r.token, _remember2FALogin);
+            state.user = r.user;
+            toast(t('auth.login_success'), 'success');
+            showApp();
+        } catch (err) {
+            toast(err.status === 401 ? t('auth.twofa_invalid_code') : err.message, 'error');
+        }
+    };
+
+    $('login-2fa-back').onclick = (e) => {
+        e.preventDefault();
+        _pending2FAToken = null;
+        $('login-2fa-form').classList.remove('active');
+        $('login-form').classList.add('active');
     };
 
     $('register-form').onsubmit = async (e) => {
@@ -200,6 +289,78 @@ function showProfileModal() {
     $('profile-name').focus();
     renderProfileSessions();
     renderProfileApiKeys();
+    renderProfile2FASection();
+}
+
+function renderProfile2FASection() {
+    const container = $('profile-2fa-section');
+    if (!container) return;
+    if (state.user.totp_enabled) {
+        container.innerHTML = `
+            <p class="text-muted admin-field-hint">${t('profile.twofa_enabled_hint')}</p>
+            <button type="button" class="btn btn-danger btn-sm" id="profile-2fa-disable-btn">${t('profile.twofa_disable_btn')}</button>
+        `;
+        $('profile-2fa-disable-btn').onclick = _showDisable2FAPrompt;
+    } else {
+        container.innerHTML = `
+            <p class="text-muted admin-field-hint">${t('profile.twofa_disabled_hint')}</p>
+            <button type="button" class="btn btn-secondary btn-sm" id="profile-2fa-enable-btn">${t('profile.twofa_enable_btn')}</button>
+        `;
+        $('profile-2fa-enable-btn').onclick = _startEnable2FA;
+    }
+}
+
+async function _startEnable2FA() {
+    const container = $('profile-2fa-section');
+    try {
+        const data = await API.setup2FA();
+        container.innerHTML = `
+            <p class="text-muted admin-field-hint">${t('profile.twofa_setup_hint')}</p>
+            <img src="${data.qr_code_data_uri}" alt="QR code" style="display:block;margin:8px 0;max-width:200px;border-radius:8px">
+            <p class="text-muted admin-field-hint" style="word-break:break-all">${t('profile.twofa_manual_secret', { secret: data.secret })}</p>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <input type="text" id="profile-2fa-code-input" placeholder="${t('profile.twofa_code_placeholder')}" maxlength="6" style="flex:1">
+                <button type="button" class="btn btn-primary btn-sm" id="profile-2fa-confirm-btn">${t('profile.twofa_confirm_btn')}</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="profile-2fa-setup-cancel-btn">${t('common.cancel')}</button>
+            </div>
+        `;
+        $('profile-2fa-setup-cancel-btn').onclick = renderProfile2FASection;
+        $('profile-2fa-confirm-btn').onclick = async () => {
+            const code = $('profile-2fa-code-input').value.trim();
+            if (!code) return;
+            try {
+                await API.verify2FA(code);
+                state.user.totp_enabled = true;
+                toast(t('profile.twofa_enabled_toast'), 'success');
+                renderProfile2FASection();
+            } catch (e) { toast(e.message, 'error'); }
+        };
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+function _showDisable2FAPrompt() {
+    const container = $('profile-2fa-section');
+    container.innerHTML = `
+        <p class="text-muted admin-field-hint">${t('profile.twofa_disable_confirm_hint')}</p>
+        <div style="display:flex;gap:8px">
+            <input type="password" id="profile-2fa-disable-password" placeholder="${t('profile.twofa_password_placeholder')}" style="flex:1">
+            <button type="button" class="btn btn-danger btn-sm" id="profile-2fa-disable-confirm-btn">${t('profile.twofa_disable_btn')}</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="profile-2fa-disable-cancel-btn">${t('common.cancel')}</button>
+        </div>
+    `;
+    $('profile-2fa-disable-cancel-btn').onclick = renderProfile2FASection;
+    $('profile-2fa-disable-confirm-btn').onclick = async () => {
+        const password = $('profile-2fa-disable-password').value;
+        if (!password) return;
+        try {
+            await API.disable2FA(password);
+            state.user.totp_enabled = false;
+            toast(t('profile.twofa_disabled_toast'), 'success');
+            renderProfile2FASection();
+        } catch (e) { toast(e.message, 'error'); }
+    };
 }
 
 // A rough, dependency-free read of the two things that actually matter for

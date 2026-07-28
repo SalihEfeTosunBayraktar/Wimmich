@@ -24,6 +24,12 @@ class User(Base):
     # into the JWT at login time same as is_admin, so a change here takes
     # effect on the user's next login, not their already-issued token.
     priority = Column(Integer, default=3, nullable=False)
+    # 2FA (TOTP). totp_secret is written at /2fa/setup time but totp_enabled
+    # stays False until the user actually confirms a code at /2fa/verify -
+    # an abandoned setup attempt (scanned the QR, never entered a code)
+    # must never silently turn on 2FA on its own.
+    totp_secret = Column(String(32), nullable=True)
+    totp_enabled = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")

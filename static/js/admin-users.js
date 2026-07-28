@@ -42,6 +42,10 @@ registerTranslations({
         'admin_users.fields_required': 'Name, email and password are required',
         'admin_users.user_created': 'User created successfully',
         'admin_users.reset_password': 'Password',
+        'admin_users.badge_2fa': '2FA',
+        'admin_users.reset_2fa': 'Reset 2FA',
+        'admin_users.confirm_reset_2fa': "Reset two-factor authentication for {name}? They'll be able to log in with just their password again until they set it up anew.",
+        'admin_users.reset_2fa_success': 'Two-factor authentication reset',
         'admin_users.set_password_title': 'Set New Password',
         'admin_users.new_password_label': 'New password (min 4 characters)',
         'admin_users.password_too_short': 'Password must be at least 8 characters',
@@ -87,6 +91,10 @@ registerTranslations({
         'admin_users.fields_required': 'İsim, e-posta ve şifre zorunludur',
         'admin_users.user_created': 'Kullanıcı başarıyla oluşturuldu',
         'admin_users.reset_password': 'Şifre',
+        'admin_users.badge_2fa': '2FA',
+        'admin_users.reset_2fa': '2FA Sıfırla',
+        'admin_users.confirm_reset_2fa': '{name} için iki adımlı doğrulama sıfırlansın mı? Yeniden kurana kadar sadece şifresiyle giriş yapabilecek.',
+        'admin_users.reset_2fa_success': 'İki adımlı doğrulama sıfırlandı',
         'admin_users.set_password_title': 'Yeni Şifre Belirle',
         'admin_users.new_password_label': 'Yeni şifre (en az 4 karakter)',
         'admin_users.password_too_short': 'Şifre en az 8 karakter olmalı',
@@ -132,6 +140,10 @@ registerTranslations({
         'admin_users.fields_required': "Le nom, l'e-mail et le mot de passe sont requis",
         'admin_users.user_created': 'Utilisateur créé avec succès',
         'admin_users.reset_password': 'Mot de passe',
+        'admin_users.badge_2fa': '2FA',
+        'admin_users.reset_2fa': 'Réinitialiser la 2FA',
+        'admin_users.confirm_reset_2fa': "Réinitialiser l'authentification à deux facteurs pour {name} ? Cette personne pourra se reconnecter avec seulement son mot de passe jusqu'à ce qu'elle la reconfigure.",
+        'admin_users.reset_2fa_success': 'Authentification à deux facteurs réinitialisée',
         'admin_users.set_password_title': 'Définir un nouveau mot de passe',
         'admin_users.new_password_label': 'Nouveau mot de passe (min. 4 caractères)',
         'admin_users.password_too_short': 'Le mot de passe doit comporter au moins 8 caractères',
@@ -177,6 +189,10 @@ registerTranslations({
         'admin_users.fields_required': 'Name, E-Mail und Passwort sind erforderlich',
         'admin_users.user_created': 'Benutzer erfolgreich erstellt',
         'admin_users.reset_password': 'Passwort',
+        'admin_users.badge_2fa': '2FA',
+        'admin_users.reset_2fa': '2FA zurücksetzen',
+        'admin_users.confirm_reset_2fa': 'Zwei-Faktor-Authentifizierung für {name} zurücksetzen? Die Person kann sich dann wieder nur mit ihrem Passwort anmelden, bis sie sie neu einrichtet.',
+        'admin_users.reset_2fa_success': 'Zwei-Faktor-Authentifizierung zurückgesetzt',
         'admin_users.set_password_title': 'Neues Passwort festlegen',
         'admin_users.new_password_label': 'Neues Passwort (mind. 4 Zeichen)',
         'admin_users.password_too_short': 'Passwort muss mindestens 8 Zeichen lang sein',
@@ -198,6 +214,7 @@ function renderUserList(users) {
                                 ${u.is_approved ? t('admin_users.approved') : t('admin_users.pending_approval')}
                             </span>
                         ` : ''}
+                        ${u.totp_enabled ? `<span class="badge badge-success" style="margin-left:4px">${t('admin_users.badge_2fa')}</span>` : ''}
                     </div>
                     <div class="user-item-email">${u.email}</div>
                 </div>
@@ -217,6 +234,7 @@ function renderUserList(users) {
                 </label>
                 <button class="btn btn-secondary btn-sm" onclick="editUserQuota('${u.id}', ${u.storage_quota_mb})">${icon('settings')} ${t('admin_users.quota_label')}</button>
                 <button class="btn btn-secondary btn-sm" onclick="showSetPasswordModal('${u.id}', '${escAttr(u.name)}')">${icon('key')} ${t('admin_users.reset_password')}</button>
+                ${u.totp_enabled ? `<button class="btn btn-secondary btn-sm" onclick="resetUser2FA('${u.id}', '${escAttr(u.name)}')">${icon('ban')} ${t('admin_users.reset_2fa')}</button>` : ''}
                 ${u.id !== state.user.id ? `
                     <button class="btn btn-secondary btn-sm" onclick="toggleUserAdmin('${u.id}', ${u.is_admin})">
                         ${icon('crown')} ${u.is_admin ? t('admin_users.remove_admin') : t('admin_users.make_admin')}
@@ -476,6 +494,17 @@ async function toggleUserAdmin(userId, currentStatus) {
     try {
         await API.updateUserAdmin(userId, !currentStatus);
         toast(!currentStatus ? t('admin_users.admin_granted') : t('admin_users.admin_revoked'), 'success');
+        renderAdmin();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+async function resetUser2FA(userId, name) {
+    if (!confirm(t('admin_users.confirm_reset_2fa', { name }))) return;
+    try {
+        await API.resetUser2FA(userId);
+        toast(t('admin_users.reset_2fa_success'), 'success');
         renderAdmin();
     } catch (e) {
         toast(e.message, 'error');

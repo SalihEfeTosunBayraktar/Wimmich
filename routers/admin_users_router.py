@@ -188,6 +188,29 @@ async def set_user_password(
     return {"message": "Kullanıcı şifresi güncellendi"}
 
 
+@router.put("/users/{user_id}/reset-2fa")
+async def reset_user_2fa(
+    user_id: str,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Force-disables 2FA for a user who lost their authenticator device -
+    no password confirmation needed (unlike the user's own self-service
+    /2fa/disable), since an admin is exactly who a locked-out user has to
+    come to for this. Logged either way, since it's a meaningful reduction
+    in that account's security."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+    user.totp_enabled = False
+    user.totp_secret = None
+    await log_action(db, admin, "user.reset_2fa", "user", user.id, {"email": user.email})
+    await db.commit()
+    return {"message": "Kullanıcının iki adımlı doğrulaması sıfırlandı"}
+
+
 @router.put("/users/{user_id}/admin")
 async def update_user_admin(
     user_id: str,

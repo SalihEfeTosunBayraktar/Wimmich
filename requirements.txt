@@ -12,6 +12,8 @@ aiosqlite>=0.20.0
 # Auth
 pyjwt>=2.9.0
 bcrypt>=4.2.0
+pyotp>=2.9.0  # TOTP two-factor authentication (RFC 6238)
+qrcode>=7.4.0  # renders the 2FA setup QR code server-side (built on Pillow, already a dependency)
 
 # Image Processing
 Pillow>=11.0.0

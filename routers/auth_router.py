@@ -1,17 +1,26 @@
 """Auth Router - Registration, Login, Profile"""
+import base64
+import io
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+import pyotp
+import qrcode
 
 from database import get_db
 from models import User, Asset, Session
-from auth import hash_password, verify_password, create_access_token, create_session, decode_token, get_current_user
+from auth import (
+    hash_password, verify_password, create_access_token, create_session, decode_token,
+    get_current_user, create_2fa_pending_token,
+)
 from services import login_rate_limit
 from utils.password_policy import is_password_strong_enough, MIN_PASSWORD_LENGTH
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+TOTP_ISSUER = "Wimmich"
 
 
 def _login_rate_keys(request: Request, email: str) -> list:
@@ -149,6 +158,15 @@ async def login(req: LoginRequest, request: Request, response: Response, db: Asy
     # Correct credentials - clear this identity's failure history so a few
     # earlier typos never accumulate toward a lockout.
     login_rate_limit.reset(rate_keys)
+
+    if user.totp_enabled:
+        # No session/jti created yet - a login that never completes the
+        # second step must leave no trace in the sessions list. The pending
+        # token itself can't be used as a real access token (get_current_user
+        # explicitly rejects it), so leaking it is harmless without the
+        # actual TOTP code too.
+        return {"requires_2fa": True, "pre_auth_token": create_2fa_pending_token(user.id)}
+
     jti = str(uuid.uuid4())
     await create_session(db, user.id, jti, request)
     await db.commit()
@@ -200,6 +218,7 @@ async def get_me(user: User = Depends(get_current_user), db: AsyncSession = Depe
         "asset_count": asset_count,
         "total_size": total_size,
         "storage_quota_mb": user.storage_quota_mb,
+        "totp_enabled": user.totp_enabled,
     }
 
 
@@ -237,6 +256,136 @@ async def update_me(
         "name": user.name,
         "is_admin": user.is_admin,
     }}
+
+
+class TwoFactorVerifyRequest(BaseModel):
+    code: str
+
+
+class TwoFactorDisableRequest(BaseModel):
+    password: str
+
+
+class TwoFactorLoginRequest(BaseModel):
+    pre_auth_token: str
+    code: str
+
+
+@router.post("/2fa/setup")
+async def setup_2fa(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Generates a new TOTP secret + QR code - not enabled yet until the
+    user proves their authenticator app actually works (see /2fa/verify).
+    Calling this again before verifying just replaces the unconfirmed
+    secret and starts over, which is fine since nothing was enabled yet."""
+    secret = pyotp.random_base32()
+    user.totp_secret = secret
+    await db.commit()
+
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=user.email, issuer_name=TOTP_ISSUER)
+    qr_img = qrcode.make(uri)
+    buf = io.BytesIO()
+    qr_img.save(buf, format="PNG")
+    qr_data_uri = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode('ascii')}"
+
+    return {"secret": secret, "otpauth_uri": uri, "qr_code_data_uri": qr_data_uri}
+
+
+@router.post("/2fa/verify")
+async def verify_2fa(
+    req: TwoFactorVerifyRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Confirms the authenticator app is actually working before turning
+    2FA on for real - an abandoned setup (scanned the QR, closed the tab)
+    must never silently enable 2FA on its own."""
+    if not user.totp_secret:
+        raise HTTPException(status_code=400, detail="Start 2FA setup first")
+    if not pyotp.TOTP(user.totp_secret).verify(req.code, valid_window=1):
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    user.totp_enabled = True
+    await db.commit()
+    return {"message": "Two-factor authentication enabled"}
+
+
+@router.post("/2fa/disable")
+async def disable_2fa(
+    req: TwoFactorDisableRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Requires the current password - 2FA exists specifically so a stolen
+    password alone isn't enough to log in; it shouldn't be enough to turn
+    2FA back off either."""
+    if not verify_password(req.password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+
+    user.totp_enabled = False
+    user.totp_secret = None
+    await db.commit()
+    return {"message": "Two-factor authentication disabled"}
+
+
+@router.post("/2fa/login-verify")
+async def login_verify_2fa(
+    req: TwoFactorLoginRequest,
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
+    """Second step of login for a 2FA-enabled account - exchanges the
+    short-lived pre-auth token from /login plus a valid TOTP code for the
+    real session/access token, mirroring the second half of a normal
+    login."""
+    payload = decode_token(req.pre_auth_token)
+    if not payload or payload.get("purpose") != "2fa_pending":
+        raise HTTPException(status_code=401, detail="Invalid or expired login attempt")
+
+    result = await db.execute(select(User).where(User.id == payload.get("sub")))
+    user = result.scalar_one_or_none()
+    if not user or not user.totp_enabled or not user.totp_secret:
+        raise HTTPException(status_code=401, detail="Invalid or expired login attempt")
+
+    # Same brute-force guard as the password step - a 6-digit code is a far
+    # smaller search space, so rate limiting it matters even more here.
+    rate_keys = _login_rate_keys(request, user.email)
+    retry_after = login_rate_limit.check_retry_after(rate_keys)
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Çok fazla başarısız deneme. Lütfen bir süre sonra tekrar deneyin.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    if not pyotp.TOTP(user.totp_secret).verify(req.code, valid_window=1):
+        login_rate_limit.record_failure(rate_keys)
+        raise HTTPException(status_code=401, detail="Invalid code")
+
+    login_rate_limit.reset(rate_keys)
+    jti = str(uuid.uuid4())
+    await create_session(db, user.id, jti, request)
+    await db.commit()
+    token = create_access_token(user.id, user.email, user.is_admin, user.priority, jti=jti)
+
+    response.set_cookie(
+        key="wimmich_token",
+        value=token,
+        httponly=True,
+        max_age=7 * 24 * 3600,
+        samesite="lax",
+    )
+
+    return {
+        "token": token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "is_admin": user.is_admin,
+            "is_approved": user.is_approved,
+        }
+    }
 
 
 @router.post("/logout")
