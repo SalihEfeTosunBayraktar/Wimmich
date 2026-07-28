@@ -67,6 +67,10 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="search"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
 textarea,
 select {
     width: 100%;
@@ -77,6 +81,23 @@ select {
     color: var(--text-primary);
     transition: all var(--transition-fast);
     outline: none;
+}
+
+/* Date/time inputs render their calendar/clock picker icon as a fixed
+   black glyph regardless of page theme - invisible-ish against the dark
+   background by default, and needs explicitly flipping back for light
+   theme (see tokens.css's data-theme switch) rather than inverting twice. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+:root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator,
+:root[data-theme="light"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+:root[data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: none;
 }
 
 input:focus, textarea:focus, select:focus {

@@ -345,9 +345,46 @@ async function applyJobConcurrencySuggestion() {
     } catch (e) { toast(e.message, 'error'); }
 }
 
-async function shutdownServer() {
+// Shared popup for shutdown/restart - a toast alone disappears in a few
+// seconds and says nothing once the page itself goes unresponsive a moment
+// later, which reads as "did anything happen?" Kept on screen (not a toast)
+// until there's a real terminal state to show (server back up, or gave up
+// waiting), with the triggering button disabled + spinning the whole time.
+function _showServerActionOverlay(message) {
+    let overlay = $('server-action-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'server-action-overlay';
+        overlay.className = 'modal-overlay';
+        document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+        <div class="modal" style="max-width:340px;padding:32px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px">
+            <div class="upload-mini-spinner" id="server-action-spinner" style="width:28px;height:28px;border-width:3px"></div>
+            <p id="server-action-message" style="margin:0">${message}</p>
+        </div>
+    `;
+    overlay.classList.remove('hidden');
+}
+
+function _setServerActionOverlayMessage(message, { stopSpinner = false } = {}) {
+    const messageEl = $('server-action-message');
+    if (messageEl) messageEl.textContent = message;
+    if (stopSpinner) {
+        const spinner = $('server-action-spinner');
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+function _setButtonBusy(btn, label) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="upload-mini-spinner" style="width:14px;height:14px;border-width:2px"></span> ${escHtml(label)}`;
+}
+
+async function shutdownServer(btn) {
     if (!confirm(t('admin_render.confirm_shutdown'))) return;
-    toast(t('admin_render.shutting_down_message'), 'success');
+    _setButtonBusy(btn, t('admin_render.shutting_down_message'));
+    _showServerActionOverlay(t('admin_render.shutdown_overlay_message'));
     try {
         await API.shutdownServer();
     } catch (e) {
@@ -355,17 +392,42 @@ async function shutdownServer() {
         // itself failing here is the expected/successful outcome, not an
         // error worth surfacing.
     }
+    // Nothing left to poll for - unlike restart, this one doesn't come back
+    // on its own. The overlay and disabled button are the final state.
+    setTimeout(() => _setServerActionOverlayMessage(t('admin_render.shutdown_overlay_done'), { stopSpinner: true }), 1500);
 }
 
-async function restartServer() {
+async function restartServer(btn) {
     if (!confirm(t('admin_render.confirm_restart'))) return;
-    toast(t('admin_render.restarting_message'), 'success');
+    _setButtonBusy(btn, t('admin_render.restarting_message'));
+    _showServerActionOverlay(t('admin_render.restart_overlay_message'));
     try {
         await API.restartServer();
     } catch (e) {
         // Same reasoning as shutdownServer() - the process exits mid-response
         // on its way to being relaunched, so the fetch failing is expected.
     }
+    _pollServerBackUp();
+}
+
+// Polls /api/health until the relaunched process answers again, then
+// reloads automatically - the alternative (silently leaving the admin to
+// guess when it's safe to refresh) is exactly the "did this actually work?"
+// feeling this whole popup is meant to fix.
+async function _pollServerBackUp() {
+    await new Promise(r => setTimeout(r, 2000));
+    for (let attempt = 0; attempt < 60; attempt++) {
+        try {
+            const resp = await fetch('/api/health', { cache: 'no-store' });
+            if (resp.ok) {
+                _setServerActionOverlayMessage(t('admin_render.restart_overlay_ready'), { stopSpinner: true });
+                setTimeout(() => location.reload(), 800);
+                return;
+            }
+        } catch (e) { /* still down - keep polling */ }
+        await new Promise(r => setTimeout(r, 2000));
+    }
+    _setServerActionOverlayMessage(t('admin_render.restart_overlay_timeout'), { stopSpinner: true });
 }
 
 async function checkForUpdate() {
@@ -393,16 +455,17 @@ async function checkForUpdate() {
                 latest: data.latest_commit,
             })}</p>
             <div style="max-height:200px;overflow-y:auto;margin:8px 0;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-md)">${changelogHtml}</div>
-            <button class="btn btn-primary btn-sm" onclick="applyUpdate()">${icon('upload')} ${t('admin_render.apply_update_btn')}</button>
+            <button class="btn btn-primary btn-sm" onclick="applyUpdate(this)">${icon('upload')} ${t('admin_render.apply_update_btn')}</button>
         `;
     } catch (e) {
         container.innerHTML = `<p class="text-muted">${escHtml(e.message)}</p>`;
     }
 }
 
-async function applyUpdate() {
+async function applyUpdate(btn) {
     if (!confirm(t('admin_render.confirm_apply_update'))) return;
-    toast(t('admin_render.applying_update_msg'), 'success');
+    _setButtonBusy(btn, t('admin_render.applying_update_msg'));
+    _showServerActionOverlay(t('admin_render.applying_update_msg'));
     try {
         await API.applyUpdate();
     } catch (e) {
@@ -410,4 +473,5 @@ async function applyUpdate() {
         // with the process exiting, so the fetch failing is expected here
         // too, not necessarily a real error.
     }
+    _pollServerBackUp();
 }

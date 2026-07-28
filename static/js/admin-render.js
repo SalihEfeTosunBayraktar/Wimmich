@@ -98,10 +98,15 @@ registerTranslations({
         'admin_render.restart_server_hint': 'Cleanly stops background jobs and the tunnel, then relaunches the process - useful after a settings change, or if something seems stuck, without pulling any code update.',
         'admin_render.confirm_restart': 'Restart the server now? Any running background job will be stopped first.',
         'admin_render.restarting_message': 'Restarting - the server will be back in a few seconds...',
+        'admin_render.restart_overlay_message': 'Restarting the server...',
+        'admin_render.restart_overlay_ready': 'Back online - reloading...',
+        'admin_render.restart_overlay_timeout': "Taking longer than expected - check the server console, or refresh this page in a moment.",
         'admin_render.shutdown_server_btn': 'Shut Down Server',
         'admin_render.shutdown_server_hint': 'Cleanly stops background jobs and the tunnel, frees GPU/CPU memory, then exits - the safe alternative to closing this window while a job is running.',
         'admin_render.confirm_shutdown': 'Shut down the server now? Any running background job will be stopped first.',
         'admin_render.shutting_down_message': 'Shutting down - freeing memory and stopping the server...',
+        'admin_render.shutdown_overlay_message': 'Shutting down the server...',
+        'admin_render.shutdown_overlay_done': 'The server has been shut down. You can close this window.',
         'admin_render.audit_log_heading': 'Audit Log',
         'admin_render.audit_log_empty': 'No admin actions recorded yet.',
         'admin_render.load_more_btn': 'Load More',
@@ -219,10 +224,15 @@ registerTranslations({
         'admin_render.restart_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, sonra süreci yeniden başlatır — bir ayar değişikliğinden sonra ya da bir şey takılmış gibi göründüğünde, kod güncellemesi çekmeden kullanışlıdır.',
         'admin_render.confirm_restart': 'Sunucu şimdi yeniden başlatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
         'admin_render.restarting_message': 'Yeniden başlatılıyor — sunucu birkaç saniye içinde geri dönecek...',
+        'admin_render.restart_overlay_message': 'Sunucu yeniden başlatılıyor...',
+        'admin_render.restart_overlay_ready': 'Tekrar çevrimiçi — sayfa yenileniyor...',
+        'admin_render.restart_overlay_timeout': 'Beklenenden uzun sürüyor — sunucu konsolunu kontrol edin veya birazdan bu sayfayı yenileyin.',
         'admin_render.shutdown_server_btn': 'Sunucuyu Kapat',
         'admin_render.shutdown_server_hint': 'Arka plan işlerini ve tüneli düzgünce durdurur, GPU/CPU belleğini boşaltır, sonra kapatır — bir iş çalışırken bu pencereyi kapatmaya güvenli bir alternatif.',
         'admin_render.confirm_shutdown': 'Sunucu şimdi kapatılsın mı? Çalışan bir arka plan işi varsa önce o durdurulacak.',
         'admin_render.shutting_down_message': 'Kapatılıyor — bellek boşaltılıyor ve sunucu durduruluyor...',
+        'admin_render.shutdown_overlay_message': 'Sunucu kapatılıyor...',
+        'admin_render.shutdown_overlay_done': 'Sunucu kapatıldı. Bu pencereyi kapatabilirsiniz.',
         'admin_render.audit_log_heading': 'İşlem Günlüğü',
         'admin_render.audit_log_empty': 'Henüz kaydedilmiş bir yönetici işlemi yok.',
         'admin_render.load_more_btn': 'Daha Fazla Yükle',
@@ -340,10 +350,15 @@ registerTranslations({
         'admin_render.restart_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, puis relance le processus - utile après un changement de paramètre ou si quelque chose semble bloqué, sans récupérer de mise à jour du code.",
         'admin_render.confirm_restart': "Redémarrer le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
         'admin_render.restarting_message': 'Redémarrage en cours - le serveur sera de retour dans quelques secondes...',
+        'admin_render.restart_overlay_message': 'Redémarrage du serveur...',
+        'admin_render.restart_overlay_ready': 'De retour en ligne - rechargement...',
+        'admin_render.restart_overlay_timeout': "Cela prend plus de temps que prévu - vérifiez la console du serveur ou actualisez cette page dans un instant.",
         'admin_render.shutdown_server_btn': 'Arrêter le serveur',
         'admin_render.shutdown_server_hint': "Arrête proprement les tâches en arrière-plan et le tunnel, libère la mémoire GPU/CPU, puis quitte - l'alternative sûre à la fermeture de cette fenêtre pendant qu'une tâche est en cours.",
         'admin_render.confirm_shutdown': "Arrêter le serveur maintenant ? Toute tâche en arrière-plan en cours sera d'abord arrêtée.",
         'admin_render.shutting_down_message': 'Arrêt en cours - libération de la mémoire et arrêt du serveur...',
+        'admin_render.shutdown_overlay_message': 'Arrêt du serveur...',
+        'admin_render.shutdown_overlay_done': 'Le serveur a été arrêté. Vous pouvez fermer cette fenêtre.',
         'admin_render.audit_log_heading': "Journal d'audit",
         'admin_render.audit_log_empty': "Aucune action d'administration enregistrée pour le moment.",
         'admin_render.load_more_btn': 'Charger plus',
@@ -461,10 +476,15 @@ registerTranslations({
         'admin_render.restart_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber und startet den Prozess dann neu - nützlich nach einer Einstellungsänderung oder wenn etwas hängen geblieben zu sein scheint, ohne ein Code-Update zu ziehen.',
         'admin_render.confirm_restart': 'Server jetzt neu starten? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
         'admin_render.restarting_message': 'Wird neu gestartet - der Server ist in wenigen Sekunden wieder da...',
+        'admin_render.restart_overlay_message': 'Server wird neu gestartet...',
+        'admin_render.restart_overlay_ready': 'Wieder online - wird neu geladen...',
+        'admin_render.restart_overlay_timeout': 'Dauert länger als erwartet - prüfen Sie die Serverkonsole oder laden Sie diese Seite in Kürze neu.',
         'admin_render.shutdown_server_btn': 'Server herunterfahren',
         'admin_render.shutdown_server_hint': 'Stoppt Hintergrundaufgaben und den Tunnel sauber, gibt GPU-/CPU-Speicher frei und beendet dann - die sichere Alternative zum Schließen dieses Fensters, während eine Aufgabe läuft.',
         'admin_render.confirm_shutdown': 'Server jetzt herunterfahren? Eine laufende Hintergrundaufgabe wird zuerst gestoppt.',
         'admin_render.shutting_down_message': 'Wird heruntergefahren - Speicher wird freigegeben und der Server gestoppt...',
+        'admin_render.shutdown_overlay_message': 'Server wird heruntergefahren...',
+        'admin_render.shutdown_overlay_done': 'Der Server wurde heruntergefahren. Sie können dieses Fenster schließen.',
         'admin_render.audit_log_heading': 'Prüfprotokoll',
         'admin_render.audit_log_empty': 'Noch keine Admin-Aktionen aufgezeichnet.',
         'admin_render.load_more_btn': 'Mehr laden',
@@ -747,9 +767,9 @@ async function renderAdmin() {
                     <div class="admin-status-card">
                         <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.restart_server_hint')}</p>
-                        <button class="btn btn-secondary btn-sm" onclick="restartServer()">${icon('refresh')} ${t('admin_render.restart_server_btn')}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="restartServer(this)">${icon('refresh')} ${t('admin_render.restart_server_btn')}</button>
                         <p class="text-muted admin-field-hint" style="margin-top:12px">${t('admin_render.shutdown_server_hint')}</p>
-                        <button class="btn btn-danger btn-sm" onclick="shutdownServer()">${icon('stop')} ${t('admin_render.shutdown_server_btn')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="shutdownServer(this)">${icon('stop')} ${t('admin_render.shutdown_server_btn')}</button>
                     </div>
 
                     <div class="admin-status-card">

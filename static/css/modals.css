@@ -256,6 +256,13 @@ kbd {
 .modal {
     width: 100%;
     max-width: 480px;
+    /* Caps the modal itself so a tall one (profile settings with sessions/
+       API keys/2FA all expanded) can never grow past the viewport with no
+       way to reach its own footer buttons - the body below scrolls
+       instead, while header/footer stay pinned in view. */
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-xl);
@@ -269,6 +276,7 @@ kbd {
     justify-content: space-between;
     padding: var(--space-lg);
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -278,6 +286,12 @@ kbd {
 
 .modal-body {
     padding: var(--space-lg);
+    overflow-y: auto;
+    /* min-height: 0 overrides flex's default min-height:auto (which sizes
+       a flex child to fit its content regardless of the parent's own
+       max-height) - without it this scroll area never actually shrinks,
+       and the modal just overflows the viewport exactly as before. */
+    min-height: 0;
 }
 
 .modal-footer {
@@ -286,6 +300,7 @@ kbd {
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-lg);
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 /* Upload Modal */
