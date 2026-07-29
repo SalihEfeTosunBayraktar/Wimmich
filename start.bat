@@ -65,6 +65,11 @@ goto :eof
 echo.
 powershell -NoProfile -Command "Write-Host 'Update applied - restarting...' -ForegroundColor Cyan"
 echo.
+REM Admin panel's own Restart/Update relaunch loop back into :run_server -
+REM the user is already looking at the page they just restarted from, so
+REM main.py should not pop a brand new browser tab for it (see main.py's
+REM lifespan, right before yield).
+set "WIMMICH_SKIP_AUTOOPEN=1"
 goto :run_server
 
 :noenv

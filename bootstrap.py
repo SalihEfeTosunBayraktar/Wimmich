@@ -30,6 +30,19 @@ GITHUB_API_BASE = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}"
 GITHUB_USER_AGENT = "Wimmich-Bootstrap"
 REPO_CLONE_URL = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}.git"
 
+# UB-Mannheim's Windows builds - the same ones utils/ocr_setup.py looks for
+# under Program Files at runtime. Unlike FFmpeg there's no portable zip
+# release for Tesseract (see that module's docstring), only this NSIS
+# installer - but it does support silent/unattended install, so it's still
+# safely automatable here rather than needing the user to click through it
+# by hand. Version-pinned rather than "always latest": a fixed, previously-
+# verified download URL can't silently start serving a different installer
+# than the one this code was written against.
+TESSERACT_INSTALLER_URL = (
+    "https://github.com/UB-Mannheim/tesseract/releases/download/"
+    "v5.4.0.20240606/tesseract-ocr-w64-setup-5.4.0.20240606.exe"
+)
+
 # This installer's own local server - unrelated to WIMMICH_PORT, the port
 # the app itself will eventually run on (chosen by the user in the form).
 SERVER_PORT = 8347
@@ -158,14 +171,119 @@ def _fetch_repo_zip(install_dir: Path) -> bool:
     return True
 
 
-def _install_worker(install_dir: Path, port: int, profile: str, gpu: bool) -> None:
+# Written into install_dir and run with the freshly-created venv, cwd
+# install_dir - relies on Python adding the script's own directory (the
+# install root) to sys.path[0], so "database"/"models"/"auth" resolve as
+# the just-cloned app's own modules instead of needing this bootstrap
+# script (which can't import them - see the module docstring) to know
+# anything about their internals beyond these three names. Reads accounts
+# from a JSON file (not embedded inline) so a password containing a quote
+# or backslash can never break script generation.
+ACCOUNTS_SCRIPT = """
+import asyncio
+import json
+import sys
+from pathlib import Path
+
+from database import init_db, AsyncSessionLocal
+from models import User
+from auth import hash_password
+
+
+async def main():
+    accounts = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    await init_db()
+    async with AsyncSessionLocal() as db:
+        for acc in accounts:
+            db.add(User(
+                email=acc["email"],
+                password_hash=hash_password(acc["password"]),
+                name=acc["name"],
+                is_admin=acc["is_admin"],
+                is_guest=acc["is_guest"] and not acc["is_admin"],
+                is_approved=True,
+            ))
+        await db.commit()
+
+asyncio.run(main())
+"""
+
+
+def _create_accounts(install_dir: Path, venv_python: Path, accounts: list) -> bool:
+    """Creates the account(s) chosen on the setup form directly in the
+    database, before the server's own /register endpoint would otherwise
+    be the only way to get a first user in - lets an admin set up every
+    account for the household in one pass instead of registering one,
+    logging out, registering the next, etc.
+
+    Passwords pass through a temp JSON file, never through a command line
+    or this bootstrap process's own log output - both temp files are
+    deleted immediately after the script runs, success or failure."""
+    script_path = install_dir / "_bootstrap_create_accounts.py"
+    data_path = install_dir / "_bootstrap_accounts.json"
     try:
-        _run_install(install_dir, port, profile, gpu)
+        script_path.write_text(ACCOUNTS_SCRIPT, encoding="utf-8")
+        data_path.write_text(json.dumps(accounts), encoding="utf-8")
+        return _run_streamed([str(venv_python), str(script_path), str(data_path)], install_dir, "account creation")
+    finally:
+        script_path.unlink(missing_ok=True)
+        data_path.unlink(missing_ok=True)
+
+
+def _install_tesseract() -> bool:
+    """Best-effort, same treatment as FFmpeg above: OCR text search just
+    stays disabled if this fails (utils/ocr_setup.py already degrades
+    gracefully at every call site), it's never worth failing the whole
+    install over."""
+    import tempfile
+
+    try:
+        already = subprocess.run(
+            [r"C:\Program Files\Tesseract-OCR\tesseract.exe", "--version"],
+            capture_output=True, timeout=5,
+        ).returncode == 0
+        if already:
+            _log("Tesseract OCR already installed - skipping.")
+            return True
+    except Exception:
+        pass
+
+    _log("Downloading Tesseract OCR installer...")
+    try:
+        req = urllib.request.Request(TESSERACT_INSTALLER_URL, headers={"User-Agent": GITHUB_USER_AGENT})
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = resp.read()
+    except Exception as e:
+        _log(f"Tesseract download failed: {e} - OCR text search will stay disabled (can be installed later from https://github.com/UB-Mannheim/tesseract/releases).")
+        return False
+
+    tmp_path = Path(tempfile.gettempdir()) / "wimmich_tesseract_setup.exe"
+    try:
+        tmp_path.write_bytes(data)
+        _log("Installing Tesseract OCR (silent)...")
+        # /S = silent (NSIS convention, no UI/prompts); no /D= override -
+        # left at its own default (Program Files) so utils/ocr_setup.py's
+        # hardcoded candidate path finds it with no extra configuration.
+        result = subprocess.run([str(tmp_path), "/S"], timeout=180)
+        if result.returncode != 0:
+            _log(f"Tesseract installer exited with code {result.returncode}.")
+            return False
+        return True
+    except Exception as e:
+        _log(f"Tesseract install failed: {e}")
+        return False
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
+def _install_worker(install_dir: Path, port: int, profile: str, gpu: bool, accounts: list, ocr: bool) -> None:
+    try:
+        _run_install(install_dir, port, profile, gpu, accounts, ocr)
     except Exception as e:
         _fail(f"Unexpected error: {e}")
 
 
-def _run_install(install_dir: Path, port: int, profile: str, gpu: bool) -> None:
+def _run_install(install_dir: Path, port: int, profile: str, gpu: bool, accounts: list, ocr: bool) -> None:
     _set_phase("preparing", 2)
     try:
         install_dir.mkdir(parents=True, exist_ok=True)
@@ -215,6 +333,13 @@ def _run_install(install_dir: Path, port: int, profile: str, gpu: bool) -> None:
         [str(venv_python), "-c", "from utils.ffmpeg_setup import check_and_download_ffmpeg; check_and_download_ffmpeg()"],
         install_dir, "FFmpeg setup",
     )
+
+    if ocr:
+        _set_phase("tesseract", 45)
+        _install_tesseract()
+        # pytesseract itself (the thin Python wrapper, not the Tesseract
+        # binary above) already lives in requirements.txt's core install -
+        # nothing extra to pip install here regardless of profile.
 
     if profile == "full":
         _set_phase("pip_torch", 50)
@@ -272,6 +397,13 @@ def _run_install(install_dir: Path, port: int, profile: str, gpu: bool) -> None:
     _set_phase("configuring", 92)
     _log("Writing configuration...")
     (install_dir / ".env").write_text(f"WIMMICH_PORT={port}\n", encoding="utf-8")
+
+    if accounts:
+        _set_phase("accounts", 95)
+        _log(f"Creating {len(accounts)} account(s)...")
+        if not _create_accounts(install_dir, venv_python, accounts):
+            _fail("Failed to create the account(s) - see the log above.")
+            return
 
     _set_phase("launching", 97)
     _log("Launching Wimmich...")
@@ -371,6 +503,26 @@ PAGE_HTML = """<!doctype html>
   .checkbox-row input { width: auto; }
   .checkbox-row label { margin: 0; color: var(--text-primary); font-size: 0.88rem; }
   .note { font-size: 0.78rem; color: var(--warning); margin-top: 10px; display: none; }
+  .account-row {
+    border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; margin-top: 10px;
+  }
+  .account-row-header {
+    display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;
+    color: var(--text-secondary); font-weight: 600;
+  }
+  .account-row input[type="text"], .account-row input[type="email"], .account-row input[type="password"] {
+    width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 9px 11px; color: var(--text-primary); font-size: 0.9rem; margin-top: 6px;
+  }
+  .account-row .checkbox-row { margin-top: 10px; }
+  .account-row-remove {
+    background: none; border: none; color: var(--danger); font-size: 0.8rem; cursor: pointer; padding: 0;
+  }
+  .secondary-btn {
+    width: 100%; margin-top: 10px; padding: 9px; border-radius: 8px; cursor: pointer;
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+  }
   button.primary {
     width: 100%; margin-top: 24px; padding: 12px; border: none; border-radius: 10px;
     background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
@@ -445,7 +597,16 @@ PAGE_HTML = """<!doctype html>
       <input type="checkbox" id="gpu">
       <label for="gpu">I have an NVIDIA GPU (CUDA)</label>
     </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="ocr" checked>
+      <label for="ocr">OCR text search (Tesseract) - find photos by text visible in screenshots/documents</label>
+    </div>
     <p class="note" id="git-note">git wasn't found - Wimmich will be downloaded directly instead (this works fine, just without a .git history).</p>
+
+    <label>Accounts</label>
+    <div id="accounts-list"></div>
+    <button type="button" class="secondary-btn" onclick="addAccountRow()">+ Add another user</button>
+    <p id="accounts-error" class="note"></p>
 
     <button class="primary" id="install-btn" onclick="startInstall(event)">Install</button>
   </div>
@@ -491,21 +652,99 @@ function selectProfile(profile) {
   document.getElementById('gpu-row').style.display = profile === 'full' ? 'flex' : 'none';
 }
 
-const STEPS_FULL = [
-  ['fetching_repo', 'Downloading Wimmich'],
-  ['venv', 'Creating virtual environment'],
-  ['pip_base', 'Installing base dependencies'],
-  ['ffmpeg', 'Setting up FFmpeg'],
-  ['pip_torch', 'Installing PyTorch'],
-  ['pip_ml', 'Installing AI dependencies'],
-  ['clip_model', 'Downloading AI models'],
-  ['configuring', 'Writing configuration'],
-  ['launching', 'Launching Wimmich'],
-];
-const SKIP_WHEN_MINIMAL = new Set(['pip_torch', 'pip_ml', 'clip_model']);
-const STEPS_MINIMAL = STEPS_FULL.filter(([key]) => !SKIP_WHEN_MINIMAL.has(key));
+// Account rows: row 0 is always the admin account (no admin/guest checkboxes
+// shown - there's nothing to choose, it's the only way a fresh install ever
+// gets its first user) - every row after that is a regular user by default,
+// promotable to admin or demotable to guest like any account created later
+// from the app's own admin panel.
+let accountRowCount = 0;
 
-let currentSteps = STEPS_FULL;
+function accountRowHtml(index) {
+  const isFirst = index === 0;
+  return `
+    <div class="account-row" data-index="${index}">
+      <div class="account-row-header">
+        <span>${isFirst ? 'Admin account' : 'User account'}</span>
+        ${isFirst ? '' : `<button type="button" class="account-row-remove" onclick="removeAccountRow(${index})">Remove</button>`}
+      </div>
+      <input type="text" class="acc-name" placeholder="Name">
+      <input type="email" class="acc-email" placeholder="Email">
+      <input type="password" class="acc-password" placeholder="Password (min 8 characters)" minlength="8">
+      ${isFirst ? '' : `
+        <div class="checkbox-row">
+          <input type="checkbox" class="acc-admin" id="acc-admin-${index}">
+          <label for="acc-admin-${index}">Admin</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" class="acc-guest" id="acc-guest-${index}">
+          <label for="acc-guest-${index}">Guest (view-only, can't upload)</label>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function addAccountRow() {
+  const list = document.getElementById('accounts-list');
+  const div = document.createElement('div');
+  div.innerHTML = accountRowHtml(accountRowCount);
+  list.appendChild(div.firstElementChild);
+  accountRowCount++;
+}
+
+function removeAccountRow(index) {
+  const row = document.querySelector(`.account-row[data-index="${index}"]`);
+  if (row) row.remove();
+}
+
+function collectAccounts() {
+  const rows = Array.from(document.querySelectorAll('.account-row'));
+  const accounts = [];
+  const emails = new Set();
+  for (const row of rows) {
+    const name = row.querySelector('.acc-name').value.trim();
+    const email = row.querySelector('.acc-email').value.trim().toLowerCase();
+    const password = row.querySelector('.acc-password').value;
+    const adminBox = row.querySelector('.acc-admin');
+    const guestBox = row.querySelector('.acc-guest');
+    if (!name || !email) return { error: 'Fill in a name and email for every account.' };
+    if (password.length < 8) return { error: `Password for ${email || 'an account'} must be at least 8 characters.` };
+    if (emails.has(email)) return { error: `Duplicate email: ${email}` };
+    emails.add(email);
+    accounts.push({
+      name, email, password,
+      is_admin: adminBox ? adminBox.checked : true,
+      is_guest: guestBox ? guestBox.checked : false,
+    });
+  }
+  if (!accounts.length) return { error: 'At least one account (the admin) is required.' };
+  return { accounts };
+}
+
+function buildSteps(profile, ocr) {
+  const steps = [
+    ['fetching_repo', 'Downloading Wimmich'],
+    ['venv', 'Creating virtual environment'],
+    ['pip_base', 'Installing base dependencies'],
+    ['ffmpeg', 'Setting up FFmpeg'],
+  ];
+  if (ocr) steps.push(['tesseract', 'Installing OCR (Tesseract)']);
+  if (profile === 'full') {
+    steps.push(
+      ['pip_torch', 'Installing PyTorch'],
+      ['pip_ml', 'Installing AI dependencies'],
+      ['clip_model', 'Downloading AI models'],
+    );
+  }
+  steps.push(
+    ['configuring', 'Writing configuration'],
+    ['accounts', 'Creating accounts'],
+    ['launching', 'Launching Wimmich'],
+  );
+  return steps;
+}
+
+let currentSteps = buildSteps('full', true);
 
 function renderSteps() {
   document.getElementById('step-list').innerHTML = currentSteps
@@ -524,6 +763,14 @@ function updateSteps(phase, done, error) {
 
 async function startInstall(e) {
   e.preventDefault();
+  const errorEl = document.getElementById('accounts-error');
+  errorEl.style.display = 'none';
+  const { accounts, error } = collectAccounts();
+  if (error) {
+    errorEl.textContent = error;
+    errorEl.style.display = 'block';
+    return;
+  }
   const btn = document.getElementById('install-btn');
   btn.disabled = true;
   const payload = {
@@ -531,6 +778,8 @@ async function startInstall(e) {
     port: parseInt(document.getElementById('port').value, 10),
     profile: document.getElementById('profile_input').value,
     gpu: document.getElementById('gpu').checked,
+    ocr: document.getElementById('ocr').checked,
+    accounts,
   };
   let res, data;
   try {
@@ -548,7 +797,7 @@ async function startInstall(e) {
     alert(data.error || 'Could not start the installation.');
     return;
   }
-  currentSteps = payload.profile === 'minimal' ? STEPS_MINIMAL : STEPS_FULL;
+  currentSteps = buildSteps(payload.profile, payload.ocr);
   renderSteps();
   document.getElementById('form-view').style.display = 'none';
   document.getElementById('progress-view').style.display = 'block';
@@ -582,7 +831,11 @@ function poll() {
   }, 1000);
 }
 
-window.addEventListener('DOMContentLoaded', loadSystemCheck);
+window.addEventListener('DOMContentLoaded', () => {
+  loadSystemCheck();
+  addAccountRow();
+  renderSteps();
+});
 </script>
 </body>
 </html>
@@ -642,6 +895,7 @@ class Handler(BaseHTTPRequestHandler):
         install_dir_str = str(body.get("install_dir", "")).strip()
         profile = body.get("profile") if body.get("profile") in ("full", "minimal") else None
         gpu = bool(body.get("gpu"))
+        ocr = bool(body.get("ocr"))
         try:
             port = int(body.get("port"))
         except (TypeError, ValueError):
@@ -657,6 +911,37 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({"error": "Port must be between 1024 and 65535."}, status=400)
             return
 
+        # Re-validated server-side, not just trusted from the form - the
+        # first account existing and being an admin is what makes the very
+        # first login into the freshly-installed app possible at all.
+        raw_accounts = body.get("accounts")
+        if not isinstance(raw_accounts, list) or not raw_accounts:
+            self._send_json({"error": "At least one account (the admin) is required."}, status=400)
+            return
+        accounts = []
+        seen_emails = set()
+        for i, acc in enumerate(raw_accounts):
+            name = str(acc.get("name", "")).strip() if isinstance(acc, dict) else ""
+            email = str(acc.get("email", "")).strip().lower() if isinstance(acc, dict) else ""
+            password = str(acc.get("password", "")) if isinstance(acc, dict) else ""
+            if not name or not email:
+                self._send_json({"error": f"Account {i + 1}: name and email are required."}, status=400)
+                return
+            if len(password) < 8:
+                self._send_json({"error": f"Account {i + 1}: password must be at least 8 characters."}, status=400)
+                return
+            if email in seen_emails:
+                self._send_json({"error": f"Duplicate email: {email}"}, status=400)
+                return
+            seen_emails.add(email)
+            accounts.append({
+                "name": name,
+                "email": email,
+                "password": password,
+                "is_admin": bool(acc.get("is_admin")) if i > 0 else True,  # first account is always admin
+                "is_guest": bool(acc.get("is_guest")) if i > 0 else False,
+            })
+
         install_dir = Path(install_dir_str).expanduser()
 
         with STATE_LOCK:
@@ -665,7 +950,7 @@ class Handler(BaseHTTPRequestHandler):
                 "phase": "starting", "percent": 0, "log": [], "launched_url": None,
             })
 
-        threading.Thread(target=_install_worker, args=(install_dir, port, profile, gpu), daemon=True).start()
+        threading.Thread(target=_install_worker, args=(install_dir, port, profile, gpu, accounts, ocr), daemon=True).start()
         self._send_json({"status": "started"})
 
 

@@ -20,6 +20,7 @@ except Exception:
     pass
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -115,6 +116,19 @@ async def lifespan(app: FastAPI):
     print(_DIVIDER)
     print(f"\033[1m  Ready! Open http://localhost:{config.PORT}\033[0m")
     print(_DIVIDER)
+
+    # Not everyone finding this via a chat/forum post knows to type
+    # localhost:PORT themselves - opens it for them on a genuine fresh
+    # start.bat launch. Skipped on the admin panel's own Restart/Update
+    # relaunch (start.bat sets WIMMICH_SKIP_AUTOOPEN before looping back to
+    # `python main.py` there - see start.bat's :restart_server label) since
+    # that's a page the user is already looking at, not a fresh visit.
+    if os.getenv("WIMMICH_SKIP_AUTOOPEN") != "1":
+        try:
+            import webbrowser
+            webbrowser.open(f"http://localhost:{config.PORT}")
+        except Exception:
+            pass
 
     yield
 
