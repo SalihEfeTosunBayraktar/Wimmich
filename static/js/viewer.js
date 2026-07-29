@@ -229,6 +229,10 @@ function renderViewerMedia(asset) {
     } else {
         container.innerHTML = `<img src="${asset.file_url}" alt="${escHtml(asset.file_name)}">`;
     }
+    // A new <img> always starts unzoomed/uncentered - carrying over the
+    // previous photo's zoom level here would be disorienting (and the
+    // pan-clamp math below is sized to THIS image's own dimensions anyway).
+    _resetZoom();
 }
 
 function updateViewerControls(asset) {
@@ -265,8 +269,12 @@ function closeViewer() {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('viewer-overlay').classList.add('hidden');
     $('viewer-sidebar').classList.add('hidden');
+    $('viewer-more-menu').classList.add('hidden');
     document.body.style.overflow = '';
     state.viewerAsset = null;
+    _zoomScale = 1;
+    _zoomX = 0;
+    _zoomY = 0;
 
     // Hiding the overlay is just CSS (display:none) - it doesn't stop a
     // playing <video>, so its audio kept going in the background after
@@ -451,6 +459,26 @@ function initViewer() {
         }
     };
 
+    // Less-frequently-used actions (slideshow/fullscreen/info/archive) live
+    // behind this "more" button instead of the main bar - on a narrow phone
+    // screen, all 10 buttons the toolbar used to have never fit, and the
+    // trailing ones (including Close) silently ran off the edge of the
+    // screen with no way to reach them. Their own onclick handlers above
+    // are untouched; this only closes the popup afterward.
+    $('viewer-more').onclick = (e) => {
+        e.stopPropagation();
+        $('viewer-more-menu').classList.toggle('hidden');
+    };
+    $('viewer-more-menu').addEventListener('click', (e) => {
+        if (e.target.closest('button')) $('viewer-more-menu').classList.add('hidden');
+    });
+    document.addEventListener('click', (e) => {
+        const menu = $('viewer-more-menu');
+        if (!menu.classList.contains('hidden') && !e.target.closest('.viewer-more-wrap')) {
+            menu.classList.add('hidden');
+        }
+    });
+
     document.addEventListener('keydown', (e) => {
         if ($('viewer-overlay').classList.contains('hidden')) return;
         if (e.key === 'Escape') closeViewer();
@@ -461,6 +489,7 @@ function initViewer() {
     });
 
     _initViewerSwipe();
+    _initViewerZoom();
 }
 
 function _initViewerSwipe() {
@@ -468,7 +497,11 @@ function _initViewerSwipe() {
     let startX = 0, startY = 0, touching = false;
 
     media.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) { touching = false; return; } // ignore pinch-zoom
+        // A pinch (2+ touches), or any single-finger touch once already
+        // zoomed in, belongs to _initViewerZoom()'s pan handling instead -
+        // swiping to the next/prev photo only makes sense at 1x, where a
+        // horizontal drag can't mean "pan around the zoomed-in image".
+        if (e.touches.length !== 1 || _zoomScale > 1) { touching = false; return; }
         touching = true;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
@@ -483,6 +516,175 @@ function _initViewerSwipe() {
         if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
             stopSlideshow();
             navigateViewer(dx < 0 ? 1 : -1);
+        }
+    }, { passive: true });
+}
+
+// Zoom/pan for the current photo - ctrl+wheel (also what a trackpad pinch
+// fires as, in every browser tested) on desktop, pinch/drag on touch,
+// double-click/double-tap to toggle between 1x and 2x. Video isn't covered
+// (its own <video controls> already owns touch/wheel for scrubbing/volume
+// - layering zoom gestures on top would fight it), so every handler here
+// bails out when the current media isn't an <img>.
+let _zoomScale = 1;
+let _zoomX = 0;
+let _zoomY = 0;
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 5;
+const ZOOM_DOUBLE_TAP = 2;
+
+function _currentViewerImg() {
+    return $('viewer-media').querySelector('img');
+}
+
+function _clampZoomPan() {
+    const img = _currentViewerImg();
+    if (!img) return;
+    const container = $('viewer-media');
+    // offsetWidth/Height is the image's own laid-out (untransformed) size -
+    // transform:scale doesn't affect layout, so this stays reliable at any
+    // zoom level instead of needing the container's size guessed at.
+    const scaledW = img.offsetWidth * _zoomScale;
+    const scaledH = img.offsetHeight * _zoomScale;
+    const maxX = Math.max(0, (scaledW - container.clientWidth) / 2);
+    const maxY = Math.max(0, (scaledH - container.clientHeight) / 2);
+    _zoomX = Math.min(maxX, Math.max(-maxX, _zoomX));
+    _zoomY = Math.min(maxY, Math.max(-maxY, _zoomY));
+}
+
+function _applyZoomTransform(smooth) {
+    const img = _currentViewerImg();
+    if (!img) return;
+    img.style.transition = smooth ? 'transform 150ms ease' : 'none';
+    img.style.transform = `translate(${_zoomX}px, ${_zoomY}px) scale(${_zoomScale})`;
+    img.classList.toggle('zoomed', _zoomScale > 1);
+}
+
+function _resetZoom() {
+    _zoomScale = 1;
+    _zoomX = 0;
+    _zoomY = 0;
+    _applyZoomTransform(false);
+}
+
+function _setZoom(scale, smooth) {
+    _zoomScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale));
+    if (_zoomScale === ZOOM_MIN) {
+        _zoomX = 0;
+        _zoomY = 0;
+    } else {
+        _clampZoomPan();
+    }
+    _applyZoomTransform(smooth);
+}
+
+function _initViewerZoom() {
+    const media = $('viewer-media');
+
+    // Ctrl+wheel (desktop) - Chrome/Firefox/Safari all report a trackpad
+    // pinch gesture as a wheel event with ctrlKey set, so this covers both
+    // an actual Ctrl+scroll and a trackpad pinch with the same code path.
+    media.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey || !_currentViewerImg()) return;
+        e.preventDefault();
+        _setZoom(_zoomScale - e.deltaY * 0.01, false);
+    }, { passive: false });
+
+    media.addEventListener('dblclick', () => {
+        if (!_currentViewerImg()) return;
+        _setZoom(_zoomScale > 1 ? ZOOM_MIN : ZOOM_DOUBLE_TAP, true);
+    });
+
+    // Mouse drag-to-pan once zoomed in - only actually starts panning past
+    // a couple pixels of movement, so a plain click still reaches other
+    // click handlers (favorite toggle isn't on the image, but nothing else
+    // should be eaten by an accidental 1px jitter either).
+    let mouseDragging = false, mouseStartX = 0, mouseStartY = 0, panStartX = 0, panStartY = 0;
+    media.addEventListener('mousedown', (e) => {
+        if (_zoomScale <= 1 || !_currentViewerImg()) return;
+        mouseDragging = true;
+        mouseStartX = e.clientX;
+        mouseStartY = e.clientY;
+        panStartX = _zoomX;
+        panStartY = _zoomY;
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (!mouseDragging) return;
+        _zoomX = panStartX + (e.clientX - mouseStartX);
+        _zoomY = panStartY + (e.clientY - mouseStartY);
+        _clampZoomPan();
+        _applyZoomTransform(false);
+    });
+    window.addEventListener('mouseup', () => { mouseDragging = false; });
+
+    // Touch: one finger pans once zoomed in (see _initViewerSwipe's own
+    // touchstart, which defers to this instead of treating it as a swipe
+    // whenever _zoomScale > 1); two fingers pinch-zoom regardless of
+    // current zoom level.
+    let pinching = false, pinchStartDist = 0, pinchStartScale = 1;
+    let panning = false, touchStartX = 0, touchStartY = 0, touchPanStartX = 0, touchPanStartY = 0;
+    let gestureMoved = false;
+    let lastTapAt = 0;
+
+    const touchDist = (touches) => Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY,
+    );
+
+    media.addEventListener('touchstart', (e) => {
+        if (!_currentViewerImg()) return;
+        if (e.touches.length === 2) {
+            pinching = true;
+            panning = false;
+            gestureMoved = true;
+            pinchStartDist = touchDist(e.touches);
+            pinchStartScale = _zoomScale;
+        } else if (e.touches.length === 1 && _zoomScale > 1) {
+            panning = true;
+            gestureMoved = false;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchPanStartX = _zoomX;
+            touchPanStartY = _zoomY;
+        } else {
+            gestureMoved = false;
+        }
+    }, { passive: true });
+
+    media.addEventListener('touchmove', (e) => {
+        if (pinching && e.touches.length === 2) {
+            e.preventDefault();
+            const ratio = touchDist(e.touches) / pinchStartDist;
+            _setZoom(pinchStartScale * ratio, false);
+        } else if (panning && e.touches.length === 1) {
+            e.preventDefault();
+            gestureMoved = true;
+            _zoomX = touchPanStartX + (e.touches[0].clientX - touchStartX);
+            _zoomY = touchPanStartY + (e.touches[0].clientY - touchStartY);
+            _clampZoomPan();
+            _applyZoomTransform(false);
+        }
+    }, { passive: false });
+
+    media.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+            const wasRealGesture = gestureMoved;
+            pinching = false;
+            panning = false;
+            pinchStartDist = 0;
+            // Double-tap to toggle zoom - only for a real stationary tap,
+            // not the release at the end of an actual pinch/pan (both also
+            // fire touchend at 0 remaining touches).
+            if (e.changedTouches.length === 1 && !wasRealGesture) {
+                const now = Date.now();
+                if (now - lastTapAt < 300) {
+                    _setZoom(_zoomScale > 1 ? ZOOM_MIN : ZOOM_DOUBLE_TAP, true);
+                    lastTapAt = 0;
+                } else {
+                    lastTapAt = now;
+                }
+            }
         }
     }, { passive: true });
 }
