@@ -133,6 +133,34 @@ Puis exécutez l'un des deux scripts d'installation prêts à l'emploi :
 
 Une fois installé, lancez le serveur avec `start.bat` (`http://localhost:3000`). Le premier utilisateur à s'inscrire devient automatiquement administrateur. Relancer `start.bat` démarre directement le serveur si le venv existe déjà — l'étape d'installation n'est pas répétée.
 
+## Accès à l'API
+
+Tout ce que fait l'interface web passe en réalité par une simple API REST — utile pour des scripts, des automatisations, ou un futur client mobile.
+
+**1. Obtenir une clé** — Paramètres du profil → Clés API → Créer une clé. Donnez-lui un nom et, si vous le souhaitez, une durée d'expiration (7/30/90 jours, 1 an, ou jamais). La clé n'est affichée qu'une seule fois ; copiez-la immédiatement.
+
+**2. Envoyez-la comme jeton Bearer à chaque requête :**
+
+```bash
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer wmk_votre_cle_ici"
+```
+
+**3. Utilisez n'importe quel endpoint utilisé par l'application web elle-même** — par exemple :
+
+```bash
+# Lister vos photos
+curl http://localhost:3000/api/assets/timeline \
+  -H "Authorization: Bearer wmk_votre_cle_ici"
+
+# Envoyer une photo
+curl -X POST http://localhost:3000/api/assets/upload \
+  -H "Authorization: Bearer wmk_votre_cle_ici" \
+  -F "files=@photo.jpg"
+```
+
+Révoquez une clé à tout moment depuis le même écran des paramètres du profil — une clé révoquée ou expirée est rejetée dès la requête suivante.
+
 ## Technologie
 
 - **Backend** : FastAPI (async), SQLAlchemy + aiosqlite, authentification basée sur JWT.

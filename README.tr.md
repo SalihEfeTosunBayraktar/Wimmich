@@ -133,6 +133,34 @@ Sonra hazır kurulum paketlerinden birini çalıştırın:
 
 Kurulum bitince `start.bat` ile sunucuyu başlatın (`http://localhost:3000`). İlk kayıt olan kullanıcı otomatik olarak yönetici olur. `start.bat`'ı tekrar çalıştırdığınızda venv zaten varsa direkt sunucuyu başlatır, kurulum adımını atlamaz.
 
+## API Kullanımı
+
+Web arayüzünün yaptığı her şey aslında sade bir REST API üzerinden yürüyor — betikler, otomasyonlar veya ileride bir mobil istemci için kullanışlı.
+
+**1. Bir anahtar alın** — Profil Ayarları → API Anahtarları → Anahtar Oluştur. Bir isim verin ve isterseniz bir son kullanma süresi seçin (7/30/90 gün, 1 yıl veya süresiz). Anahtar yalnızca bir kez gösterilir; hemen kopyalayın.
+
+**2. Her istekte Bearer token olarak gönderin:**
+
+```bash
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer wmk_anahtariniz_burada"
+```
+
+**3. Web uygulamasının kendisinin kullandığı herhangi bir endpoint'i kullanın** — örneğin:
+
+```bash
+# Fotoğraflarınızı listeleyin
+curl http://localhost:3000/api/assets/timeline \
+  -H "Authorization: Bearer wmk_anahtariniz_burada"
+
+# Bir fotoğraf yükleyin
+curl -X POST http://localhost:3000/api/assets/upload \
+  -H "Authorization: Bearer wmk_anahtariniz_burada" \
+  -F "files=@fotograf.jpg"
+```
+
+Bir anahtarı istediğiniz zaman aynı Profil Ayarları ekranından iptal edebilirsiniz — iptal edilmiş veya süresi dolmuş bir anahtar bir sonraki istekte reddedilir.
+
 ## Teknoloji
 
 - **Backend**: FastAPI (async), SQLAlchemy + aiosqlite, JWT tabanlı kimlik doğrulama.

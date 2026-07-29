@@ -133,6 +133,34 @@ Then run one of the two ready-made installer scripts:
 
 Once installed, launch the server with `start.bat` (`http://localhost:3000`). The first user to register automatically becomes an admin. Running `start.bat` again just starts the server directly if the venv already exists — it won't repeat the install step.
 
+## API Access
+
+Everything the web UI does goes through a plain REST API underneath — useful for scripts, automations, or a future mobile client.
+
+**1. Get a key** — Profile Settings → API Keys → Create Key. Give it a name and, optionally, an expiry (7/30/90 days, 1 year, or never). The key is shown once; copy it right away.
+
+**2. Send it as a Bearer token** on every request:
+
+```bash
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer wmk_your_key_here"
+```
+
+**3. Use any endpoint the web app itself uses** — for example:
+
+```bash
+# List your photos
+curl http://localhost:3000/api/assets/timeline \
+  -H "Authorization: Bearer wmk_your_key_here"
+
+# Upload a photo
+curl -X POST http://localhost:3000/api/assets/upload \
+  -H "Authorization: Bearer wmk_your_key_here" \
+  -F "files=@photo.jpg"
+```
+
+Revoke a key anytime from the same Profile Settings screen — a revoked or expired key is rejected on its very next request.
+
 ## Technology
 
 - **Backend**: FastAPI (async), SQLAlchemy + aiosqlite, JWT-based authentication.

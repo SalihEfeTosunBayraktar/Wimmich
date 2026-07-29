@@ -133,6 +133,34 @@ Dann eines der beiden fertigen Installationsskripte ausführen:
 
 Nach der Installation den Server mit `start.bat` starten (`http://localhost:3000`). Der erste registrierte Benutzer wird automatisch Administrator. Ein erneuter Aufruf von `start.bat` startet den Server direkt, wenn das venv bereits existiert — der Installationsschritt wird nicht wiederholt.
 
+## API-Zugriff
+
+Alles, was die Weboberfläche tut, läuft im Hintergrund über eine ganz normale REST-API — nützlich für Skripte, Automatisierungen oder einen zukünftigen mobilen Client.
+
+**1. Einen Schlüssel erstellen** — Profileinstellungen → API-Schlüssel → Schlüssel erstellen. Einen Namen vergeben und optional eine Ablaufzeit wählen (7/30/90 Tage, 1 Jahr oder nie). Der Schlüssel wird nur einmal angezeigt — sofort kopieren.
+
+**2. Bei jeder Anfrage als Bearer-Token senden:**
+
+```bash
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer wmk_ihr_schluessel_hier"
+```
+
+**3. Jeden Endpunkt verwenden, den die Web-App selbst nutzt** — zum Beispiel:
+
+```bash
+# Ihre Fotos auflisten
+curl http://localhost:3000/api/assets/timeline \
+  -H "Authorization: Bearer wmk_ihr_schluessel_hier"
+
+# Ein Foto hochladen
+curl -X POST http://localhost:3000/api/assets/upload \
+  -H "Authorization: Bearer wmk_ihr_schluessel_hier" \
+  -F "files=@foto.jpg"
+```
+
+Ein Schlüssel kann jederzeit über denselben Profileinstellungen-Bildschirm widerrufen werden — ein widerrufener oder abgelaufener Schlüssel wird bei der nächsten Anfrage abgelehnt.
+
 ## Technologie
 
 - **Backend**: FastAPI (async), SQLAlchemy + aiosqlite, JWT-basierte Authentifizierung.
