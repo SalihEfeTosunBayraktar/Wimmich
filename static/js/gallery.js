@@ -326,7 +326,7 @@ async function renderGallery() {
                     <div id="gallery-search-suggestions" class="search-suggestions hidden"></div>
                 </div>
                 <div id="gallery-controls-row" class="gallery-controls-mini" style="${g.searchQuery ? 'display:none' : ''}">
-                    <input type="month" id="gallery-jump-date" class="gallery-mini-select" title="${t('gallery.jump_to_date')}">
+                    <input type="month" id="gallery-jump-date" class="gallery-mini-select" title="${t('gallery.jump_to_date')}" placeholder="${t('gallery.jump_to_date')}">
                     <select id="gallery-sort" class="gallery-mini-select" title="${t('gallery.sort_title')}">${_galleryOptionsHtml(GALLERY_SORT_OPTIONS, g.sortBy)}</select>
                     <select id="gallery-group" class="gallery-mini-select" title="${t('gallery.group_title')}">${_galleryOptionsHtml(GALLERY_GROUP_OPTIONS, g.groupBy)}</select>
                 </div>

@@ -34,12 +34,28 @@
 /* ─── Profile: API keys ──────────────────────────────────── */
 .profile-api-key-create {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-sm);
     margin-top: var(--space-sm);
 }
 
 .profile-api-key-create input {
-    flex: 1;
+    /* Was tied with the expiry <select> for remaining space (both at
+       flex:1) - a <select> at min-content width is often wider than it
+       looks (native chrome + the "Never expires" text), which left the
+       name field squeezed down to almost nothing. Given more room to
+       grow, with the select/button now fixed to their own content size. */
+    flex: 3 1 160px;
+    min-width: 0;
+}
+
+.profile-api-key-create select {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.profile-api-key-create button {
+    flex-shrink: 0;
 }
 
 .profile-api-key-reveal {
