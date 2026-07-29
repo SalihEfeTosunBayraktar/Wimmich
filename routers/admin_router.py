@@ -3,6 +3,7 @@ import asyncio
 import shutil
 import sys
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -121,7 +122,30 @@ async def get_network_status(admin: User = Depends(get_admin_user)):
         "port": config.PORT,
         "firewall_rule_found": firewall_found,
         "python_exe": sys.executable,
+        "lan_access_enabled": config.LAN_ACCESS_ENABLED,
     }
+
+
+class UpdateLanAccessRequest(BaseModel):
+    enabled: bool
+
+
+@router.put("/network/lan-access")
+async def update_lan_access(
+    req: UpdateLanAccessRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Toggles whether a direct LAN connection (a different device, or this
+    machine reached via its own LAN IP) is served at all - see main.py's
+    lan_access_gate_middleware for the actual enforcement. Loopback always
+    keeps working regardless, so this can never lock the admin's own
+    browser out, and Cloudflare Tunnel/Tailscale (both connect in via
+    localhost) are unaffected either way."""
+    config.set_lan_access_enabled(req.enabled)
+    await log_action(db, admin, "network.set_lan_access", detail={"enabled": req.enabled})
+    await db.commit()
+    return {"lan_access_enabled": config.LAN_ACCESS_ENABLED}
 
 
 @router.get("/users")

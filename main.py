@@ -162,6 +162,28 @@ app.add_middleware(
 from auth import decode_token
 from services.request_priority import request_gate
 
+# The server always binds 0.0.0.0 (see config.HOST) - this is the actual
+# enforcement point for config.LAN_ACCESS_ENABLED, applied to every path
+# (not just /api/) so a disabled LAN can't even load the login page from
+# another device. Only loopback is ever exempt: Cloudflare Tunnel/Tailscale
+# both connect in via localhost, so remote access through either keeps
+# working exactly as before regardless of this setting - this only ever
+# blocks a REAL LAN-originated connection (a different device, or this same
+# machine reached via its own LAN IP instead of localhost).
+@app.middleware("http")
+async def lan_access_gate_middleware(request, call_next):
+    if config.LAN_ACCESS_ENABLED:
+        return await call_next(request)
+
+    client_host = request.client.host if request.client else ""
+    if client_host in ("127.0.0.1", "::1") or client_host.startswith("::ffff:127."):
+        return await call_next(request)
+
+    return JSONResponse(
+        status_code=403,
+        content={"detail": "Yerel ağdan erişim bu sunucuda devre dışı bırakılmış."},
+    )
+
 # Scoped to /api/ - static assets (JS/CSS/images) do real work on neither the
 # DB nor the ML pipeline, so gating them too would only add latency for zero
 # benefit. /api/health is excluded as well: the admin panel's ping badge

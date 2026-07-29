@@ -112,6 +112,36 @@ TUNNEL_CUSTOM_DOMAIN = os.getenv("WIMMICH_TUNNEL_CUSTOM_DOMAIN", "")
 TOTAL_STORAGE_LIMIT_MB = int(os.getenv("WIMMICH_TOTAL_STORAGE_LIMIT_MB", "0"))
 AUTO_START_TUNNEL = os.getenv("WIMMICH_AUTO_START_TUNNEL", "false").lower() == "true"
 
+# The server always binds 0.0.0.0 (HOST above) regardless of this flag -
+# this instead gates access at the request level (see main.py's
+# lan_access_gate_middleware): defaults to enabled since that's the
+# behavior every install already had before this setting existed, but lets
+# an admin cut off direct LAN access (leaving loopback - and therefore
+# Cloudflare Tunnel/Tailscale, which both connect in via localhost - always
+# working) without having to touch Windows Firewall rules at all.
+LAN_ACCESS_ENABLED = os.getenv("WIMMICH_LAN_ACCESS_ENABLED", "true").lower() == "true"
+
+
+def set_lan_access_enabled(enabled: bool) -> None:
+    global LAN_ACCESS_ENABLED
+    LAN_ACCESS_ENABLED = enabled
+
+    env_path = BASE_DIR / ".env"
+    lines = []
+    found = False
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("WIMMICH_LAN_ACCESS_ENABLED="):
+                    lines.append(f"WIMMICH_LAN_ACCESS_ENABLED={'true' if enabled else 'false'}\n")
+                    found = True
+                else:
+                    lines.append(line)
+    if not found:
+        lines.append(f"\nWIMMICH_LAN_ACCESS_ENABLED={'true' if enabled else 'false'}\n")
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
 # Storage warnings shown in the admin panel, checked independently: the
 # quota one only ever fires if an admin bothered to set
 # TOTAL_STORAGE_LIMIT_MB (most installs leave it at 0/unlimited), while the

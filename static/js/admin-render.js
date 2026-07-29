@@ -28,6 +28,11 @@ registerTranslations({
         'admin_render.lan_access_heading': 'Local Network Access',
         'admin_render.lan_access_info_hint': "Wimmich already listens for connections from any device on your home network, no setup needed - this just shows the address to type on your phone/tablet, and checks whether Windows Firewall is actually letting those connections through. Separate from Cloudflare Tunnel/Tailscale below, which are for access from OUTSIDE your home network.",
         'admin_render.lan_access_hint': 'From another device on the same Wi-Fi/network, open one of these addresses:',
+        'admin_render.lan_access_toggle_label': 'Allow access from other devices on this network',
+        'admin_render.lan_access_disabled_hint': "LAN access is off - other devices on this network (and this address on this device) can't reach Wimmich right now. Remote access via Cloudflare Tunnel/Tailscale still works.",
+        'admin_render.lan_access_disable_confirm': "Turning this off will immediately cut off any device using this LAN address - including this one, if you're on it right now. Continue?",
+        'admin_render.lan_access_enabled_toast': 'Local network access enabled',
+        'admin_render.lan_access_disabled_toast': 'Local network access disabled',
         'admin_render.lan_no_ip_found': 'Could not detect a local network address.',
         'admin_render.lan_firewall_ok': 'Firewall: allowed',
         'admin_render.lan_firewall_blocked': 'Firewall: blocked',
@@ -166,6 +171,11 @@ registerTranslations({
         'admin_render.lan_access_heading': 'Yerel Ağ Erişimi',
         'admin_render.lan_access_info_hint': 'Wimmich, ev ağınızdaki herhangi bir cihazdan gelen bağlantıları zaten dinliyor, ekstra kurulum gerekmez - bu bölüm sadece telefonunuza/tabletinize yazacağınız adresi gösterir ve Windows Güvenlik Duvarı\'nın bu bağlantılara gerçekten izin verip vermediğini kontrol eder. Aşağıdaki Cloudflare Tunnel/Tailscale\'den farklıdır - onlar ev ağınızın DIŞINDAN erişim içindir.',
         'admin_render.lan_access_hint': 'Aynı Wi-Fi/ağdaki başka bir cihazdan şu adreslerden birini açın:',
+        'admin_render.lan_access_toggle_label': 'Bu ağdaki diğer cihazlardan erişime izin ver',
+        'admin_render.lan_access_disabled_hint': 'Yerel ağ erişimi kapalı - bu ağdaki diğer cihazlar (ve bu cihazdaki bu adres) şu anda Wimmich\'e ulaşamaz. Cloudflare Tunnel/Tailscale ile uzaktan erişim yine de çalışmaya devam eder.',
+        'admin_render.lan_access_disable_confirm': 'Bunu kapatmak, bu yerel ağ adresini kullanan her cihazın erişimini hemen kesecek - şu anda bu cihazdaysanız o da dahil. Devam edilsin mi?',
+        'admin_render.lan_access_enabled_toast': 'Yerel ağ erişimi etkinleştirildi',
+        'admin_render.lan_access_disabled_toast': 'Yerel ağ erişimi devre dışı bırakıldı',
         'admin_render.lan_no_ip_found': 'Bir yerel ağ adresi tespit edilemedi.',
         'admin_render.lan_firewall_ok': 'Güvenlik Duvarı: izinli',
         'admin_render.lan_firewall_blocked': 'Güvenlik Duvarı: engelli',
@@ -304,6 +314,11 @@ registerTranslations({
         'admin_render.lan_access_heading': 'Accès au réseau local',
         'admin_render.lan_access_info_hint': "Wimmich écoute déjà les connexions de tout appareil sur votre réseau domestique, sans configuration nécessaire - ceci affiche simplement l'adresse à saisir sur votre téléphone/tablette, et vérifie si le pare-feu Windows laisse réellement passer ces connexions. Distinct du tunnel Cloudflare/Tailscale ci-dessous, qui sont pour l'accès DEPUIS l'extérieur de votre réseau domestique.",
         'admin_render.lan_access_hint': 'Depuis un autre appareil sur le même Wi-Fi/réseau, ouvrez une de ces adresses :',
+        'admin_render.lan_access_toggle_label': "Autoriser l'accès depuis d'autres appareils sur ce réseau",
+        'admin_render.lan_access_disabled_hint': "L'accès réseau local est désactivé - les autres appareils de ce réseau (et cette adresse sur cet appareil) ne peuvent pas atteindre Wimmich pour le moment. L'accès à distance via Cloudflare Tunnel/Tailscale fonctionne toujours.",
+        'admin_render.lan_access_disable_confirm': "Désactiver ceci coupera immédiatement tout appareil utilisant cette adresse réseau local - y compris celui-ci, si vous l'utilisez actuellement. Continuer ?",
+        'admin_render.lan_access_enabled_toast': 'Accès au réseau local activé',
+        'admin_render.lan_access_disabled_toast': 'Accès au réseau local désactivé',
         'admin_render.lan_no_ip_found': "Impossible de détecter une adresse réseau locale.",
         'admin_render.lan_firewall_ok': 'Pare-feu : autorisé',
         'admin_render.lan_firewall_blocked': 'Pare-feu : bloqué',
@@ -442,6 +457,11 @@ registerTranslations({
         'admin_render.lan_access_heading': 'Zugriff im lokalen Netzwerk',
         'admin_render.lan_access_info_hint': 'Wimmich nimmt bereits Verbindungen von jedem Gerät in Ihrem Heimnetzwerk an, ohne dass eine Einrichtung nötig ist - dies zeigt nur die Adresse, die Sie auf Ihrem Handy/Tablet eingeben, und prüft, ob die Windows-Firewall diese Verbindungen tatsächlich durchlässt. Getrennt von Cloudflare Tunnel/Tailscale unten, die für den Zugriff von AUSSERHALB Ihres Heimnetzwerks sind.',
         'admin_render.lan_access_hint': 'Öffnen Sie von einem anderen Gerät im selben WLAN/Netzwerk eine dieser Adressen:',
+        'admin_render.lan_access_toggle_label': 'Zugriff von anderen Geräten in diesem Netzwerk erlauben',
+        'admin_render.lan_access_disabled_hint': 'Der Zugriff im lokalen Netzwerk ist deaktiviert - andere Geräte in diesem Netzwerk (und diese Adresse auf diesem Gerät) können Wimmich derzeit nicht erreichen. Der Fernzugriff über Cloudflare Tunnel/Tailscale funktioniert weiterhin.',
+        'admin_render.lan_access_disable_confirm': 'Das Deaktivieren trennt sofort jedes Gerät, das diese lokale Netzwerkadresse verwendet - einschließlich dieses Geräts, falls Sie es gerade nutzen. Fortfahren?',
+        'admin_render.lan_access_enabled_toast': 'Zugriff im lokalen Netzwerk aktiviert',
+        'admin_render.lan_access_disabled_toast': 'Zugriff im lokalen Netzwerk deaktiviert',
         'admin_render.lan_no_ip_found': 'Es konnte keine lokale Netzwerkadresse erkannt werden.',
         'admin_render.lan_firewall_ok': 'Firewall: erlaubt',
         'admin_render.lan_firewall_blocked': 'Firewall: blockiert',
@@ -993,10 +1013,31 @@ function renderNetworkStatusPanel(status) {
     }
 
     return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <input type="checkbox" id="lan-access-enabled-input" ${status.lan_access_enabled ? 'checked' : ''} style="width:auto;margin:0" onchange="saveLanAccessEnabled(this)">
+            <label for="lan-access-enabled-input" class="admin-checkbox-label">${t('admin_render.lan_access_toggle_label')}</label>
+        </div>
+        ${!status.lan_access_enabled ? `<p class="text-muted admin-field-hint" style="color:var(--danger)">${t('admin_render.lan_access_disabled_hint')}</p>` : ''}
         <p class="text-muted admin-field-hint">${t('admin_render.lan_access_hint')}</p>
         ${urlsHtml}
         <div style="margin-top:12px">${firewallHtml}</div>
     `;
+}
+
+async function saveLanAccessEnabled(checkbox) {
+    const enabling = checkbox.checked;
+    if (!enabling && !confirm(t('admin_render.lan_access_disable_confirm'))) {
+        checkbox.checked = true;
+        return;
+    }
+    try {
+        await API.setLanAccessEnabled(enabling);
+        toast(t(enabling ? 'admin_render.lan_access_enabled_toast' : 'admin_render.lan_access_disabled_toast'), 'success');
+        renderAdmin();
+    } catch (e) {
+        checkbox.checked = !enabling;
+        toast(e.message, 'error');
+    }
 }
 
 // Delegated on #page-content (present for the whole admin panel's
