@@ -111,7 +111,15 @@
 .map-container {
     display: flex;
     width: 100%;
+    /* 100vh is the LARGEST possible mobile viewport (browser chrome
+       collapsed) - with the address bar actually showing, this overshoots
+       the real visible height, letting the map (and whatever Leaflet
+       lays out inside it) push past .app's own overflow:hidden bound
+       instead of fitting inside it like every other page's content does.
+       100dvh (dynamic viewport height, tracks the browser chrome's actual
+       current state) is the same fix .app itself already uses. */
     height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2);
+    height: calc(100dvh - var(--topbar-height) - var(--space-lg) * 2);
     border-radius: var(--radius-lg);
     overflow: hidden;
     border: 1px solid var(--border-color);

@@ -69,7 +69,7 @@ English (default), Turkish, French, and German interface support. You're asked t
 
 ## Screenshots
 
-> The images below are from a sample account created purely to demonstrate the interface — they contain no real user data.
+> The images below are from a sample account created purely to demonstrate the interface — they contain no real user data. Demo photos are sourced from [Lorem Picsum](https://picsum.photos), a free stock photo placeholder service.
 
 | Login | Gallery |
 |---|---|

@@ -3,6 +3,12 @@
     .sidebar {
         position: fixed;
         transform: translateX(-100%);
+        /* Well above the base 100 - as an off-canvas overlay on mobile,
+           this has to beat whatever any given page's own content stacks
+           up to (e.g. Leaflet's internal panes/controls on the Map page,
+           which are normally scoped to their own container but this is
+           a cheap, safe guarantee regardless of the exact mechanism). */
+        z-index: 1000;
     }
     .sidebar.open { transform: translateX(0); }
     .sidebar-toggle { display: flex; }
