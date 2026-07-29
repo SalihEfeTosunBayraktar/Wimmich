@@ -30,7 +30,8 @@ registerTranslations({
         'admin_render.lan_access_hint': 'From another device on the same Wi-Fi/network, open one of these addresses:',
         'admin_render.lan_access_toggle_label': 'Allow access from other devices on this network',
         'admin_render.lan_access_disabled_hint': "LAN access is off - other devices on this network (and this address on this device) can't reach Wimmich right now. Remote access via Cloudflare Tunnel/Tailscale still works.",
-        'admin_render.lan_access_disable_confirm': "Turning this off will immediately cut off any device using this LAN address - including this one, if you're on it right now. Continue?",
+        'admin_render.lan_access_disable_confirm_safe': "You're viewing this over localhost, so this won't affect you - it only blocks other devices (or this one, if reached via its network IP instead). Continue?",
+        'admin_render.lan_access_disable_confirm_risky': "You appear to be viewing this over the local network right now - turning this off will immediately cut YOU off too, along with any other device using this address. Continue?",
         'admin_render.lan_access_enabled_toast': 'Local network access enabled',
         'admin_render.lan_access_disabled_toast': 'Local network access disabled',
         'admin_render.lan_no_ip_found': 'Could not detect a local network address.',
@@ -173,7 +174,8 @@ registerTranslations({
         'admin_render.lan_access_hint': 'Aynı Wi-Fi/ağdaki başka bir cihazdan şu adreslerden birini açın:',
         'admin_render.lan_access_toggle_label': 'Bu ağdaki diğer cihazlardan erişime izin ver',
         'admin_render.lan_access_disabled_hint': 'Yerel ağ erişimi kapalı - bu ağdaki diğer cihazlar (ve bu cihazdaki bu adres) şu anda Wimmich\'e ulaşamaz. Cloudflare Tunnel/Tailscale ile uzaktan erişim yine de çalışmaya devam eder.',
-        'admin_render.lan_access_disable_confirm': 'Bunu kapatmak, bu yerel ağ adresini kullanan her cihazın erişimini hemen kesecek - şu anda bu cihazdaysanız o da dahil. Devam edilsin mi?',
+        'admin_render.lan_access_disable_confirm_safe': 'Şu anda localhost üzerinden görüntülüyorsunuz, bu yüzden sizi etkilemez - sadece başka cihazları (veya bu cihazı ağ IP\'siyle erişilirse) engeller. Devam edilsin mi?',
+        'admin_render.lan_access_disable_confirm_risky': 'Şu anda yerel ağ üzerinden görüntülüyor gibisiniz - bunu kapatmak SİZİ de bu adresi kullanan diğer her cihazla birlikte hemen kesecek. Devam edilsin mi?',
         'admin_render.lan_access_enabled_toast': 'Yerel ağ erişimi etkinleştirildi',
         'admin_render.lan_access_disabled_toast': 'Yerel ağ erişimi devre dışı bırakıldı',
         'admin_render.lan_no_ip_found': 'Bir yerel ağ adresi tespit edilemedi.',
@@ -316,7 +318,8 @@ registerTranslations({
         'admin_render.lan_access_hint': 'Depuis un autre appareil sur le même Wi-Fi/réseau, ouvrez une de ces adresses :',
         'admin_render.lan_access_toggle_label': "Autoriser l'accès depuis d'autres appareils sur ce réseau",
         'admin_render.lan_access_disabled_hint': "L'accès réseau local est désactivé - les autres appareils de ce réseau (et cette adresse sur cet appareil) ne peuvent pas atteindre Wimmich pour le moment. L'accès à distance via Cloudflare Tunnel/Tailscale fonctionne toujours.",
-        'admin_render.lan_access_disable_confirm': "Désactiver ceci coupera immédiatement tout appareil utilisant cette adresse réseau local - y compris celui-ci, si vous l'utilisez actuellement. Continuer ?",
+        'admin_render.lan_access_disable_confirm_safe': "Vous consultez ceci via localhost, donc cela ne vous affectera pas - cela bloque uniquement les autres appareils (ou celui-ci, si atteint via son IP réseau). Continuer ?",
+        'admin_render.lan_access_disable_confirm_risky': "Vous semblez consulter ceci via le réseau local actuellement - désactiver ceci vous coupera VOUS aussi immédiatement, ainsi que tout autre appareil utilisant cette adresse. Continuer ?",
         'admin_render.lan_access_enabled_toast': 'Accès au réseau local activé',
         'admin_render.lan_access_disabled_toast': 'Accès au réseau local désactivé',
         'admin_render.lan_no_ip_found': "Impossible de détecter une adresse réseau locale.",
@@ -459,7 +462,8 @@ registerTranslations({
         'admin_render.lan_access_hint': 'Öffnen Sie von einem anderen Gerät im selben WLAN/Netzwerk eine dieser Adressen:',
         'admin_render.lan_access_toggle_label': 'Zugriff von anderen Geräten in diesem Netzwerk erlauben',
         'admin_render.lan_access_disabled_hint': 'Der Zugriff im lokalen Netzwerk ist deaktiviert - andere Geräte in diesem Netzwerk (und diese Adresse auf diesem Gerät) können Wimmich derzeit nicht erreichen. Der Fernzugriff über Cloudflare Tunnel/Tailscale funktioniert weiterhin.',
-        'admin_render.lan_access_disable_confirm': 'Das Deaktivieren trennt sofort jedes Gerät, das diese lokale Netzwerkadresse verwendet - einschließlich dieses Geräts, falls Sie es gerade nutzen. Fortfahren?',
+        'admin_render.lan_access_disable_confirm_safe': 'Sie betrachten dies über localhost, daher betrifft es Sie nicht - es blockiert nur andere Geräte (oder dieses, falls über seine Netzwerk-IP erreicht). Fortfahren?',
+        'admin_render.lan_access_disable_confirm_risky': 'Sie scheinen dies gerade über das lokale Netzwerk zu betrachten - das Deaktivieren trennt sofort auch SIE, zusammen mit jedem anderen Gerät, das diese Adresse verwendet. Fortfahren?',
         'admin_render.lan_access_enabled_toast': 'Zugriff im lokalen Netzwerk aktiviert',
         'admin_render.lan_access_disabled_toast': 'Zugriff im lokalen Netzwerk deaktiviert',
         'admin_render.lan_no_ip_found': 'Es konnte keine lokale Netzwerkadresse erkannt werden.',
@@ -1026,9 +1030,23 @@ function renderNetworkStatusPanel(status) {
 
 async function saveLanAccessEnabled(checkbox) {
     const enabling = checkbox.checked;
-    if (!enabling && !confirm(t('admin_render.lan_access_disable_confirm'))) {
-        checkbox.checked = true;
-        return;
+    if (!enabling) {
+        // The generic warning was confusing admins viewing the panel via
+        // plain "localhost"/127.0.0.1 (or through Cloudflare Tunnel/
+        // Tailscale, both of which also arrive as loopback server-side) -
+        // none of those are actually affected by this toggle at all, only
+        // a REAL LAN address (this machine's own 192.168.x.x/10.x.x.x, or
+        // a different device) is. Tell the admin which case they're
+        // actually in instead of always implying "you might lock
+        // yourself out".
+        const onLoopback = ['localhost', '127.0.0.1', '::1'].includes(location.hostname);
+        const message = onLoopback
+            ? t('admin_render.lan_access_disable_confirm_safe')
+            : t('admin_render.lan_access_disable_confirm_risky');
+        if (!confirm(message)) {
+            checkbox.checked = true;
+            return;
+        }
     }
     try {
         await API.setLanAccessEnabled(enabling);
