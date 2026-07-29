@@ -458,6 +458,7 @@ function initViewer() {
             renderViewerInfo(state.viewerAsset);
         }
     };
+    $('viewer-sidebar-close').onclick = () => $('viewer-sidebar').classList.add('hidden');
 
     // Less-frequently-used actions (slideshow/fullscreen/info/archive) live
     // behind this "more" button instead of the main bar - on a narrow phone

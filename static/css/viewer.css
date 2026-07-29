@@ -50,6 +50,7 @@
 }
 
 .viewer-sidebar {
+    position: relative;
     width: 360px;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-color);
@@ -58,8 +59,20 @@
     animation: slideInRight 0.3s ease;
 }
 
+.viewer-sidebar-close {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    z-index: 1;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+}
+
 .viewer-sidebar-content {
-    padding: var(--space-lg);
+    /* Extra top padding so the absolutely-positioned close button never
+       overlaps the content's own top-left corner (title text, EXIF
+       labels, etc). */
+    padding: calc(var(--space-lg) + 36px + var(--space-sm)) var(--space-lg) var(--space-lg);
 }
 
 .viewer-info-section {
