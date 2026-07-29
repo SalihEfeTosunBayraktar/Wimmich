@@ -124,10 +124,11 @@ def decode_token(token: str) -> Optional[dict]:
 
 
 async def _get_user_for_api_key(token: str, db: AsyncSession) -> User:
-    """API keys never expire and carry no embedded claims - every request
-    re-checks the DB row directly, unlike a JWT which is trusted until its
-    own exp/jti check fails. Slower per-request, but keys are meant for a
-    handful of scripts/integrations, not the main app's request volume."""
+    """API keys carry no embedded claims (unlike a JWT, which is trusted
+    until its own exp/jti check fails) - every request re-checks the DB row
+    directly, including its optional expires_at. Slower per-request, but
+    keys are meant for a handful of scripts/integrations, not the main
+    app's request volume."""
     key_hash = hash_api_key(token)
     result = await db.execute(select(ApiKey).where(ApiKey.key_hash == key_hash))
     api_key = result.scalar_one_or_none()
@@ -138,6 +139,17 @@ async def _get_user_for_api_key(token: str, db: AsyncSession) -> User:
         )
 
     now = datetime.now(timezone.utc)
+
+    expires_at = api_key.expires_at
+    if expires_at:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if now >= expires_at:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="API key has expired",
+            )
+
     last_used = api_key.last_used_at
     if last_used and last_used.tzinfo is None:
         last_used = last_used.replace(tzinfo=timezone.utc)

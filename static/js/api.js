@@ -106,7 +106,7 @@ const API = {
     getSessions() { return this.request('/api/auth/sessions'); },
     revokeSession(id) { return this.request(`/api/auth/sessions/${id}`, { method: 'DELETE' }); },
     getApiKeys() { return this.request('/api/auth/api-keys'); },
-    createApiKey(name) { return this.request('/api/auth/api-keys', { method: 'POST', body: { name } }); },
+    createApiKey(name, expiresInDays) { return this.request('/api/auth/api-keys', { method: 'POST', body: { name, expires_in_days: expiresInDays || null } }); },
     revokeApiKey(id) { return this.request(`/api/auth/api-keys/${id}`, { method: 'DELETE' }); },
     setup2FA() { return this.request('/api/auth/2fa/setup', { method: 'POST' }); },
     verify2FA(code) { return this.request('/api/auth/2fa/verify', { method: 'POST', body: { code } }); },

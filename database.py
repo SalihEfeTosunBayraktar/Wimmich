@@ -175,3 +175,10 @@ async def init_db():
             await conn.execute(text("ALTER TABLE assets ADD COLUMN ocr_text TEXT"))
         except Exception:
             pass
+
+        # Automatic column migration for time-limited API keys - see
+        # models/api_key.py's expires_at.
+        try:
+            await conn.execute(text("ALTER TABLE api_keys ADD COLUMN expires_at DATETIME"))
+        except Exception:
+            pass

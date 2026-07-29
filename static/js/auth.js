@@ -38,6 +38,15 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'API key revoked',
         'profile.api_keys_name_required': 'Enter a name for the key',
         'profile.api_keys_empty': 'No API keys yet',
+        'profile.api_keys_expiry_never': 'Never expires',
+        'profile.api_keys_expiry_7d': 'Expires in 7 days',
+        'profile.api_keys_expiry_30d': 'Expires in 30 days',
+        'profile.api_keys_expiry_90d': 'Expires in 90 days',
+        'profile.api_keys_expiry_1y': 'Expires in 1 year',
+        'profile.api_keys_expires_label': 'Expires {date}',
+        'profile.api_keys_expired_label': 'Expired {date}',
+        'profile.api_keys_no_expiry_label': 'Never expires',
+        'profile.api_keys_expired_badge': 'Expired',
         'profile.twofa_label': 'Two-Factor Authentication',
         'profile.twofa_enabled_hint': 'Two-factor authentication is enabled - a code from your authenticator app is required at login.',
         'profile.twofa_disabled_hint': 'Add an extra step at login using an authenticator app (Google Authenticator, Authy, etc.), on top of your password.',
@@ -98,6 +107,15 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'API anahtarı iptal edildi',
         'profile.api_keys_name_required': 'Anahtar için bir isim girin',
         'profile.api_keys_empty': 'Henüz API anahtarı yok',
+        'profile.api_keys_expiry_never': 'Süresiz',
+        'profile.api_keys_expiry_7d': '7 gün sonra sona erer',
+        'profile.api_keys_expiry_30d': '30 gün sonra sona erer',
+        'profile.api_keys_expiry_90d': '90 gün sonra sona erer',
+        'profile.api_keys_expiry_1y': '1 yıl sonra sona erer',
+        'profile.api_keys_expires_label': 'Sona erme: {date}',
+        'profile.api_keys_expired_label': 'Süresi doldu: {date}',
+        'profile.api_keys_no_expiry_label': 'Süresiz',
+        'profile.api_keys_expired_badge': 'Süresi Doldu',
         'profile.twofa_label': 'İki Adımlı Doğrulama',
         'profile.twofa_enabled_hint': 'İki adımlı doğrulama etkin - girişte kimlik doğrulama uygulamanızdan bir kod gerekir.',
         'profile.twofa_disabled_hint': 'Şifrenize ek olarak bir kimlik doğrulama uygulaması (Google Authenticator, Authy vb.) ile girişe ekstra bir adım ekleyin.',
@@ -158,6 +176,15 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'Clé API révoquée',
         'profile.api_keys_name_required': 'Entrez un nom pour la clé',
         'profile.api_keys_empty': 'Aucune clé API pour le moment',
+        'profile.api_keys_expiry_never': "N'expire jamais",
+        'profile.api_keys_expiry_7d': 'Expire dans 7 jours',
+        'profile.api_keys_expiry_30d': 'Expire dans 30 jours',
+        'profile.api_keys_expiry_90d': 'Expire dans 90 jours',
+        'profile.api_keys_expiry_1y': 'Expire dans 1 an',
+        'profile.api_keys_expires_label': 'Expire le {date}',
+        'profile.api_keys_expired_label': 'Expirée le {date}',
+        'profile.api_keys_no_expiry_label': "N'expire jamais",
+        'profile.api_keys_expired_badge': 'Expirée',
         'profile.twofa_label': 'Authentification à deux facteurs',
         'profile.twofa_enabled_hint': "L'authentification à deux facteurs est activée - un code de votre application d'authentification est requis à la connexion.",
         'profile.twofa_disabled_hint': "Ajoutez une étape supplémentaire à la connexion à l'aide d'une application d'authentification (Google Authenticator, Authy, etc.), en plus de votre mot de passe.",
@@ -218,6 +245,15 @@ registerTranslations({
         'profile.api_keys_revoked_toast': 'API-Schlüssel widerrufen',
         'profile.api_keys_name_required': 'Geben Sie einen Namen für den Schlüssel ein',
         'profile.api_keys_empty': 'Noch keine API-Schlüssel',
+        'profile.api_keys_expiry_never': 'Läuft nie ab',
+        'profile.api_keys_expiry_7d': 'Läuft in 7 Tagen ab',
+        'profile.api_keys_expiry_30d': 'Läuft in 30 Tagen ab',
+        'profile.api_keys_expiry_90d': 'Läuft in 90 Tagen ab',
+        'profile.api_keys_expiry_1y': 'Läuft in 1 Jahr ab',
+        'profile.api_keys_expires_label': 'Läuft ab: {date}',
+        'profile.api_keys_expired_label': 'Abgelaufen: {date}',
+        'profile.api_keys_no_expiry_label': 'Läuft nie ab',
+        'profile.api_keys_expired_badge': 'Abgelaufen',
         'profile.twofa_label': 'Zwei-Faktor-Authentifizierung',
         'profile.twofa_enabled_hint': 'Zwei-Faktor-Authentifizierung ist aktiviert - beim Login ist ein Code aus Ihrer Authenticator-App erforderlich.',
         'profile.twofa_disabled_hint': 'Fügen Sie mit einer Authenticator-App (Google Authenticator, Authy usw.) einen zusätzlichen Schritt beim Login hinzu, zusätzlich zu Ihrem Passwort.',
@@ -578,15 +614,20 @@ async function renderProfileApiKeys(revealKey = null) {
         }
         html += data.keys.length === 0
             ? `<p class="text-muted admin-field-hint">${t('profile.api_keys_empty')}</p>`
-            : data.keys.map(k => `
+            : data.keys.map(k => {
+                const expiryLabel = k.expires_at
+                    ? t(k.is_expired ? 'profile.api_keys_expired_label' : 'profile.api_keys_expires_label', { date: formatDateShort(k.expires_at) })
+                    : t('profile.api_keys_no_expiry_label');
+                return `
                 <div class="profile-session-row">
                     <div>
-                        <div class="profile-session-agent">${escHtml(k.name)}</div>
-                        <div class="profile-session-meta">${escHtml(k.key_prefix)}&hellip; &middot; ${k.last_used_at ? t('profile.api_keys_last_used', { date: formatDateShort(k.last_used_at) }) : t('profile.api_keys_never_used')}</div>
+                        <div class="profile-session-agent">${escHtml(k.name)}${k.is_expired ? ` <span class="badge badge-danger">${t('profile.api_keys_expired_badge')}</span>` : ''}</div>
+                        <div class="profile-session-meta">${escHtml(k.key_prefix)}&hellip; &middot; ${k.last_used_at ? t('profile.api_keys_last_used', { date: formatDateShort(k.last_used_at) }) : t('profile.api_keys_never_used')} &middot; ${expiryLabel}</div>
                     </div>
                     <button class="btn btn-danger btn-sm" data-api-key-id="${k.id}">${t('profile.api_keys_revoke')}</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         container.innerHTML = html;
         if (revealKey) {
             $('profile-api-key-copy-btn').onclick = () => _copyApiKeyToClipboard(revealKey);
@@ -616,8 +657,10 @@ async function createProfileApiKey() {
         toast(t('profile.api_keys_name_required'), 'warning');
         return;
     }
+    const expirySelect = $('profile-api-key-expiry');
+    const expiresInDays = expirySelect && expirySelect.value ? parseInt(expirySelect.value, 10) : null;
     try {
-        const key = await API.createApiKey(name);
+        const key = await API.createApiKey(name, expiresInDays);
         input.value = '';
         toast(t('profile.api_keys_created_toast'), 'success');
         renderProfileApiKeys(key.key);

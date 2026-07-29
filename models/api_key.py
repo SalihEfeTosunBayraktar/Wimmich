@@ -24,5 +24,11 @@ class ApiKey(Base):
     created_at = Column(DateTime, default=utcnow)
     last_used_at = Column(DateTime, nullable=True)
     revoked = Column(Boolean, default=False)
+    # NULL = never expires (the original, only behavior before this column
+    # existed) - an expired-but-not-revoked key is rejected the same way a
+    # revoked one is (see auth.py's _get_user_for_api_key), just with a
+    # distinct reason so the owner can tell "I turned this off" apart from
+    # "this quietly timed out".
+    expires_at = Column(DateTime, nullable=True)
 
     user = relationship("User")

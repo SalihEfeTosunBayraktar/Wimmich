@@ -491,6 +491,13 @@
                     <div id="profile-api-keys-list" class="profile-sessions-list"></div>
                     <div class="profile-api-key-create">
                         <input type="text" id="profile-api-key-name" maxlength="255" data-i18n-placeholder="profile.api_keys_name_placeholder">
+                        <select id="profile-api-key-expiry">
+                            <option value="" data-i18n="profile.api_keys_expiry_never"></option>
+                            <option value="7" data-i18n="profile.api_keys_expiry_7d"></option>
+                            <option value="30" data-i18n="profile.api_keys_expiry_30d"></option>
+                            <option value="90" data-i18n="profile.api_keys_expiry_90d"></option>
+                            <option value="365" data-i18n="profile.api_keys_expiry_1y"></option>
+                        </select>
                         <button type="button" class="btn btn-secondary btn-sm" id="profile-api-key-create-btn" data-i18n="profile.api_keys_create"></button>
                     </div>
                 </div>
