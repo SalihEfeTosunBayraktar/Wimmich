@@ -42,7 +42,7 @@ async function renderTrash() {
         const pc = $('page-content');
         pc.innerHTML = `
             <div class="trash-info">
-                <span>⚠️ ${t('trash.auto_delete_warning', { days: state.user.trash_days_effective })}</span>
+                <span style="display:flex;align-items:center;gap:6px">${icon('alertTriangle', 16)} ${t('trash.auto_delete_warning', { days: state.user.trash_days_effective })}</span>
                 ${data.assets.length ? `<button id="trash-empty-btn" class="btn btn-sm btn-danger">${icon('trash')} ${t('trash.empty_trash_btn')}</button>` : ''}
             </div>
         `;

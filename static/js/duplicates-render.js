@@ -297,7 +297,7 @@ function renderDupAssetCard(a) {
     const dateStr = a.taken_at ? new Date(a.taken_at).toLocaleString(locale) : new Date(a.created_at).toLocaleString(locale);
     const resolution = a.width && a.height ? `${a.width} × ${a.height}` : '';
     const locationStr = [a.city, a.country].filter(Boolean).join(', ') || t('duplicates_render.unknown_location');
-    const fileTypeLabel = a.file_type === 'VIDEO' ? `🎥 ${t('duplicates_render.file_type_video')}` : `🖼 ${t('duplicates_render.file_type_image')}`;
+    const fileTypeLabel = a.file_type === 'VIDEO' ? `${icon('film', 12)} ${t('duplicates_render.file_type_video')}` : `${icon('image', 12)} ${t('duplicates_render.file_type_image')}`;
 
     return `
         <div class="dup-asset-card" data-id="${a.id}">
@@ -311,7 +311,7 @@ function renderDupAssetCard(a) {
                     <div class="dup-asset-meta"><strong>${t('duplicates_render.size_label')}</strong> ${sizeStr}</div>
                     ${resolution ? `<div class="dup-asset-meta"><strong>${t('duplicates_render.resolution_label')}</strong> ${resolution}</div>` : ''}
                     <div class="dup-asset-meta"><strong>${t('duplicates_render.date_label')}</strong> ${dateStr}</div>
-                    <div class="dup-asset-meta"><strong>${t('duplicates_render.location_label')}</strong> 📍 ${locationStr}</div>
+                    <div class="dup-asset-meta"><strong>${t('duplicates_render.location_label')}</strong> ${icon('pin', 12)} ${locationStr}</div>
                 </div>
                 <button class="btn-trash-dup" data-id="${a.id}">${t('duplicates_render.trash_this_copy')}</button>
             </div>

@@ -88,6 +88,12 @@
     margin: 0 auto var(--space-sm);
     background: var(--bg-tertiary);
     border: 2px solid var(--border-color);
+    /* Centers the placeholder person icon shown when there's no
+       thumbnail_url yet - an <img> already fills the circle edge-to-edge
+       via width/height:100% regardless. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .person-avatar img {

@@ -35,7 +35,7 @@ async function renderMemories() {
         pc.innerHTML = data.memories.map(m => `
             <div class="memory-group">
                 <div class="memory-header">
-                    <div class="memory-icon">📸</div>
+                    <div class="memory-icon">${icon('camera', 22)}</div>
                     <div class="memory-text">
                         <h3>${m.title}</h3>
                         <p>${t('memories.date_count', { date: m.date, count: m.asset_count })}</p>

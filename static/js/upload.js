@@ -148,13 +148,13 @@ function setUploadItemStatus(idx, status, errorMsg) {
     if (!el) return;
     const st = el.querySelector('.upload-item-status');
     if (status === 'success') {
-        st.textContent = `✓ ${t('upload.status_success')}`;
+        st.innerHTML = `${icon('check', 12)} ${escHtml(t('upload.status_success'))}`;
         st.className = 'upload-item-status success';
     } else if (status === 'duplicate') {
-        st.textContent = `✓ ${t('upload.status_duplicate')}`;
+        st.innerHTML = `${icon('check', 12)} ${escHtml(t('upload.status_duplicate'))}`;
         st.className = 'upload-item-status success upload-item-status--duplicate';
     } else {
-        st.textContent = `✗ ${t('common.error_prefix')}${errorMsg || t('upload.status_failed')}`;
+        st.innerHTML = `${icon('close', 12)} ${escHtml(t('common.error_prefix') + (errorMsg || t('upload.status_failed')))}`;
         st.className = 'upload-item-status error';
     }
     updateUploadMiniProgress();

@@ -390,6 +390,9 @@ kbd {
 }
 
 .upload-item-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.8rem;
     font-weight: 600;
 }

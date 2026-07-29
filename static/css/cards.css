@@ -95,6 +95,9 @@
     position: absolute;
     top: var(--space-sm);
     left: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: 4px;
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
     border-radius: var(--radius-full);

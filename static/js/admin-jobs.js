@@ -193,14 +193,15 @@ registerTranslations({
 });
 
 const JOB_TYPE_INFO = {
-    CLIP: { title: t('admin_jobs.clip_title'), icon: '🧠', desc: t('admin_jobs.clip_desc') },
-    FACE: { title: t('admin_jobs.face_title'), icon: '👤', desc: t('admin_jobs.face_desc') },
-    THUMBNAIL: { title: t('admin_jobs.thumbnail_title'), icon: '🖼', desc: t('admin_jobs.thumbnail_desc') },
-    SCAN: { title: t('admin_jobs.scan_title'), icon: '🔍', desc: t('admin_jobs.scan_desc') },
-    CLEANUP: { title: t('admin_jobs.cleanup_title'), icon: '🧹', desc: t('admin_jobs.cleanup_desc') },
-    BACKUP: { title: t('admin_jobs.backup_title'), icon: '💾', desc: t('admin_jobs.backup_desc') },
-    SIMILARITY: { title: t('admin_jobs.similarity_title'), icon: '🔗', desc: t('admin_jobs.similarity_desc') },
-    REPAIR: { title: t('admin_jobs.repair_title'), icon: '🔧', desc: t('admin_jobs.repair_desc') },
+    CLIP: { title: t('admin_jobs.clip_title'), icon: 'brain', desc: t('admin_jobs.clip_desc') },
+    FACE: { title: t('admin_jobs.face_title'), icon: 'person', desc: t('admin_jobs.face_desc') },
+    THUMBNAIL: { title: t('admin_jobs.thumbnail_title'), icon: 'image', desc: t('admin_jobs.thumbnail_desc') },
+    SCAN: { title: t('admin_jobs.scan_title'), icon: 'search', desc: t('admin_jobs.scan_desc') },
+    CLEANUP: { title: t('admin_jobs.cleanup_title'), icon: 'broom', desc: t('admin_jobs.cleanup_desc') },
+    BACKUP: { title: t('admin_jobs.backup_title'), icon: 'save', desc: t('admin_jobs.backup_desc') },
+    SIMILARITY: { title: t('admin_jobs.similarity_title'), icon: 'link', desc: t('admin_jobs.similarity_desc') },
+    REPAIR: { title: t('admin_jobs.repair_title'), icon: 'wrench', desc: t('admin_jobs.repair_desc') },
+    OCR: { title: t('admin_render.job_ocr_btn'), icon: 'file', desc: t('admin_render.job_ocr_title') },
 };
 
 const JOB_STATUS_INFO = {
@@ -219,11 +220,11 @@ function _jobTypeInfo(j) {
     if (j.type === 'IMPORT') {
         return {
             title: j.copy_files === false ? t('admin_jobs.import_reference_title') : t('admin_jobs.import_copy_title'),
-            icon: j.copy_files === false ? '🔗' : '📥',
+            icon: j.copy_files === false ? 'link' : 'download',
             desc: t('admin_jobs.import_desc'),
         };
     }
-    return JOB_TYPE_INFO[j.type] || { title: j.type || t('admin_jobs.unknown_job_title'), icon: '⚙️', desc: t('admin_jobs.unknown_job_desc') };
+    return JOB_TYPE_INFO[j.type] || { title: j.type || t('admin_jobs.unknown_job_title'), icon: 'settings', desc: t('admin_jobs.unknown_job_desc') };
 }
 
 // Simple linear extrapolation from elapsed-time-so-far / progress-so-far -
@@ -266,7 +267,7 @@ function renderJobList(jobs) {
                 <div class="job-card-row">
                     <div>
                         <div class="job-card-title">
-                            <span>${typeInfo.icon}</span>
+                            <span>${icon(typeInfo.icon, 18)}</span>
                             <span>${typeInfo.title}</span>
                         </div>
                         <div class="job-card-desc">${typeInfo.desc}</div>
@@ -442,14 +443,14 @@ async function checkForUpdate() {
             return;
         }
         if (!data.available) {
-            container.innerHTML = `<p class="text-muted">✅ ${t('admin_render.up_to_date_msg', { commit: data.current_commit || '?' })}</p>`;
+            container.innerHTML = `<p class="text-muted" style="display:flex;align-items:center;gap:6px">${icon('check', 14)} ${t('admin_render.up_to_date_msg', { commit: data.current_commit || '?' })}</p>`;
             return;
         }
         const changelogHtml = (data.changelog || [])
             .map(line => `<div style="font-size:12px;color:var(--text-secondary)">${escHtml(line)}</div>`)
             .join('');
         container.innerHTML = `
-            <p>⬆️ ${t('admin_render.update_available_msg', {
+            <p style="display:flex;align-items:center;gap:6px">${icon('upload', 14)} ${t('admin_render.update_available_msg', {
                 count: data.commits_behind,
                 current: data.current_commit,
                 latest: data.latest_commit,

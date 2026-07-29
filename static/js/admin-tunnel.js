@@ -142,8 +142,8 @@ function renderTunnelPanel(status) {
                     <button class="btn btn-danger btn-sm" onclick="stopTunnel()">${t('admin_tunnel.stop')}</button>
                 </div>
                 <div class="tunnel-url-box">
-                    <p style="color:var(--warning);font-size:0.85rem">
-                        ⚠️ ${t('admin_tunnel.custom_token_no_domain_warning')}
+                    <p style="color:var(--warning);font-size:0.85rem;display:flex;align-items:center;gap:6px">
+                        ${icon('alertTriangle', 14)} ${t('admin_tunnel.custom_token_no_domain_warning')}
                     </p>
                 </div>
             `;

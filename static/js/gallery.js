@@ -38,15 +38,15 @@ registerTranslations({
         'gallery.no_results': 'No results found',
         'gallery.try_different_search': 'Try a different search.',
         'gallery.results_count': '{count} results found',
-        'gallery.clip_warming_hint': '🧠 Preparing the smart search model - this first search may take a little longer.',
-        'gallery.clip_ready_toast': '🧠 Smart search model ready - future searches will be instant.',
+        'gallery.clip_warming_hint': 'Preparing the smart search model - this first search may take a little longer.',
+        'gallery.clip_ready_toast': 'Smart search model ready - future searches will be instant.',
         'gallery.no_photos_for_filter': 'No photos match this filter',
         'gallery.try_different_filters': 'Try changing the filters.',
         'gallery.item_count': '{count} items',
         'gallery.no_photos': 'No photos',
         'gallery.back_to_years': '← Back to Years',
         'gallery.collapse_btn': 'Collapse',
-        'gallery.clear_city_filter': '✕ Clear',
+        'gallery.clear_city_filter': 'Clear',
         'gallery.jump_to_date': 'Jump to date',
     },
     tr: {
@@ -82,15 +82,15 @@ registerTranslations({
         'gallery.no_results': 'Sonuç bulunamadı',
         'gallery.try_different_search': 'Farklı bir arama deneyin.',
         'gallery.results_count': '{count} sonuç bulundu',
-        'gallery.clip_warming_hint': '🧠 Akıllı arama modeli hazırlanıyor - bu ilk arama biraz daha uzun sürebilir.',
-        'gallery.clip_ready_toast': '🧠 Akıllı arama modeli hazır - sonraki aramalar artık anında olacak.',
+        'gallery.clip_warming_hint': 'Akıllı arama modeli hazırlanıyor - bu ilk arama biraz daha uzun sürebilir.',
+        'gallery.clip_ready_toast': 'Akıllı arama modeli hazır - sonraki aramalar artık anında olacak.',
         'gallery.no_photos_for_filter': 'Bu filtreyle eşleşen fotoğraf yok',
         'gallery.try_different_filters': 'Filtreleri değiştirmeyi deneyin.',
         'gallery.item_count': '{count} öğe',
         'gallery.no_photos': 'Fotoğraf yok',
         'gallery.back_to_years': '← Yıllara Dön',
         'gallery.collapse_btn': 'Küçült',
-        'gallery.clear_city_filter': '✕ Temizle',
+        'gallery.clear_city_filter': 'Temizle',
         'gallery.jump_to_date': 'Tarihe git',
     },
     fr: {
@@ -126,15 +126,15 @@ registerTranslations({
         'gallery.no_results': 'Aucun résultat trouvé',
         'gallery.try_different_search': 'Essayez une autre recherche.',
         'gallery.results_count': '{count} résultats trouvés',
-        'gallery.clip_warming_hint': '🧠 Préparation du modèle de recherche intelligente - cette première recherche peut prendre un peu plus de temps.',
-        'gallery.clip_ready_toast': '🧠 Modèle de recherche intelligente prêt - les prochaines recherches seront instantanées.',
+        'gallery.clip_warming_hint': 'Préparation du modèle de recherche intelligente - cette première recherche peut prendre un peu plus de temps.',
+        'gallery.clip_ready_toast': 'Modèle de recherche intelligente prêt - les prochaines recherches seront instantanées.',
         'gallery.no_photos_for_filter': 'Aucune photo ne correspond à ce filtre',
         'gallery.try_different_filters': 'Essayez de modifier les filtres.',
         'gallery.item_count': '{count} éléments',
         'gallery.no_photos': 'Aucune photo',
         'gallery.back_to_years': '← Retour aux années',
         'gallery.collapse_btn': 'Réduire',
-        'gallery.clear_city_filter': '✕ Effacer',
+        'gallery.clear_city_filter': 'Effacer',
         'gallery.jump_to_date': 'Aller à la date',
     },
     de: {
@@ -170,15 +170,15 @@ registerTranslations({
         'gallery.no_results': 'Keine Ergebnisse gefunden',
         'gallery.try_different_search': 'Versuchen Sie eine andere Suche.',
         'gallery.results_count': '{count} Ergebnisse gefunden',
-        'gallery.clip_warming_hint': '🧠 Das Modell für die intelligente Suche wird vorbereitet - diese erste Suche kann etwas länger dauern.',
-        'gallery.clip_ready_toast': '🧠 Modell für intelligente Suche bereit - zukünftige Suchen sind sofort da.',
+        'gallery.clip_warming_hint': 'Das Modell für die intelligente Suche wird vorbereitet - diese erste Suche kann etwas länger dauern.',
+        'gallery.clip_ready_toast': 'Modell für intelligente Suche bereit - zukünftige Suchen sind sofort da.',
         'gallery.no_photos_for_filter': 'Keine Fotos entsprechen diesem Filter',
         'gallery.try_different_filters': 'Versuchen Sie, die Filter zu ändern.',
         'gallery.item_count': '{count} Elemente',
         'gallery.no_photos': 'Keine Fotos',
         'gallery.back_to_years': '← Zurück zu den Jahren',
         'gallery.collapse_btn': 'Einklappen',
-        'gallery.clear_city_filter': '✕ Löschen',
+        'gallery.clear_city_filter': 'Löschen',
         'gallery.jump_to_date': 'Zu Datum springen',
     },
 });
@@ -334,8 +334,8 @@ async function renderGallery() {
         </div>
         ${cityFilterName ? `
             <div class="date-group-header" style="margin-bottom:12px">
-                <span class="date-group-title">🏙️ ${escHtml(cityFilterName)}</span>
-                <button class="btn btn-secondary btn-sm" id="gallery-clear-city-filter">${t('gallery.clear_city_filter')}</button>
+                <span class="date-group-title" style="display:inline-flex;align-items:center;gap:6px">${icon('pin', 16)} ${escHtml(cityFilterName)}</span>
+                <button class="btn btn-secondary btn-sm" id="gallery-clear-city-filter">${icon('close', 14)} ${t('gallery.clear_city_filter')}</button>
             </div>
         ` : ''}
         <div id="gallery-grid-container"></div>
@@ -540,7 +540,7 @@ async function _runGallerySearch(query) {
     if (myRequestId !== g.requestId) return;
     container.innerHTML = (clipStatus.clip_available && !clipStatus.clip_loaded)
         ? `<div class="skeleton" style="height:200px;border-radius:12px;margin-bottom:10px"></div>
-           <p class="text-muted" style="text-align:center">${t('gallery.clip_warming_hint')}</p>`
+           <p class="text-muted" style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px">${icon('brain', 14)} ${t('gallery.clip_warming_hint')}</p>`
         : `<div class="skeleton" style="height:200px;border-radius:12px"></div>`;
 
     try {

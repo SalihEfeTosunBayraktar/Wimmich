@@ -170,7 +170,7 @@ function _renderPersonCard(p, { hidden = false, showDissolve = false } = {}) {
             ${showDissolve ? `<button class="person-dissolve-btn" onclick="event.stopPropagation(); dissolvePersonAction('${p.id}')" title="${t('people.dissolve_title')}">${icon('explosion')}</button>` : ''}
             <button class="person-hide-btn" onclick="event.stopPropagation(); togglePersonHidden('${p.id}', ${!hidden})" title="${hidden ? t('people.unhide_title') : t('people.hide_title')}">${hidden ? icon('eyeOff') : icon('eye')}</button>
             <div class="person-avatar">
-                ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : '<span style="font-size:2rem">👤</span>'}
+                ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="">` : `<span style="color:var(--text-muted)">${icon('person', 32)}</span>`}
             </div>
             <div class="person-name">${escHtml(p.name)}</div>
             <div class="person-count">${t('people.photo_count', { count: p.face_count })}</div>
@@ -236,13 +236,13 @@ async function renderPeople() {
             <div class="people-grid">${data.people.map(p => _renderPersonCard(p, { showDissolve: true })).join('')}</div>
             ${unknownPool.length ? `
                 <div class="unknown-pool-section">
-                    <h3 class="unknown-pool-title">❓ ${t('people.unknown_pool_title', { count: unknownPool.length })}</h3>
+                    <h3 class="unknown-pool-title" style="display:flex;align-items:center;gap:6px">${icon('question', 16)} ${t('people.unknown_pool_title', { count: unknownPool.length })}</h3>
                     <div class="people-grid">${unknownPool.map(p => _renderPersonCard(p, { showDissolve: true })).join('')}</div>
                 </div>
             ` : ''}
             ${hiddenPeople.length ? `
                 <details class="hidden-people-section">
-                    <summary class="hidden-people-title">🙈 ${t('people.hidden_people_title', { count: hiddenPeople.length })}</summary>
+                    <summary class="hidden-people-title"><span style="display:inline-flex;align-items:center;gap:6px">${icon('eyeOff', 16)} ${t('people.hidden_people_title', { count: hiddenPeople.length })}</span></summary>
                     <div class="people-grid">${hiddenPeople.map(p => _renderPersonCard(p, { hidden: true, showDissolve: true })).join('')}</div>
                 </details>
             ` : ''}
@@ -262,7 +262,7 @@ async function openPerson(id) {
         pc.innerHTML = `
             <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;background:var(--bg-secondary);padding:16px;border-radius:12px;border:1px solid var(--border-color);flex-wrap:wrap">
                 <div class="person-avatar" style="width:80px;height:80px;margin:0;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:var(--bg-primary);border:2px solid var(--border-color)">
-                    ${person.thumbnail_url ? `<img src="${person.thumbnail_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:2rem">👤</span>'}
+                    ${person.thumbnail_url ? `<img src="${person.thumbnail_url}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span style="color:var(--text-muted)">${icon('person', 32)}</span>`}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:200px">
                     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -309,8 +309,8 @@ function renderFaceCorrectionTab(person) {
     }
 
     return `
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;background:rgba(255,255,255,0.05);padding:12px;border-radius:8px">
-            💡 ${t('people.correction_info')}
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;display:flex;align-items:flex-start;gap:6px">
+            <span style="flex-shrink:0">${icon('lightbulb', 14)}</span> <span>${t('people.correction_info')}</span>
         </p>
         <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:16px;padding:8px 0">
             ${person.faces.map(f => `

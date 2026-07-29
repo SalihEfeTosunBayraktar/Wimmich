@@ -73,7 +73,7 @@ async function renderNamingQueue() {
         container.innerHTML = `
             <div class="naming-queue">
                 <div class="naming-queue-header">
-                    <h3 class="naming-queue-title">🏷 ${t('people_naming_queue.title', { count: data.queue.length })}</h3>
+                    <h3 class="naming-queue-title" style="display:flex;align-items:center;gap:6px">${icon('category', 16)} ${t('people_naming_queue.title', { count: data.queue.length })}</h3>
                 </div>
                 <div class="naming-queue-list">
                     ${data.queue.slice(0, 6).map(item => renderNamingQueueItem(item)).join('')}
@@ -87,7 +87,7 @@ async function renderNamingQueue() {
 function renderNamingQueueItem(item) {
     const thumb = item.thumbnail_url
         ? `<img src="${item.thumbnail_url}" alt="">`
-        : '<span style="font-size:1.5rem">👤</span>';
+        : `<span style="color:var(--text-muted)">${icon('person', 24)}</span>`;
 
     const suggestion = item.suggested_person ? `
         <p class="naming-queue-question">${t('people_naming_queue.confirm_person_question', { name: `<strong>${escHtml(item.suggested_person.name)}</strong>` })}</p>

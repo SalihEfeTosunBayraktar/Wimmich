@@ -109,7 +109,7 @@ async function renderMap() {
             <div id="map-view" style="height:100%"></div>
             <div class="map-cities-sidebar">
                 <div class="map-cities-header">
-                    <h4>🏙️ ${t('map.cities_heading')}</h4>
+                    <h4 style="display:flex;align-items:center;gap:6px">${icon('pin', 16)} ${t('map.cities_heading')}</h4>
                     <button class="btn btn-secondary btn-sm" id="map-city-sort-btn"></button>
                 </div>
                 <div id="map-cities-list"></div>

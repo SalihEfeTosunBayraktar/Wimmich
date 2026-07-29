@@ -619,7 +619,7 @@ async function renderAdmin() {
             <div id="admin-tab-overview" class="admin-tab-panel" ${activeAdminTab === 'overview' ? '' : 'hidden'}>
               <div class="admin-status-matrix">
                 <div class="admin-status-card">
-                    <h4>📡 ${t('admin_render.server_status_heading')}</h4>
+                    <h4>${icon('radio', 16)} ${t('admin_render.server_status_heading')}</h4>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <span class="badge" id="server-ping-badge">${t('admin_render.ping_checking')}</span>
                         <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
@@ -649,7 +649,7 @@ async function renderAdmin() {
                 </div>
 
                 <div class="admin-status-card admin-status-card--jobs">
-                    <h4>⚙️ ${t('admin_render.jobs_status_card_heading')}</h4>
+                    <h4>${icon('settings', 16)} ${t('admin_render.jobs_status_card_heading')}</h4>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
                         <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}" id="jobs-pending-badge">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
                         <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}" id="jobs-running-badge">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
@@ -702,7 +702,7 @@ async function renderAdmin() {
             <div id="admin-tab-users" class="admin-tab-panel" ${activeAdminTab === 'users' ? '' : 'hidden'}>
                 <div class="admin-section">
                     <div style="display:flex;justify-content:space-between;align-items:center">
-                        <h3>👥 ${t('admin_render.stat_users')} ${infoBtn(t('admin_users.priority_info_hint'))}</h3>
+                        <h3 style="display:flex;align-items:center;gap:6px">${icon('users', 18)} ${t('admin_render.stat_users')} ${infoBtn(t('admin_users.priority_info_hint'))}</h3>
                         <button class="btn btn-primary btn-sm" onclick="showCreateUserModal()">${t('admin_users.new_user_button')}</button>
                     </div>
                     <div class="user-list">${renderUserList(users.users)}</div>
@@ -713,7 +713,7 @@ async function renderAdmin() {
                 <div class="admin-row">
                     <div class="admin-status-card">
                         <div style="display:flex;justify-content:space-between;align-items:center">
-                            <h4>📁 ${t('admin_render.storage_settings_heading')}</h4>
+                            <h4>${icon('folder', 16)} ${t('admin_render.storage_settings_heading')}</h4>
                             <button class="btn btn-secondary btn-sm" onclick="resetStorageConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
                         </div>
                         <div id="storage-panel" style="display:flex;flex-direction:column;gap:12px">
@@ -755,7 +755,7 @@ async function renderAdmin() {
 
                     <div class="admin-status-card">
                         <div style="display:flex;justify-content:space-between;align-items:center">
-                            <h4>💾 ${t('admin_render.backup_heading')}</h4>
+                            <h4>${icon('save', 16)} ${t('admin_render.backup_heading')}</h4>
                             <button class="btn btn-secondary btn-sm" onclick="resetBackupConfigDefaults()">${icon('undo')} ${t('admin_render.reset_defaults_btn')}</button>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:12px">
@@ -787,7 +787,7 @@ async function renderAdmin() {
             <div id="admin-tab-import" class="admin-tab-panel" ${activeAdminTab === 'import' ? '' : 'hidden'}>
                 <div class="admin-row">
                     <div class="admin-status-card">
-                        <h4>📂 ${t('admin_render.folder_import_heading')}</h4>
+                        <h4>${icon('folder', 16)} ${t('admin_render.folder_import_heading')}</h4>
                         <p class="admin-section-desc" style="margin:0">${t('admin_render.folder_import_desc')}</p>
                         <div id="import-panel" style="display:flex;flex-direction:column;gap:12px">
                             <div id="file-browser">
@@ -810,7 +810,7 @@ async function renderAdmin() {
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>🔗 ${t('admin_render.reference_roots_heading')}</h4>
+                        <h4>${icon('link', 16)} ${t('admin_render.reference_roots_heading')}</h4>
                         <p class="admin-section-desc" style="margin:0">${t('admin_render.reference_roots_desc')}</p>
                         <div id="reference-roots-list">${renderReferenceRootsList(referenceRootsData.references)}</div>
                     </div>
@@ -820,12 +820,12 @@ async function renderAdmin() {
             <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
                 <div class="admin-status-matrix">
                     <div class="admin-status-card">
-                        <h4>🏠 ${t('admin_render.lan_access_heading')} ${infoBtn(t('admin_render.lan_access_info_hint'))}</h4>
+                        <h4>${icon('home', 16)} ${t('admin_render.lan_access_heading')} ${infoBtn(t('admin_render.lan_access_info_hint'))}</h4>
                         <div id="network-status-panel">${renderNetworkStatusPanel(networkStatus)}</div>
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>🌐 ${t('admin_render.remote_access_heading')} ${infoBtn(t('admin_render.remote_access_info_hint'))}</h4>
+                        <h4>${icon('globe', 16)} ${t('admin_render.remote_access_heading')} ${infoBtn(t('admin_render.remote_access_info_hint'))}</h4>
                         <div id="tunnel-panel">${renderTunnelPanel(tunnelStatus)}</div>
                         <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
                             <input type="checkbox" id="storage-autostart-input" ${storageConfig.auto_start_tunnel ? 'checked' : ''} style="width:auto;margin:0">
@@ -835,20 +835,20 @@ async function renderAdmin() {
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>🔀 ${t('admin_tunnel.other_methods_heading')} ${infoBtn(t('admin_tunnel.other_methods_info_hint'))}</h4>
+                        <h4>${icon('repeat', 16)} ${t('admin_tunnel.other_methods_heading')} ${infoBtn(t('admin_tunnel.other_methods_info_hint'))}</h4>
                         <div id="tailscale-panel">${renderTailscalePanel(tailscaleStatus)}</div>
                         <p class="text-muted admin-field-hint admin-field-hint--bordered">${t('admin_tunnel.reverse_proxy_hint')}</p>
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>⬆️ ${t('admin_render.updates_heading')}</h4>
+                        <h4>${icon('upload', 16)} ${t('admin_render.updates_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
                         <div id="update-status-container"></div>
                         <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">${icon('search')} ${t('admin_render.check_update_btn')}</button>
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>🔌 ${t('admin_render.server_control_heading')}</h4>
+                        <h4>${icon('plug', 16)} ${t('admin_render.server_control_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.restart_server_hint')}</p>
                         <button class="btn btn-secondary btn-sm" onclick="restartServer(this)">${icon('refresh')} ${t('admin_render.restart_server_btn')}</button>
                         <p class="text-muted admin-field-hint" style="margin-top:12px">${t('admin_render.shutdown_server_hint')}</p>
@@ -856,7 +856,7 @@ async function renderAdmin() {
                     </div>
 
                     <div class="admin-status-card">
-                        <h4>📜 ${t('admin_render.audit_log_heading')}</h4>
+                        <h4>${icon('file', 16)} ${t('admin_render.audit_log_heading')}</h4>
                         <div id="audit-log-list">${renderAuditLogEntries(auditLog.entries)}</div>
                         ${auditLog.entries.length < auditLog.total ? `
                             <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="loadMoreAuditLog()">${t('admin_render.load_more_btn')}</button>

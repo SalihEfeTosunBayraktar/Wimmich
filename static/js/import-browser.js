@@ -3,12 +3,12 @@
  */
 registerTranslations({
     en: {
-        'import_browser.parent_folder': '⬆ Parent Folder',
+        'import_browser.parent_folder': 'Parent Folder',
         'import_browser.media_count': '{count} media',
         'import_browser.free_suffix': 'free',
         'import_browser.no_media_found': 'No media files found in this folder.',
         'import_browser.enter_path': 'Enter a folder path',
-        'import_browser.scan_result_title': '📊 Scan Result',
+        'import_browser.scan_result_title': 'Scan Result',
         'import_browser.total_label': 'Total:',
         'import_browser.new_label': 'New:',
         'import_browser.existing_label': 'Existing:',
@@ -19,29 +19,29 @@ registerTranslations({
         'import_browser.copy_mode': 'Copy',
         'import_browser.reference_mode': 'Reference',
         'import_browser.no_new_files': 'No new files found to import.',
-        'import_browser.import_in_progress': '✓ Import continuing in the background',
+        'import_browser.import_in_progress': 'Import continuing in the background',
         'import_browser.job_id_label': 'Job ID: {id}',
         'import_browser.import_path_label': 'Path: {path}',
         'import_browser.import_started': 'Import started!',
         'import_browser.import_completed': 'Import completed!',
-        'import_browser.completed_label': '✓ Completed',
+        'import_browser.completed_label': 'Completed',
         'import_browser.import_failed_prefix': 'Import failed: ',
         'import_browser.browsing_btn': 'Loading...',
         'import_browser.scanning_btn': 'Scanning...',
-        'import_browser.scanning_hint': '🔍 Scanning the folder... this can take a while for a large drive.',
+        'import_browser.scanning_hint': 'Scanning the folder... this can take a while for a large drive.',
         'import_browser.starting_btn': 'Starting...',
-        'import_browser.reference_risky_warning': '⚠️ This folder is on a {diskType} drive. In Reference mode, if this drive is ever disconnected or unavailable, those photos will eventually be moved to trash (see Repair Broken Files). Copy mode is recommended for drives like this.',
+        'import_browser.reference_risky_warning': 'This folder is on a {diskType} drive. In Reference mode, if this drive is ever disconnected or unavailable, those photos will eventually be moved to trash (see Repair Broken Files). Copy mode is recommended for drives like this.',
         'import_browser.disk_type_removable': 'removable (USB/external)',
         'import_browser.disk_type_network': 'network',
         'import_browser.disk_type_cdrom': 'optical (CD/DVD)',
     },
     tr: {
-        'import_browser.parent_folder': '⬆ Üst Klasör',
+        'import_browser.parent_folder': 'Üst Klasör',
         'import_browser.media_count': '{count} medya',
         'import_browser.free_suffix': 'boş',
         'import_browser.no_media_found': 'Bu klasörde medya dosyası bulunamadı.',
         'import_browser.enter_path': 'Bir klasör yolu girin',
-        'import_browser.scan_result_title': '📊 Tarama Sonucu',
+        'import_browser.scan_result_title': 'Tarama Sonucu',
         'import_browser.total_label': 'Toplam:',
         'import_browser.new_label': 'Yeni:',
         'import_browser.existing_label': 'Mevcut:',
@@ -52,29 +52,29 @@ registerTranslations({
         'import_browser.copy_mode': 'Kopyala',
         'import_browser.reference_mode': 'Referans',
         'import_browser.no_new_files': 'Aktarılacak yeni dosya bulunamadı.',
-        'import_browser.import_in_progress': '✓ İçe aktarma arka planda devam ediyor',
+        'import_browser.import_in_progress': 'İçe aktarma arka planda devam ediyor',
         'import_browser.job_id_label': 'İş ID: {id}',
         'import_browser.import_path_label': 'Yol: {path}',
         'import_browser.import_started': 'İçe aktarma başlatıldı!',
         'import_browser.import_completed': 'İçe aktarma tamamlandı!',
-        'import_browser.completed_label': '✓ Tamamlandı',
+        'import_browser.completed_label': 'Tamamlandı',
         'import_browser.import_failed_prefix': 'İçe aktarma başarısız: ',
         'import_browser.browsing_btn': 'Yükleniyor...',
         'import_browser.scanning_btn': 'Taranıyor...',
-        'import_browser.scanning_hint': '🔍 Klasör taranıyor... büyük bir disk için bu biraz sürebilir.',
+        'import_browser.scanning_hint': 'Klasör taranıyor... büyük bir disk için bu biraz sürebilir.',
         'import_browser.starting_btn': 'Başlatılıyor...',
-        'import_browser.reference_risky_warning': '⚠️ Bu klasör {diskType} bir sürücüde. Referans modunda, bu sürücü bir gün bağlantısı kesilir veya erişilemez hale gelirse bu fotoğraflar zamanla çöp kutusuna taşınır (bkz. Bozuk Dosyaları Onar). Bu tür sürücüler için Kopyala modu önerilir.',
+        'import_browser.reference_risky_warning': 'Bu klasör {diskType} bir sürücüde. Referans modunda, bu sürücü bir gün bağlantısı kesilir veya erişilemez hale gelirse bu fotoğraflar zamanla çöp kutusuna taşınır (bkz. Bozuk Dosyaları Onar). Bu tür sürücüler için Kopyala modu önerilir.',
         'import_browser.disk_type_removable': 'çıkarılabilir (USB/harici)',
         'import_browser.disk_type_network': 'ağ',
         'import_browser.disk_type_cdrom': 'optik (CD/DVD)',
     },
     fr: {
-        'import_browser.parent_folder': '⬆ Dossier parent',
+        'import_browser.parent_folder': 'Dossier parent',
         'import_browser.media_count': '{count} médias',
         'import_browser.free_suffix': 'libre',
         'import_browser.no_media_found': 'Aucun fichier média trouvé dans ce dossier.',
         'import_browser.enter_path': 'Entrez un chemin de dossier',
-        'import_browser.scan_result_title': '📊 Résultat du scan',
+        'import_browser.scan_result_title': 'Résultat du scan',
         'import_browser.total_label': 'Total :',
         'import_browser.new_label': 'Nouveau :',
         'import_browser.existing_label': 'Existant :',
@@ -85,29 +85,29 @@ registerTranslations({
         'import_browser.copy_mode': 'Copier',
         'import_browser.reference_mode': 'Référence',
         'import_browser.no_new_files': 'Aucun nouveau fichier à importer.',
-        'import_browser.import_in_progress': "✓ L'importation se poursuit en arrière-plan",
+        'import_browser.import_in_progress': "L'importation se poursuit en arrière-plan",
         'import_browser.job_id_label': 'ID de tâche : {id}',
         'import_browser.import_path_label': 'Chemin : {path}',
         'import_browser.import_started': 'Importation démarrée !',
         'import_browser.import_completed': 'Importation terminée !',
-        'import_browser.completed_label': '✓ Terminé',
+        'import_browser.completed_label': 'Terminé',
         'import_browser.import_failed_prefix': "Échec de l'importation : ",
         'import_browser.browsing_btn': 'Chargement...',
         'import_browser.scanning_btn': 'Analyse...',
-        'import_browser.scanning_hint': "🔍 Analyse du dossier en cours... cela peut prendre un moment pour un grand disque.",
+        'import_browser.scanning_hint': "Analyse du dossier en cours... cela peut prendre un moment pour un grand disque.",
         'import_browser.starting_btn': 'Démarrage...',
-        'import_browser.reference_risky_warning': "⚠️ Ce dossier se trouve sur un lecteur {diskType}. En mode Référence, si ce lecteur est un jour déconnecté ou indisponible, ces photos finiront par être déplacées vers la corbeille (voir Réparer les fichiers cassés). Le mode Copie est recommandé pour ce type de lecteur.",
+        'import_browser.reference_risky_warning': "Ce dossier se trouve sur un lecteur {diskType}. En mode Référence, si ce lecteur est un jour déconnecté ou indisponible, ces photos finiront par être déplacées vers la corbeille (voir Réparer les fichiers cassés). Le mode Copie est recommandé pour ce type de lecteur.",
         'import_browser.disk_type_removable': 'amovible (USB/externe)',
         'import_browser.disk_type_network': 'réseau',
         'import_browser.disk_type_cdrom': 'optique (CD/DVD)',
     },
     de: {
-        'import_browser.parent_folder': '⬆ Übergeordneter Ordner',
+        'import_browser.parent_folder': 'Übergeordneter Ordner',
         'import_browser.media_count': '{count} Medien',
         'import_browser.free_suffix': 'frei',
         'import_browser.no_media_found': 'In diesem Ordner wurden keine Mediendateien gefunden.',
         'import_browser.enter_path': 'Geben Sie einen Ordnerpfad ein',
-        'import_browser.scan_result_title': '📊 Scan-Ergebnis',
+        'import_browser.scan_result_title': 'Scan-Ergebnis',
         'import_browser.total_label': 'Gesamt:',
         'import_browser.new_label': 'Neu:',
         'import_browser.existing_label': 'Vorhanden:',
@@ -118,18 +118,18 @@ registerTranslations({
         'import_browser.copy_mode': 'Kopieren',
         'import_browser.reference_mode': 'Referenz',
         'import_browser.no_new_files': 'Keine neuen Dateien zum Importieren gefunden.',
-        'import_browser.import_in_progress': '✓ Import wird im Hintergrund fortgesetzt',
+        'import_browser.import_in_progress': 'Import wird im Hintergrund fortgesetzt',
         'import_browser.job_id_label': 'Job-ID: {id}',
         'import_browser.import_path_label': 'Pfad: {path}',
         'import_browser.import_started': 'Import gestartet!',
         'import_browser.import_completed': 'Import abgeschlossen!',
-        'import_browser.completed_label': '✓ Abgeschlossen',
+        'import_browser.completed_label': 'Abgeschlossen',
         'import_browser.import_failed_prefix': 'Import fehlgeschlagen: ',
         'import_browser.browsing_btn': 'Lädt...',
         'import_browser.scanning_btn': 'Wird gescannt...',
-        'import_browser.scanning_hint': '🔍 Ordner wird gescannt... bei einem großen Laufwerk kann das etwas dauern.',
+        'import_browser.scanning_hint': 'Ordner wird gescannt... bei einem großen Laufwerk kann das etwas dauern.',
         'import_browser.starting_btn': 'Wird gestartet...',
-        'import_browser.reference_risky_warning': '⚠️ Dieser Ordner befindet sich auf einem {diskType} Laufwerk. Im Referenzmodus werden diese Fotos irgendwann in den Papierkorb verschoben, falls dieses Laufwerk jemals getrennt oder nicht verfügbar ist (siehe Defekte Dateien reparieren). Für solche Laufwerke wird der Kopiermodus empfohlen.',
+        'import_browser.reference_risky_warning': 'Dieser Ordner befindet sich auf einem {diskType} Laufwerk. Im Referenzmodus werden diese Fotos irgendwann in den Papierkorb verschoben, falls dieses Laufwerk jemals getrennt oder nicht verfügbar ist (siehe Defekte Dateien reparieren). Für solche Laufwerke wird der Kopiermodus empfohlen.',
         'import_browser.disk_type_removable': 'Wechseldatenträger (USB/extern)',
         'import_browser.disk_type_network': 'Netzwerk',
         'import_browser.disk_type_cdrom': 'optisch (CD/DVD)',
@@ -157,21 +157,21 @@ async function browsePath(path) {
         let html = '';
         if (data.parent_path !== null && data.parent_path !== undefined) {
             html += `<div class="browse-item browse-item--parent" onclick="browsePath('${escAttr(data.parent_path)}')">
-                <span>📁</span> <span>${t('import_browser.parent_folder')}</span>
+                <span>${icon('folder', 16)}</span> <span>${t('import_browser.parent_folder')}</span>
             </div>`;
         }
 
         data.items.forEach(item => {
             if (item.type === 'folder' || item.type === 'drive') {
                 html += `<div class="browse-item browse-item--dir" onclick="browsePath('${escAttr(item.path)}')">
-                    <span>${item.type === 'drive' ? '💾' : '📁'}</span>
+                    <span>${icon(item.type === 'drive' ? 'disk' : 'folder', 16)}</span>
                     <span style="flex:1;font-weight:500">${escHtml(item.name)}</span>
                     ${item.media_count !== undefined ? `<span style="font-size:0.8rem;color:var(--text-muted)">${t('import_browser.media_count', { count: item.media_count })}</span>` : ''}
                     ${item.total_size ? `<span style="font-size:0.8rem;color:var(--text-muted)">${formatSize(item.free_size)} ${t('import_browser.free_suffix')}</span>` : ''}
                 </div>`;
             } else {
                 html += `<div class="browse-item browse-item--file">
-                    <span>${item.media_type === 'VIDEO' ? '🎬' : '🖼'}</span>
+                    <span>${icon(item.media_type === 'VIDEO' ? 'film' : 'image', 16)}</span>
                     <span style="flex:1;font-size:0.9rem">${escHtml(item.name)}</span>
                     <span style="font-size:0.8rem;color:var(--text-muted)">${formatSize(item.size)}</span>
                 </div>`;
@@ -218,7 +218,7 @@ function _renderScanResult(path, data) {
     const showRiskyWarning = data.reference_risky && !data.copy_mode;
     sr.innerHTML = `
         <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:10px;padding:16px">
-            <h4 style="margin-bottom:8px">${t('import_browser.scan_result_title')}</h4>
+            <h4 style="margin-bottom:8px;display:flex;align-items:center;gap:6px">${icon('barChart', 16)} ${t('import_browser.scan_result_title')}</h4>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px">
                 <div><span style="color:var(--text-muted)">${t('import_browser.total_label')}</span> <strong>${data.total_found}</strong></div>
                 <div><span style="color:var(--text-muted)">${t('import_browser.new_label')}</span> <strong style="color:var(--success)">${data.new_files}</strong></div>
@@ -228,8 +228,9 @@ function _renderScanResult(path, data) {
                 <div><span style="color:var(--text-muted)">${t('import_browser.size_label')}</span> <strong>${formatSize(data.total_size)}</strong></div>
             </div>
             ${showRiskyWarning ? `
-                <p style="color:var(--warning);font-size:0.85rem;margin-bottom:12px">
-                    ${t('import_browser.reference_risky_warning', { diskType: _diskTypeLabel(data.disk_type) })}
+                <p style="color:var(--warning);font-size:0.85rem;margin-bottom:12px;display:flex;align-items:flex-start;gap:6px">
+                    <span style="flex-shrink:0">${icon('alertTriangle', 14)}</span>
+                    <span>${t('import_browser.reference_risky_warning', { diskType: _diskTypeLabel(data.disk_type) })}</span>
                 </p>
             ` : ''}
             ${data.new_files > 0 ? `
@@ -251,7 +252,7 @@ async function scanImportPath() {
     // Same reasoning as browsePath's Go button - a recursive scan over a
     // real external drive can take a while, and a static skeleton with no
     // further change for that whole stretch reads as frozen, not busy.
-    sr.innerHTML = `<div class="skeleton" style="height:36px;border-radius:8px;margin-bottom:8px"></div><p class="text-muted" style="margin:0;font-size:0.85rem">${t('import_browser.scanning_hint')}</p>`;
+    sr.innerHTML = `<div class="skeleton" style="height:36px;border-radius:8px;margin-bottom:8px"></div><p class="text-muted" style="margin:0;font-size:0.85rem;display:flex;align-items:center;gap:6px">${icon('search', 14)} ${t('import_browser.scanning_hint')}</p>`;
     const scanBtn = $('scan-import-btn');
     const prevScanText = scanBtn ? scanBtn.textContent : null;
     if (scanBtn) { scanBtn.disabled = true; scanBtn.textContent = t('import_browser.scanning_btn'); }
@@ -326,7 +327,7 @@ function _renderActiveImportsList(entries) {
     if (!sr) return;
     sr.innerHTML = entries.map(({ jobId, path }) => `
         <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:16px;margin-bottom:8px">
-            <p style="color:var(--success);font-weight:600">${t('import_browser.import_in_progress')}</p>
+            <p style="color:var(--success);font-weight:600;display:flex;align-items:center;gap:6px">${icon('check', 14)} ${t('import_browser.import_in_progress')}</p>
             <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px">${t('import_browser.job_id_label', { id: jobId })}</p>
             ${path ? `<p style="color:var(--text-secondary);font-size:0.85rem;margin-top:2px">${t('import_browser.import_path_label', { path: escHtml(path) })}</p>` : ''}
             <div style="margin-top:8px">
@@ -458,7 +459,7 @@ function renderReferenceRootsList(roots) {
         <div style="display:flex;flex-direction:column;gap:8px">
             ${roots.map(r => `
                 <div class="browse-item" style="display:flex;align-items:center;gap:8px">
-                    <span>🔗</span>
+                    <span>${icon('link', 16)}</span>
                     <span style="flex:1;font-size:0.9rem;word-break:break-all">${escHtml(r.path)}</span>
                     <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap">${t('admin_render.reference_roots_item_count', { count: r.asset_count })} · ${formatSize(r.total_size)}</span>
                     <button class="btn btn-danger btn-sm" onclick="removeReferenceRoot('${escAttr(r.path)}')">${t('admin_render.reference_roots_remove_btn')}</button>

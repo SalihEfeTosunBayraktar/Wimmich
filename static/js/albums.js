@@ -36,7 +36,7 @@ registerTranslations({
         'albums.smart_query_placeholder': 'e.g. cat, sunset, screenshot...',
         'albums.smart_query_required': 'Describe what this album should contain',
         'albums.smart_created': 'Dynamic album created - {count} matching photos added so far',
-        'albums.smart_badge': '🔮 Dynamic',
+        'albums.smart_badge': 'Dynamic',
         'albums.smart_query_display': 'Auto-adds photos matching: "{query}"',
     },
     tr: {
@@ -73,7 +73,7 @@ registerTranslations({
         'albums.smart_query_placeholder': 'örn. kedi, gün batımı, ekran görüntüsü...',
         'albums.smart_query_required': 'Bu albümde ne olması gerektiğini yazın',
         'albums.smart_created': 'Dinamik albüm oluşturuldu - şimdiden {count} eşleşen fotoğraf eklendi',
-        'albums.smart_badge': '🔮 Dinamik',
+        'albums.smart_badge': 'Dinamik',
         'albums.smart_query_display': 'Şununla eşleşen fotoğrafları otomatik ekler: "{query}"',
     },
     fr: {
@@ -110,7 +110,7 @@ registerTranslations({
         'albums.smart_query_placeholder': 'ex. chat, coucher de soleil, capture d\'écran...',
         'albums.smart_query_required': 'Décrivez ce que cet album doit contenir',
         'albums.smart_created': 'Album dynamique créé - {count} photos correspondantes déjà ajoutées',
-        'albums.smart_badge': '🔮 Dynamique',
+        'albums.smart_badge': 'Dynamique',
         'albums.smart_query_display': 'Ajoute automatiquement les photos correspondant à : "{query}"',
     },
     de: {
@@ -147,7 +147,7 @@ registerTranslations({
         'albums.smart_query_placeholder': 'z. B. Katze, Sonnenuntergang, Screenshot...',
         'albums.smart_query_required': 'Beschreiben Sie, was dieses Album enthalten soll',
         'albums.smart_created': 'Dynamisches Album erstellt - {count} passende Fotos bereits hinzugefügt',
-        'albums.smart_badge': '🔮 Dynamisch',
+        'albums.smart_badge': 'Dynamisch',
         'albums.smart_query_display': 'Fügt automatisch Fotos hinzu, die zu „{query}“ passen',
     },
 });
@@ -166,9 +166,9 @@ async function renderAlbums() {
             <div class="album-grid">${data.albums.map(a => `
                 <div class="album-card" onclick="openAlbum('${a.id}')">
                     <div class="album-card-cover">
-                        ${a.cover_thumb ? `<img src="${a.cover_thumb}" alt="" loading="lazy">` : '<div class="empty-cover">📁</div>'}
-                        ${a.is_owner === false ? `<span class="album-card-shared-badge">👥</span>` : ''}
-                        ${a.is_smart ? `<span class="album-card-smart-badge">${t('albums.smart_badge')}</span>` : ''}
+                        ${a.cover_thumb ? `<img src="${a.cover_thumb}" alt="" loading="lazy">` : `<div class="empty-cover">${icon('folder', 32)}</div>`}
+                        ${a.is_owner === false ? `<span class="album-card-shared-badge">${icon('users', 12)}</span>` : ''}
+                        ${a.is_smart ? `<span class="album-card-smart-badge">${icon('sparkle', 12)} ${t('albums.smart_badge')}</span>` : ''}
                     </div>
                     <div class="album-card-info">
                         <div class="album-card-name">${escHtml(a.name)}</div>
@@ -199,7 +199,7 @@ async function openAlbum(id) {
                 <button class="btn btn-secondary btn-sm" onclick="navigateTo('albums')">${t('albums.back_to_albums')}</button>
                 <h3 class="album-detail-title">${escHtml(album.name)}</h3>
                 <span class="text-muted">${t('albums.item_count', { count: album.assets?.length || 0 })}</span>
-                ${album.is_smart ? `<span class="album-view-only-badge album-smart-badge">${t('albums.smart_badge')}</span>` : ''}
+                ${album.is_smart ? `<span class="album-view-only-badge album-smart-badge" style="display:inline-flex;align-items:center;gap:4px">${icon('sparkle', 12)} ${t('albums.smart_badge')}</span>` : ''}
                 ${!isOwner ? `<span class="text-muted">${t('albums.shared_by', { name: escHtml(album.owner_name || '') })}</span>` : ''}
                 ${!isOwner && !album.can_edit ? `<span class="album-view-only-badge">${t('albums.view_only_badge')}</span>` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="showShareModal('ALBUM', '${id}')">${icon('link')} ${t('albums.share_button')}</button>
@@ -294,7 +294,7 @@ async function showAddToAlbumModal() {
         }
         list.innerHTML = pickable.map(a => `
             <div class="album-pick-row" data-id="${a.id}">
-                <div class="album-pick-cover">${a.cover_thumb ? `<img src="${a.cover_thumb}" alt="">` : '📁'}</div>
+                <div class="album-pick-cover">${a.cover_thumb ? `<img src="${a.cover_thumb}" alt="">` : icon('folder', 20)}</div>
                 <div class="album-pick-info">
                     <div class="album-pick-name">${escHtml(a.name)}</div>
                     <div class="text-muted">${t('albums.item_count', { count: a.asset_count })}</div>

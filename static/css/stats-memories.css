@@ -75,6 +75,10 @@
     justify-content: center;
     font-size: 1.2rem;
     flex-shrink: 0;
+    /* The SVG icon here inherits color via currentColor (see icons.js) -
+       explicit white for contrast against the accent-gradient background,
+       same reasoning as .user-avatar's identical background. */
+    color: white;
 }
 
 .memory-text h3 {

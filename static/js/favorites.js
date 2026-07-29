@@ -4,19 +4,19 @@
 registerTranslations({
     en: {
         'favorites.empty_title': 'No favorites',
-        'favorites.empty_desc': 'Mark your photos as favorites with the ♥ icon.',
+        'favorites.empty_desc': 'Mark your photos as favorites with the heart icon.',
     },
     tr: {
         'favorites.empty_title': 'Favori yok',
-        'favorites.empty_desc': 'Fotoğraflarınızı ♥ simgesiyle favori olarak işaretleyin.',
+        'favorites.empty_desc': 'Fotoğraflarınızı kalp simgesiyle favori olarak işaretleyin.',
     },
     fr: {
         'favorites.empty_title': 'Aucun favori',
-        'favorites.empty_desc': "Marquez vos photos comme favorites avec l'icône ♥.",
+        'favorites.empty_desc': "Marquez vos photos comme favorites avec l'icône en forme de cœur.",
     },
     de: {
         'favorites.empty_title': 'Keine Favoriten',
-        'favorites.empty_desc': 'Markieren Sie Ihre Fotos mit dem Symbol ♥ als Favoriten.',
+        'favorites.empty_desc': 'Markieren Sie Ihre Fotos mit dem Herz-Symbol als Favoriten.',
     },
 });
 

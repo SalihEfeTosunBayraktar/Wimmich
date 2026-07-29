@@ -132,7 +132,7 @@ function _renderDupSlideshowCard(asset) {
             ${st.multiAllowed ? `
                 <button type="button" class="dup-slideshow-card-multi" onclick="_dupSlideshowCardToggle('${asset.id}', event)" title="${t('duplicates_slideshow.toggle_keep_title')}">${isKeep ? icon('check') : ''}</button>
             ` : ''}
-            <span class="dup-slideshow-card-tag ${isKeep ? 'dup-slideshow-card-tag--keep' : 'dup-slideshow-card-tag--delete'}">${isKeep ? '✓ ' + t('duplicates_slideshow.tag_keep') : '✕ ' + t('duplicates_slideshow.tag_delete')}</span>
+            <span class="dup-slideshow-card-tag ${isKeep ? 'dup-slideshow-card-tag--keep' : 'dup-slideshow-card-tag--delete'}">${isKeep ? icon('check', 12) + ' ' + t('duplicates_slideshow.tag_keep') : icon('close', 12) + ' ' + t('duplicates_slideshow.tag_delete')}</span>
         </div>
     `;
 }
