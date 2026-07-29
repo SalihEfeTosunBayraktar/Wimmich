@@ -43,6 +43,35 @@
     flex-shrink: 0;
 }
 
+/* Just the calendar icon is shown - the actual <input type="month">
+   sits invisibly on top of it at the same size, so a click lands on the
+   real input and opens the browser's own native month/year picker.
+   Avoids showing the input's own placeholder dashes ("---- --") when
+   empty, which read as visual clutter rather than an actual date. */
+.gallery-jump-date-wrap {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.gallery-jump-date-wrap button {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.gallery-jump-date-wrap input[type="month"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
 .gallery-mini-select {
     height: 36px;
     max-width: 130px;
