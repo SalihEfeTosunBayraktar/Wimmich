@@ -38,6 +38,9 @@ registerTranslations({
         'albums.smart_created': 'Dynamic album created - {count} matching photos added so far',
         'albums.smart_badge': 'Dynamic',
         'albums.smart_query_display': 'Auto-adds photos matching: "{query}"',
+        'albums.leave_button': 'Leave Album',
+        'albums.confirm_leave': 'Remove this shared album from your account? You will lose access to it.',
+        'albums.left': 'Left album',
     },
     tr: {
         'albums.empty_title': 'Henüz albüm yok',
@@ -75,6 +78,9 @@ registerTranslations({
         'albums.smart_created': 'Dinamik albüm oluşturuldu - şimdiden {count} eşleşen fotoğraf eklendi',
         'albums.smart_badge': 'Dinamik',
         'albums.smart_query_display': 'Şununla eşleşen fotoğrafları otomatik ekler: "{query}"',
+        'albums.leave_button': 'Albümden Ayrıl',
+        'albums.confirm_leave': 'Bu paylaşılan albümü hesabınızdan kaldırmak istiyor musunuz? Erişiminiz sona erecek.',
+        'albums.left': 'Albümden ayrıldınız',
     },
     fr: {
         'albums.empty_title': "Pas encore d'albums",
@@ -112,6 +118,9 @@ registerTranslations({
         'albums.smart_created': 'Album dynamique créé - {count} photos correspondantes déjà ajoutées',
         'albums.smart_badge': 'Dynamique',
         'albums.smart_query_display': 'Ajoute automatiquement les photos correspondant à : "{query}"',
+        'albums.leave_button': "Quitter l'album",
+        'albums.confirm_leave': 'Retirer cet album partagé de votre compte ? Vous perdrez l\'accès.',
+        'albums.left': 'Album quitté',
     },
     de: {
         'albums.empty_title': 'Noch keine Alben',
@@ -149,6 +158,9 @@ registerTranslations({
         'albums.smart_created': 'Dynamisches Album erstellt - {count} passende Fotos bereits hinzugefügt',
         'albums.smart_badge': 'Dynamisch',
         'albums.smart_query_display': 'Fügt automatisch Fotos hinzu, die zu „{query}“ passen',
+        'albums.leave_button': 'Album verlassen',
+        'albums.confirm_leave': 'Dieses geteilte Album aus Ihrem Konto entfernen? Sie verlieren den Zugriff darauf.',
+        'albums.left': 'Album verlassen',
     },
 });
 
@@ -205,6 +217,7 @@ async function openAlbum(id) {
                 <button class="btn btn-secondary btn-sm" onclick="showShareModal('ALBUM', '${id}')">${icon('link')} ${t('albums.share_button')}</button>
                 ${isOwner ? `<button class="btn btn-secondary btn-sm" onclick="showAlbumShareModal('${id}')">${icon('users')} ${t('albums.share_with_account_button')}</button>` : ''}
                 ${isOwner ? `<button class="btn btn-danger btn-sm" onclick="deleteAlbum('${id}')">${t('common.delete')}</button>` : ''}
+                ${!isOwner ? `<button class="btn btn-danger btn-sm" onclick="leaveAlbum('${id}')">${t('albums.leave_button')}</button>` : ''}
             </div>
             ${album.description ? `<p style="color:var(--text-secondary);margin-bottom:16px">${escHtml(album.description)}</p>` : ''}
             ${album.is_smart && album.smart_query ? `<p class="text-muted admin-field-hint" style="margin-bottom:16px">${t('albums.smart_query_display', { query: escHtml(album.smart_query) })}</p>` : ''}
@@ -240,6 +253,15 @@ async function deleteAlbum(id) {
     await API.deleteAlbum(id);
     toast(t('albums.deleted'), 'success');
     navigateTo('albums');
+}
+
+async function leaveAlbum(id) {
+    if (!confirm(t('albums.confirm_leave'))) return;
+    try {
+        await API.leaveAlbum(id);
+        toast(t('albums.left'), 'success');
+        navigateTo('albums');
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 function showAlbumModal() {

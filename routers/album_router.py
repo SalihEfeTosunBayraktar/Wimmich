@@ -142,3 +142,13 @@ async def unshare_album(
 ):
     """Revoke a shared user's access to this album."""
     return await album_service.unshare_album(db, album_id, user.id, target_user_id)
+
+
+@router.post("/{album_id}/leave")
+async def leave_album(
+    album_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove the current (non-owner) user's own access to a shared album."""
+    return await album_service.leave_album(db, album_id, user.id)

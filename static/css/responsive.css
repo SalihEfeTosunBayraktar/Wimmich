@@ -42,6 +42,13 @@
         opacity: 0.8 !important;
     }
 
+    /* .photo-cover-btn (album.js's "set as cover" star) otherwise only
+       reveals via :hover, which touch devices never trigger - same fix as
+       .photo-select above. */
+    .photo-card .photo-cover-btn {
+        opacity: 0.8 !important;
+    }
+
     .photo-grid {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     }

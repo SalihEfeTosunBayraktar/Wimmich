@@ -208,6 +208,9 @@ const API = {
     unshareAlbumAccount(albumId, userId) {
         return this.request(`/api/albums/${albumId}/users/${userId}`, { method: 'DELETE' });
     },
+    leaveAlbum(albumId) {
+        return this.request(`/api/albums/${albumId}/leave`, { method: 'POST' });
+    },
 
     // Search
     search(q, type = 'smart', opts = {}) {

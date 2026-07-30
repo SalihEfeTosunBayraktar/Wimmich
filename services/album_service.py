@@ -345,6 +345,29 @@ async def unshare_album(db: AsyncSession, album_id: str, user_id: str, target_us
     return {"message": "Share removed"}
 
 
+async def leave_album(db: AsyncSession, album_id: str, user_id: str) -> dict:
+    """A non-owner removes their own access to a shared album. Unlike
+    unshare_album (owner revoking someone else's access), this only ever
+    touches the calling user's own AlbumUser row - the owner has no
+    "leave" action, they have delete."""
+    album = await get_album_for_user(db, album_id, user_id)
+    if album.user_id == user_id:
+        raise HTTPException(status_code=400, detail="Owner cannot leave their own album")
+
+    result = await db.execute(
+        select(AlbumUser).where(
+            and_(AlbumUser.album_id == album_id, AlbumUser.user_id == user_id)
+        )
+    )
+    share = result.scalar_one_or_none()
+    if not share:
+        raise HTTPException(status_code=404, detail="Album is not shared with you")
+
+    await db.delete(share)
+    await db.commit()
+    return {"message": "Left album"}
+
+
 async def list_share_targets(db: AsyncSession, user: User) -> dict:
     """Other approved accounts on this server that albums can be shared
     with - deliberately minimal (id/name/email only, no admin/quota/

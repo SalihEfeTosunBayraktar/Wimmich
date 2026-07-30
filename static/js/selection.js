@@ -135,6 +135,7 @@ function _selectionBarActions() {
             <button class="btn btn-sm btn-secondary" onclick="showBulkMetadataEditModal()">${icon('calendar')} <span>${t('bulk_metadata_edit.button')}</span></button>
             <button class="btn btn-sm btn-secondary" onclick="showBulkTagModal()">${icon('category')} <span>${t('bulk_tag.button')}</span></button>
             <button class="btn btn-sm btn-danger" onclick="bulkRemoveFromAlbum()">${icon('minus')} <span>${t('selection.remove_from_album')}</span></button>
+            <button class="btn btn-sm btn-danger" onclick="bulkDeleteInAlbum()">${icon('trash')} <span>${t('common.delete')}</span></button>
         `;
     }
     return `
@@ -251,6 +252,19 @@ async function bulkRemoveFromAlbum() {
     openAlbum(albumId);
 }
 
+// Same trash (soft-delete) semantics as bulkDelete(), but refreshes via
+// openAlbum() instead of navigateTo(state.currentPage) - the latter would
+// land on the album cover-grid list, not this album's own detail view,
+// same reasoning as bulkRemoveFromAlbum() above.
+async function bulkDeleteInAlbum() {
+    const albumId = state.currentAlbum.id;
+    const ids = [...state.selectedAssets];
+    await API.bulkAction(ids, 'delete');
+    _undoableToast(t('selection.moved_to_trash', { count: ids.length }), () => API.bulkAction(ids, 'restore'), () => openAlbum(albumId));
+    clearSelection();
+    openAlbum(albumId);
+}
+
 async function bulkDeletePermanent() {
     if (!confirm(t('selection.confirm_delete_permanent', { count: state.selectedAssets.size }))) return;
     await API.bulkAction([...state.selectedAssets], 'delete_permanent');
@@ -304,6 +318,10 @@ document.addEventListener('keydown', (e) => {
     // The viewer has its own Delete-key handler for the single open photo;
     // only handle it here for a grid multi-selection with the viewer closed.
     if (e.key === 'Delete' && state.selectedAssets.size > 0 && $('viewer-overlay').classList.contains('hidden')) {
-        bulkDelete();
+        if (state.currentPage === 'albums' && state.currentAlbum) {
+            bulkDeleteInAlbum();
+        } else {
+            bulkDelete();
+        }
     }
 });
