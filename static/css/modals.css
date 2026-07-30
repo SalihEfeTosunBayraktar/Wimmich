@@ -458,6 +458,31 @@ kbd {
     animation: fadeInUp 0.2s ease;
 }
 .upload-mini:hover { border-color: var(--accent-primary); }
+
+/* App-wide fullscreen toggle: floating in a corner (not dead-center, so it
+   never sits over photo content) and present on every page, not just inside
+   the photo viewer's own toolbar. Bottom-left, since bottom-right is already
+   used by the upload-mini pill. */
+.app-fullscreen-btn {
+    position: fixed;
+    left: var(--space-lg);
+    bottom: var(--space-lg);
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+.app-fullscreen-btn:hover { border-color: var(--accent-primary); color: var(--text-primary); }
 .upload-mini-spinner {
     width: 16px;
     height: 16px;
