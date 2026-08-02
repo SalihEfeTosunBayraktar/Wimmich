@@ -135,7 +135,7 @@ Kurulum bitince `start.bat` ile sunucuyu başlatın (`http://localhost:3000`). �
 
 ## API Kullanımı
 
-Web arayüzünün yaptığı her şey aslında sade bir REST API üzerinden yürüyor — betikler, otomasyonlar veya ileride bir mobil istemci için kullanışlı.
+Web arayüzünün yaptığı her şey aslında sade bir REST API üzerinden yürüyor — betikler, otomasyonlar veya bir mobil istemci için kullanışlı (aşağıdaki [Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android)'a bakın).
 
 **1. Bir anahtar alın** — Profil Ayarları → API Anahtarları → Anahtar Oluştur. Bir isim verin ve isterseniz bir son kullanma süresi seçin (7/30/90 gün, 1 yıl veya süresiz). Anahtar yalnızca bir kez gösterilir; hemen kopyalayın.
 
@@ -160,6 +160,10 @@ curl -X POST http://localhost:3000/api/assets/upload \
 ```
 
 Bir anahtarı istediğiniz zaman aynı Profil Ayarları ekranından iptal edebilirsiniz — iptal edilmiş veya süresi dolmuş bir anahtar bir sonraki istekte reddedilir.
+
+## Android Uygulaması
+
+Kotlin/Compose ile yazılmış native bir Android istemcisi ayrı bir repoda yaşıyor: **[Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android)**. Giriş, telefonunuzdaki fotoğraf/videoların otomatik arka plan yedeklemesini ve temel galeri gezintisini bu sunucuya karşı yönetir — burada hiçbir değişiklik yapmanıza gerek yoktur.
 
 ## Teknoloji
 

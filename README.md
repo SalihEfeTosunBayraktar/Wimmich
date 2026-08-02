@@ -135,7 +135,7 @@ Once installed, launch the server with `start.bat` (`http://localhost:3000`). Th
 
 ## API Access
 
-Everything the web UI does goes through a plain REST API underneath — useful for scripts, automations, or a future mobile client.
+Everything the web UI does goes through a plain REST API underneath — useful for scripts, automations, or a mobile client (see [Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android) below).
 
 **1. Get a key** — Profile Settings → API Keys → Create Key. Give it a name and, optionally, an expiry (7/30/90 days, 1 year, or never). The key is shown once; copy it right away.
 
@@ -160,6 +160,10 @@ curl -X POST http://localhost:3000/api/assets/upload \
 ```
 
 Revoke a key anytime from the same Profile Settings screen — a revoked or expired key is rejected on its very next request.
+
+## Android App
+
+A native Kotlin/Compose Android client lives in a separate repo: **[Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android)**. It handles login, background auto-backup of your phone's photos/videos, and basic gallery browsing against this same server — no changes needed here to use it.
 
 ## Technology
 
