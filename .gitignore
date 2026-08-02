@@ -10,7 +10,12 @@ venv/
 .env.*.local
 
 # Data Directory (Contains user photos, videos, database, ml data, and cloudflared binary)
-data/
+# Anchored to the repo root (leading slash) - an unanchored "data/" matches
+# ANY directory named "data" anywhere in the tree, which silently swallowed
+# the whole android/.../com/wimmich/app/data/ Kotlin package (never made it
+# into a commit, only caught when CI did a clean checkout and failed to
+# compile - a real bug, not a hypothetical one).
+/data/
 
 # Scratch/Temporary script directories
 scratch/
