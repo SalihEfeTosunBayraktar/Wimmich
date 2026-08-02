@@ -12,6 +12,12 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Self-update: lets this app prompt the user to install a downloaded
+         APK (see update/UpdateInstaller.kt). Android still requires the
+         user's explicit tap-through on the system installer either way -
+         this permission only unlocks that installer from being invoked by
+         a non-Play-Store app at all. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".WimmichApp"
@@ -30,6 +36,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Grants the system package installer temporary read access to a
+             downloaded APK sitting in this app's private cache dir - the
+             installer runs as a different app/process and can't otherwise
+             read our cacheDir. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

@@ -31,6 +31,11 @@ import com.wimmich.app.backup.BackupStatus
 import com.wimmich.app.di.ViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.draw.rotate
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
+import com.wimmich.app.update.UpdateState
+import com.wimmich.app.update.UpdateViewModel
 
 @Composable
 fun BackupStatusScreen(viewModelFactory: ViewModelFactory) {
@@ -59,6 +64,63 @@ fun BackupStatusScreen(viewModelFactory: ViewModelFactory) {
         Button(onClick = { BackupScheduler.runNow(context) }, modifier = Modifier.fillMaxWidth()) {
             Text("Back up now")
         }
+
+        androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 24.dp))
+        AppUpdateSection(viewModelFactory)
+    }
+}
+
+/** Checks GitHub Releases (see update/UpdateChecker.kt) once when this screen
+ * appears, and shows an "Update available" / download / install flow if a
+ * newer android-vX release with the expected APK asset is found. */
+@Composable
+private fun AppUpdateSection(viewModelFactory: ViewModelFactory) {
+    val updateViewModel: UpdateViewModel = viewModel(factory = viewModelFactory)
+    val state = updateViewModel.state
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) { updateViewModel.checkForUpdate() }
+
+    when (state) {
+        is UpdateState.Available -> {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Update available: ${state.info.tag}", style = MaterialTheme.typography.bodyMedium)
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    onClick = {
+                        val permissionIntent = updateViewModel.requestPermissionIfNeeded()
+                        if (permissionIntent != null) {
+                            context.startActivity(permissionIntent)
+                        } else {
+                            updateViewModel.downloadAndPrepareInstall()
+                        }
+                    },
+                ) {
+                    Text("Download update")
+                }
+            }
+        }
+        is UpdateState.Downloading -> {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Text("Downloading update... ${state.progressPercent}%", style = MaterialTheme.typography.bodySmall)
+                LinearProgressIndicator(
+                    progress = { state.progressPercent / 100f },
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                )
+            }
+        }
+        is UpdateState.ReadyToInstall -> {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { context.startActivity(updateViewModel.installIntentFor(state)) },
+            ) {
+                Text("Install update")
+            }
+        }
+        is UpdateState.Error -> {
+            Text("Update check failed: ${state.message}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+        else -> {}
     }
 }
 

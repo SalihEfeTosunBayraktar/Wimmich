@@ -14,7 +14,7 @@ import com.wimmich.app.network.NetworkModule
  * WorkManager instantiates workers by reflection without DI support unless
  * a custom WorkerFactory is registered.
  */
-class AppContainer(private val appContext: Context) {
+class AppContainer(val appContext: Context) {
     val tokenStore = SecureTokenStore(appContext)
     val backupDb = BackupDb.get(appContext)
 

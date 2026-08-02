@@ -16,6 +16,24 @@ android {
         versionName = "0.1.0"
     }
 
+    // Fixed, checked-in debug keystore (android/keystore/wimmich-debug.keystore)
+    // used for every debug build - local and CI (.github/workflows/android-release.yml)
+    // alike. Without this, Gradle's auto-generated per-machine debug keystore
+    // would differ between your machine and the CI runner, and Android refuses
+    // to install an update whose signing certificate doesn't match the
+    // already-installed app - auto-update would fail with "signatures do not
+    // match" the very first time a CI-built APK tried to update a locally
+    // built one (or vice versa). Not a production/Play Store signing key -
+    // just a shared identity so sideloaded builds stay update-compatible.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("../keystore/wimmich-debug.keystore")
+            storePassword = "wimmich-debug"
+            keyAlias = "wimmich-debug"
+            keyPassword = "wimmich-debug"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -32,6 +50,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
