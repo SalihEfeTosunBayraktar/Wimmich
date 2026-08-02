@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Reuses the same PNG (static/icon-192.png) the web app's own PWA
+     manifest uses as its app icon, so the two clients share one visual
+     identity instead of an unrelated placeholder glyph. Inset 12% so the
+     adaptive-icon mask (circle/squircle/rounded-square depending on the
+     launcher) doesn't crop the logo's own edges. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@drawable/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <background android:drawable="@color/launcher_background" />
+    <foreground>
+        <inset
+            android:drawable="@drawable/wimmich_logo"
+            android:inset="12%" />
+    </foreground>
 </adaptive-icon>

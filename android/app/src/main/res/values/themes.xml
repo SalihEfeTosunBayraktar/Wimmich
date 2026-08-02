@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Wimmich" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Day variant. Paired with values-night/themes.xml so the Activity's
+         own window chrome (status bar, splash-to-content background) follows
+         the system's light/dark setting, matching Compose's own
+         isSystemInDarkTheme()-driven WimmichTheme instead of always forcing
+         a light window frame regardless of the device's theme. -->
+    <style name="Theme.Wimmich" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F6F6FB</item>
+        <item name="android:statusBarColor">#F6F6FB</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>
