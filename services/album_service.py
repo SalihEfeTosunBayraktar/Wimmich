@@ -8,6 +8,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Album, AlbumAsset, AlbumUser, Asset
 from utils.serializers import album_to_dict, asset_to_dict
 
+
+async def _owned_asset_ids(db: AsyncSession, user_id: str, asset_ids: List[str]) -> List[str]:
+    """Filters asset_ids down to the ones user_id actually owns, preserving
+    input order. Both create_album and add_assets_to_album accept a raw
+    asset_ids list straight from the request body with no prior ownership
+    check - without this, any authenticated user could pass another user's
+    asset id and get it linked into their own album (IDOR: the asset itself
+    stays inaccessible since AlbumAsset carries no access grant of its own,
+    but its existence/id would be enumerable via album membership, and any
+    endpoint that trusts "it's in my album" as an access check would leak
+    the file). Silently dropping unowned ids rather than 404ing keeps this
+    a plain filter callers can apply without changing their error shape."""
+    if not asset_ids:
+        return []
+    result = await db.execute(
+        select(Asset.id).where(and_(Asset.user_id == user_id, Asset.id.in_(asset_ids)))
+    )
+    owned = set(result.scalars().all())
+    return [aid for aid in asset_ids if aid in owned]
+
 # Same acceptance bar search_smart() uses for its CLIP results - if a query
 # would surface a photo in search, that's a reasonable bar for auto-adding
 # it to a dynamic album too. This model's real photo-vs-text scores run
@@ -113,10 +133,12 @@ async def create_album(
             album.cover_asset_id = matched_ids[0]
         count = len(matched_ids)
     elif asset_ids:
-        for aid in asset_ids:
+        owned_ids = await _owned_asset_ids(db, user.id, asset_ids)
+        for aid in owned_ids:
             db.add(AlbumAsset(album_id=album.id, asset_id=aid))
-        album.cover_asset_id = asset_ids[0]
-        count = len(asset_ids)
+        if owned_ids:
+            album.cover_asset_id = owned_ids[0]
+        count = len(owned_ids)
     else:
         count = 0
 
@@ -272,8 +294,13 @@ async def delete_album(db: AsyncSession, album_id: str, user_id: str) -> dict:
 async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, asset_ids: List[str]) -> dict:
     album = await get_album_for_user(db, album_id, user_id, require_edit=True)
 
+    # A shared-album collaborator can add assets, but only their OWN assets -
+    # otherwise any editor could pass an arbitrary asset_id belonging to a
+    # third party and link it into the album. See _owned_asset_ids.
+    owned_ids = await _owned_asset_ids(db, user_id, asset_ids)
+
     added = 0
-    for aid in asset_ids:
+    for aid in owned_ids:
         existing = await db.execute(
             select(AlbumAsset).where(
                 and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id == aid)
@@ -283,8 +310,8 @@ async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, ass
             db.add(AlbumAsset(album_id=album_id, asset_id=aid))
             added += 1
 
-    if not album.cover_asset_id and asset_ids:
-        album.cover_asset_id = asset_ids[0]
+    if not album.cover_asset_id and owned_ids:
+        album.cover_asset_id = owned_ids[0]
 
     await db.commit()
     return {"message": f"{added} assets added to album"}

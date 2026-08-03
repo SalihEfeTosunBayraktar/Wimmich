@@ -2,7 +2,7 @@
 import secrets
 from datetime import datetime, timezone
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, File, UploadFile, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select, and_
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from models import User, Asset, Album, AlbumAsset, SharedLink
 from auth import get_current_user, get_optional_user, hash_password, verify_password
-from services import asset_media_service, download_service, asset_mutation_service, album_service
+from services import asset_media_service, download_service, asset_mutation_service, album_service, login_rate_limit
 
 router = APIRouter(tags=["shares"])
 
@@ -70,8 +70,23 @@ async def create_share(
     )
 
     if req.link_type == "ASSET" and req.asset_ids:
-        share.asset_ids = req.asset_ids
+        # Ownership check - without this, any authenticated user could
+        # share_router.create_share another user's asset_id and get a
+        # public, unauthenticated URL serving that file (IDOR). Silently
+        # drops ids the caller doesn't own rather than 404ing, same
+        # reasoning as album_service._owned_asset_ids.
+        owned_result = await db.execute(
+            select(Asset.id).where(and_(Asset.user_id == user.id, Asset.id.in_(req.asset_ids)))
+        )
+        owned_ids = set(owned_result.scalars().all())
+        share.asset_ids = [aid for aid in req.asset_ids if aid in owned_ids]
+        if not share.asset_ids:
+            raise HTTPException(status_code=400, detail="Invalid share configuration")
     elif req.link_type == "ALBUM" and req.album_id:
+        # require_owner=True - a shared-album editor can add photos but
+        # shouldn't be able to mint a public link for an album they don't
+        # own themselves.
+        await album_service.get_album_for_user(db, req.album_id, user.id, require_owner=True)
         share.album_id = req.album_id
     else:
         raise HTTPException(status_code=400, detail="Invalid share configuration")
@@ -126,6 +141,40 @@ async def delete_share(
     return {"message": "Share deleted"}
 
 
+def _share_rate_keys(request: Request, key: str) -> list:
+    """Same loopback-trust reasoning as auth_router._login_rate_keys: only
+    honor CF-Connecting-IP/X-Forwarded-For when the request actually came
+    through the local reverse proxy, otherwise anyone hitting this server
+    directly could set those headers themselves to dodge the limit."""
+    socket_ip = request.client.host if request.client else None
+    ip = None
+    if socket_ip in ("127.0.0.1", "::1"):
+        ip = request.headers.get("cf-connecting-ip")
+        if not ip:
+            xff = request.headers.get("x-forwarded-for")
+            ip = xff.split(",")[0].strip() if xff else None
+    if not ip:
+        ip = socket_ip or "unknown"
+    return [f"ip:{ip}", f"share:{key}"]
+
+
+def _check_share_password(request: Request, share: SharedLink, key: str, password: Optional[str]) -> None:
+    """Rate-limited password check shared by every public share-scoped
+    endpoint. Without this, a share's password (unlike the login password)
+    had no brute-force protection at all - a bare bcrypt verify_password()
+    call an attacker could hit as fast as the network allowed."""
+    if not share.password_hash:
+        return
+    rate_keys = _share_rate_keys(request, key)
+    retry_after = login_rate_limit.check_retry_after(rate_keys)
+    if retry_after is not None:
+        raise HTTPException(status_code=429, detail="Too many attempts", headers={"Retry-After": str(retry_after)})
+    if not (password and verify_password(password, share.password_hash)):
+        login_rate_limit.record_failure(rate_keys)
+        raise HTTPException(status_code=403, detail="Password required or incorrect")
+    login_rate_limit.reset(rate_keys)
+
+
 async def _get_share_or_404(db: AsyncSession, key: str) -> SharedLink:
     """Look up a share by key, checking existence and expiry - the two
     checks every public share-scoped endpoint needs regardless of what it
@@ -166,7 +215,7 @@ async def _resolve_share_asset_ids(db: AsyncSession, share: SharedLink) -> set:
     return set()
 
 
-async def _require_share_asset_access(db: AsyncSession, key: str, asset_id: str, password: Optional[str]) -> tuple:
+async def _require_share_asset_access(db: AsyncSession, request: Request, key: str, asset_id: str, password: Optional[str]) -> tuple:
     """Full hard-fail access check for the public per-asset media endpoints:
     valid/unexpired share, correct password (if one is set), and the asset
     actually belongs to that share's scope. Raises 404/410/403 on any
@@ -175,15 +224,20 @@ async def _require_share_asset_access(db: AsyncSession, key: str, asset_id: str,
     /file endpoint) check it AFTER this succeeds, not before, so a wrong
     password never leaks whether downloads happen to be enabled."""
     share = await _get_share_or_404(db, key)
-
-    if share.password_hash and not (password and verify_password(password, share.password_hash)):
-        raise HTTPException(status_code=403, detail="Password required or incorrect")
+    _check_share_password(request, share, key, password)
 
     asset_ids = await _resolve_share_asset_ids(db, share)
     if asset_id not in asset_ids:
         raise HTTPException(status_code=404, detail="Asset not found in this share")
 
-    asset_result = await db.execute(select(Asset).where(Asset.id == asset_id))
+    # Scoped by share.user_id as defense-in-depth: asset_id was already
+    # checked against _resolve_share_asset_ids above, so this should be
+    # unreachable for a foreign asset in practice, but a bare unscoped
+    # lookup here would silently serve the wrong file if that invariant
+    # was ever violated (e.g. an ALBUM share whose album_id got reused).
+    asset_result = await db.execute(
+        select(Asset).where(and_(Asset.id == asset_id, Asset.user_id == share.user_id))
+    )
     asset = asset_result.scalar_one_or_none()
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -194,6 +248,7 @@ async def _require_share_asset_access(db: AsyncSession, key: str, asset_id: str,
 @router.get("/api/shared/{key}/download-zip")
 async def download_shared_zip(
     key: str,
+    request: Request,
     password: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
@@ -204,9 +259,7 @@ async def download_shared_zip(
     _require_share_asset_access: a wrong password should never leak
     whether downloads happen to be enabled."""
     share = await _get_share_or_404(db, key)
-
-    if share.password_hash and not (password and verify_password(password, share.password_hash)):
-        raise HTTPException(status_code=403, detail="Password required or incorrect")
+    _check_share_password(request, share, key, password)
 
     if not share.allow_download:
         raise HTTPException(status_code=403, detail="Downloads are disabled for this share")
@@ -227,6 +280,7 @@ async def download_shared_zip(
 async def get_shared_asset_thumbnail(
     key: str,
     asset_id: str,
+    request: Request,
     size: str = Query("medium", pattern="^(small|medium|large)$"),
     password: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
@@ -234,7 +288,7 @@ async def get_shared_asset_thumbnail(
     """Public, share-scoped thumbnail - no auth required. Always allowed
     regardless of allow_download, same as the authenticated thumbnail
     endpoint (that flag only governs the original-file download)."""
-    _, asset = await _require_share_asset_access(db, key, asset_id, password)
+    _, asset = await _require_share_asset_access(db, request, key, asset_id, password)
     return asset_media_service.build_thumbnail_response(asset, size)
 
 
@@ -242,12 +296,13 @@ async def get_shared_asset_thumbnail(
 async def get_shared_asset_file(
     key: str,
     asset_id: str,
+    request: Request,
     password: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Public, share-scoped original file - no auth required. Blocked
     entirely when the share was created with "allow download" off."""
-    share, asset = await _require_share_asset_access(db, key, asset_id, password)
+    share, asset = await _require_share_asset_access(db, request, key, asset_id, password)
     if not share.allow_download:
         raise HTTPException(status_code=403, detail="Downloads are disabled for this share")
     return asset_media_service.build_file_response(asset)
@@ -256,19 +311,36 @@ async def get_shared_asset_file(
 @router.get("/api/shared/{key}")
 async def view_shared(
     key: str,
+    request: Request,
     password: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """View a shared link (public, no auth required)."""
     share = await _get_share_or_404(db, key)
 
-    # Check password
+    # Check password. Unlike the other share endpoints this doesn't raise
+    # on a wrong/missing password - the first load has none to send yet,
+    # and the UI needs the soft "requires_password" reply to show the
+    # prompt - but a WRONG guess is still rate-limited and counted as a
+    # failure the same way, so this can't be used to brute-force the
+    # password just because the response shape is friendlier.
     if share.password_hash:
-        if not password or not verify_password(password, share.password_hash):
+        rate_keys = _share_rate_keys(request, key)
+        retry_after = login_rate_limit.check_retry_after(rate_keys)
+        if retry_after is not None:
+            raise HTTPException(status_code=429, detail="Too many attempts", headers={"Retry-After": str(retry_after)})
+        if not password:
             return {
                 "requires_password": True,
                 "description": share.description,
             }
+        if not verify_password(password, share.password_hash):
+            login_rate_limit.record_failure(rate_keys)
+            return {
+                "requires_password": True,
+                "description": share.description,
+            }
+        login_rate_limit.reset(rate_keys)
 
     # Increment view count
     share.view_count += 1
@@ -312,6 +384,7 @@ async def view_shared(
 @router.post("/api/shared/{key}/upload")
 async def upload_to_shared_album(
     key: str,
+    request: Request,
     files: List[UploadFile] = File(...),
     password: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
@@ -324,9 +397,7 @@ async def upload_to_shared_album(
     own), so the owner's usual quota/file-validation checks apply exactly
     as if they'd uploaded it themselves."""
     share = await _get_share_or_404(db, key)
-
-    if share.password_hash and not (password and verify_password(password, share.password_hash)):
-        raise HTTPException(status_code=403, detail="Password required or incorrect")
+    _check_share_password(request, share, key, password)
 
     if share.link_type != "ALBUM" or not share.album_id or not share.allow_upload:
         raise HTTPException(status_code=403, detail="Uploads are not allowed for this share")

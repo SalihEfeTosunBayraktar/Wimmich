@@ -223,6 +223,34 @@ async def priority_gate_middleware(request, call_next):
     finally:
         await request_gate.release()
 
+# Applied to every response, not just /api/ - the SPA shell itself is what
+# clickjacking/framing attacks target. Without X-Frame-Options/frame-
+# ancestors, the whole app was framable: a hostile page could iframe it and
+# trick a logged-in admin into clicking through to a real admin action
+# (delete user, restart server) positioned under an invisible overlay.
+# CSP is permissive on script/style ('unsafe-inline' + unpkg.com) because
+# the SPA genuinely uses inline <script>/style= throughout and loads
+# Leaflet from a CDN (static/index.html) - tightening those would need a
+# nonce-based rewrite of the frontend, out of scope here. frame-ancestors
+# and object-src are the parts that actually matter for this pass.
+@app.middleware("http")
+async def security_headers_middleware(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline' https://unpkg.com; "
+        "img-src 'self' data: blob: https://unpkg.com; "
+        "connect-src 'self'; "
+        "frame-ancestors 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'"
+    )
+    return response
+
 # Routers
 from routers.auth_router import router as auth_router
 from routers.asset_router import router as asset_router

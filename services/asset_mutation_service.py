@@ -1,9 +1,11 @@
 """Asset mutations: upload, metadata updates, favorite/archive/trash, bulk actions."""
 from datetime import datetime, timezone
 from typing import List, Optional
+from fastapi import HTTPException
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import config
 from models import Asset, User
 from services.media_service import process_upload, delete_asset_files, UploadIntegrityError
 from services.job_service import create_job, JobAlreadyExistsException
@@ -22,17 +24,57 @@ def _parse_client_timestamp(raw: Optional[str]) -> Optional[datetime]:
         return None
 
 
+async def _read_bounded(file) -> Optional[bytes]:
+    """Reads a single upload in chunks, bailing out as soon as it passes
+    config.MAX_UPLOAD_SIZE instead of calling file.read() (which reads to
+    completion before quota_service ever gets a chance to reject it). A
+    single oversized file previously got fully buffered - and, past
+    Starlette's ~1MB in-memory SpooledTemporaryFile threshold, fully
+    spooled to disk - before its size was checked at all, so an attacker
+    could tie up disk/time on arbitrarily large bodies with no real cap.
+    Returns None if the file exceeds the limit; caller treats that as this
+    file's quota error rather than the more generic one check_all_quotas
+    would otherwise produce from a size it never got to see."""
+    limit = config.MAX_UPLOAD_SIZE
+    chunks = []
+    total = 0
+    while True:
+        chunk = await file.read(1024 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            return None
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
 async def upload_files(
     db: AsyncSession, user: User, files: List, last_modified: Optional[List[Optional[str]]] = None,
     checksums: Optional[List[Optional[str]]] = None,
 ) -> dict:
     """Process a batch of uploaded files: quota checks, dedup, storage, ML job queuing."""
+    # Enforced here rather than only at the router level so every path into
+    # an upload inherits the same rule - originally this lived solely in
+    # asset_router.py's /upload handler, which meant share_router.py's
+    # upload_to_shared_album() (which attributes visitor uploads to the
+    # share owner's account) could let a guest owner's shares accept
+    # uploads even though that same account can't upload directly.
+    if user.is_guest:
+        raise HTTPException(status_code=403, detail="Misafir hesaplar fotoğraf yükleyemez.")
+
     results = []
     errors = []
 
     for i, file in enumerate(files):
         try:
-            file_data = await file.read()
+            file_data = await _read_bounded(file)
+            if file_data is None:
+                errors.append({
+                    "file_name": file.filename,
+                    "error": f"Dosya çok büyük (maksimum {config.MAX_UPLOAD_SIZE // (1024 * 1024)} MB)",
+                })
+                continue
             incoming_size = len(file_data)
 
             quota_error = await check_all_quotas(db, user, incoming_size)

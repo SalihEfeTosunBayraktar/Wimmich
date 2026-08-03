@@ -32,6 +32,28 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 TOTP_ISSUER = "Wimmich"
 
+# A profile picture has no business being anywhere near config.MAX_UPLOAD_SIZE
+# (500MB default) - capped separately and much lower.
+MAX_AVATAR_SIZE = 20 * 1024 * 1024
+
+
+async def _read_bounded(file: UploadFile, limit: int) -> Optional[bytes]:
+    """Same reasoning as asset_mutation_service._read_bounded: reads in
+    chunks and bails as soon as the size limit is passed, instead of
+    file.read() unconditionally buffering (and, past ~1MB, spooling to
+    disk) an arbitrarily large body before any size check runs."""
+    chunks = []
+    total = 0
+    while True:
+        chunk = await file.read(1024 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            return None
+        chunks.append(chunk)
+    return b"".join(chunks)
+
 
 def _login_rate_keys(request: Request, email: str) -> list:
     """Identity keys a login attempt is throttled against - the client's real
@@ -39,11 +61,22 @@ def _login_rate_keys(request: Request, email: str) -> list:
     socket IP is 127.0.0.1 for everyone, so CF-Connecting-IP (set by
     Cloudflare, not the client) is honored when present to recover the real
     attacker IP; X-Forwarded-For's first hop is the fallback. On a direct LAN
-    connection request.client.host is the real, unspoofable socket IP."""
-    ip = request.headers.get("cf-connecting-ip")
+    connection request.client.host is the real, unspoofable socket IP.
+
+    Those headers are only trusted when the socket IP is loopback, i.e. the
+    request actually came through the local reverse proxy - anyone who can
+    reach this server directly (LAN, or a misconfigured/absent proxy) could
+    otherwise set CF-Connecting-IP themselves and pin the rate limiter to a
+    victim's IP (or a fresh one each attempt) to dodge it entirely."""
+    socket_ip = request.client.host if request.client else None
+    ip = None
+    if socket_ip in ("127.0.0.1", "::1"):
+        ip = request.headers.get("cf-connecting-ip")
+        if not ip:
+            xff = request.headers.get("x-forwarded-for")
+            ip = xff.split(",")[0].strip() if xff else None
     if not ip:
-        xff = request.headers.get("x-forwarded-for")
-        ip = xff.split(",")[0].strip() if xff else (request.client.host if request.client else "unknown")
+        ip = socket_ip or "unknown"
     return [f"ip:{ip}", f"email:{email.strip().lower()}"]
 
 
@@ -68,12 +101,24 @@ class UpdateProfileRequest(BaseModel):
 @router.post("/register")
 async def register(req: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
     """Register a new user. First user becomes admin."""
+    # Same loopback-trust IP derivation as login, keyed on IP alone (there's
+    # no existing account to also key on) - registration was previously
+    # unthrottled, letting someone script arbitrarily many signups (or use
+    # it to brute-force which emails are already registered - see the
+    # "Email already registered" check below).
+    register_keys = [_login_rate_keys(request, "")[0]]
+    retry_after = login_rate_limit.check_retry_after(register_keys)
+    if retry_after is not None:
+        raise HTTPException(status_code=429, detail="Too many attempts", headers={"Retry-After": str(retry_after)})
+
     if not is_password_strong_enough(req.password):
+        login_rate_limit.record_failure(register_keys)
         raise HTTPException(status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
 
     # Check if email exists
     result = await db.execute(select(User).where(User.email == req.email))
     if result.scalar_one_or_none():
+        login_rate_limit.record_failure(register_keys)
         raise HTTPException(status_code=400, detail="Email already registered")
 
     # Check if first user (becomes admin)
@@ -248,7 +293,15 @@ async def update_me(
     if req.name:
         user.name = req.name
 
-    if req.email:
+    if req.email and req.email != user.email:
+        # Changing the account's email is a credential change same as the
+        # password below - it moves where password-reset/login identity
+        # points - so it gets the same current_password re-entry
+        # requirement. Without this, anyone who steals a logged-in
+        # session/token could quietly redirect the account's email to one
+        # they control.
+        if not req.current_password or not verify_password(req.current_password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
         # Check if email taken
         result = await db.execute(
             select(User).where(User.email == req.email, User.id != user.id)
@@ -306,7 +359,9 @@ async def upload_profile_image(
     """Sets the profile picture from a directly uploaded file - center-
     cropped to a square avatar, same processing as the library-photo path
     below so it looks consistent regardless of source."""
-    data = await file.read()
+    data = await _read_bounded(file, MAX_AVATAR_SIZE)
+    if data is None:
+        raise HTTPException(status_code=413, detail=f"Dosya çok büyük (maksimum {MAX_AVATAR_SIZE // (1024 * 1024)} MB)")
     if not matches_claimed_type(file.filename or "", data):
         raise HTTPException(status_code=400, detail="Dosya türü uzantısıyla eşleşmiyor")
 

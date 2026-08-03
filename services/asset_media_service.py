@@ -19,7 +19,16 @@ def build_thumbnail_response(asset: Asset, size: str) -> FileResponse:
         # Fallback to original for images
         file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
         if asset.file_type == "IMAGE" and file_path and file_path.exists():
-            return FileResponse(file_path, media_type=asset.mime_type)
+            # filename= forces Content-Disposition: attachment, same as
+            # build_file_response below - without it this was the one place
+            # in the app serving an asset's own file inline with its stored
+            # mime_type, which mattered a lot when SVG (a script execution
+            # context, not just an image format) was still an accepted
+            # upload type. Kept as defense-in-depth even now that .svg is
+            # rejected at upload time, since this endpoint is reachable
+            # unauthenticated via share links and any pre-existing SVG
+            # asset would otherwise still serve inline.
+            return FileResponse(file_path, media_type=asset.mime_type, filename=asset.original_file_name)
         raise HTTPException(status_code=404, detail="Thumbnail not found")
 
     media_type = "image/webp" if str(thumb_path).endswith(".webp") else "image/jpeg"

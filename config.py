@@ -196,7 +196,14 @@ THUMB_SIZES = {
 MAX_UPLOAD_SIZE = int(os.getenv("WIMMICH_MAX_UPLOAD_MB", "500")) * 1024 * 1024  # 500MB default
 
 # Supported formats
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".heic", ".heif", ".avif", ".svg"}
+# SVG deliberately excluded: it's a script execution context, not just an
+# image format, and utils/file_signature.py has no (and can't meaningfully
+# have) a magic-number validator for it - a renamed .svg with an embedded
+# <script> would sail through matches_claimed_type() and, served inline as
+# image/svg+xml from the thumbnail endpoint (some of which are reachable
+# via unauthenticated share links), execute on this origin. See
+# services/asset_media_service.py for the corresponding inline-serving fix.
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".heic", ".heif", ".avif"}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".webm", ".m4v", ".3gp"}
 RAW_EXTENSIONS = {".raw", ".cr2", ".cr3", ".nef", ".arw", ".dng", ".orf", ".rw2"}
 ALL_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS | RAW_EXTENSIONS
