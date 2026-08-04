@@ -29,10 +29,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Job
-from services.job_core import check_job_cancelled
+from services.job_core import check_job_cancelled, JobCancelledException
 from services.media_processing import _process_image, _process_video
 from utils.path_utils import resolve_data_path
-from utils.log import info, warn
+from utils.log import info, warn, error
 
 
 def _thumbnail_broken(asset: Asset) -> bool:
@@ -148,35 +148,47 @@ async def handle_job_repair(db: AsyncSession, job: Job):
         await check_job_cancelled(db, job.id)
         checked += 1
 
-        # file_path is what actually gets served/thumbnailed regardless of
-        # source - reference mode just happens to have file_path ==
-        # external_path, so checking file_path first handles "thumbnail
-        # broken but the file itself is fine" identically for reference and
-        # copy-mode assets, with no need to special-case is_external here.
-        file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
-        file_exists = bool(file_path) and await asyncio.to_thread(file_path.exists)
+        try:
+            # file_path is what actually gets served/thumbnailed regardless
+            # of source - reference mode just happens to have file_path ==
+            # external_path, so checking file_path first handles "thumbnail
+            # broken but the file itself is fine" identically for reference
+            # and copy-mode assets, with no need to special-case is_external
+            # here.
+            file_path = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
+            file_exists = bool(file_path) and await asyncio.to_thread(file_path.exists)
 
-        if file_exists:
-            if _thumbnail_broken(asset):
-                if await _reprocess_in_place(asset, str(file_path)):
-                    repaired += 1
-        elif asset.external_path and asset.external_path != asset.file_path:
-            # Copy-mode: our own copy is gone/broken, but the original
-            # import source is a genuinely different path - try recovering
-            # from there before giving up.
-            source_exists = await asyncio.to_thread(lambda p=asset.external_path: Path(p).exists())
-            if source_exists:
-                if await _recopy_from_source(asset):
-                    repaired += 1
+            if file_exists:
+                if _thumbnail_broken(asset):
+                    if await _reprocess_in_place(asset, str(file_path)):
+                        repaired += 1
+            elif asset.external_path and asset.external_path != asset.file_path:
+                # Copy-mode: our own copy is gone/broken, but the original
+                # import source is a genuinely different path - try
+                # recovering from there before giving up.
+                source_exists = await asyncio.to_thread(lambda p=asset.external_path: Path(p).exists())
+                if source_exists:
+                    if await _recopy_from_source(asset):
+                        repaired += 1
+                else:
+                    _trash(asset, f"local copy gone and original source at {asset.external_path} is also gone")
+                    trashed += 1
             else:
-                _trash(asset, f"local copy gone and original source at {asset.external_path} is also gone")
+                # Reference mode (file_path == external_path, already
+                # covered by the file_exists check above) with the source
+                # now missing - nothing left to recover from.
+                _trash(asset, f"source no longer exists at {asset.file_path}")
                 trashed += 1
-        else:
-            # Reference mode (file_path == external_path, already covered
-            # by the file_exists check above) with the source now missing -
-            # nothing left to recover from.
-            _trash(asset, f"source no longer exists at {asset.file_path}")
-            trashed += 1
+        except JobCancelledException:
+            raise
+        except Exception as e:
+            # One asset's unexpected failure (a corrupt file tripping up a
+            # library deep in _process_image/_process_video in a way none
+            # of the specific except clauses above anticipated) must not
+            # abort the whole run - every other asset in this user's library
+            # still needs to be checked. Leave this one exactly as it was
+            # and move on; it'll be retried on the next REPAIR run.
+            error("JOB", f"Repair: unexpected error on asset {asset.id} ({asset.original_file_name}): {e}")
 
         job.progress = int((i + 1) / total * 100) if total > 0 else 100
         await db.commit()

@@ -24,7 +24,7 @@ def _run_ffprobe(file_path: str) -> Optional[Dict[str, Any]]:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode == 0:
             return json.loads(result.stdout)
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError, TypeError, OSError):
         pass
     return None
 
