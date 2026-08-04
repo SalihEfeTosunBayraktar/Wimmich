@@ -59,6 +59,12 @@ let _dragSelectActive = false;
 let _dragStartPoint = null; // {x, y} in page-content scroll-space, set when the drag begins
 let _dragOriginSelected = null; // asset IDs already selected before this drag started - never deselected by it
 
+// Map<cardElement, {left, right, top, bottom}> in scroll-space (viewport
+// rect + scroll offset), built once per drag gesture instead of re-measured
+// on every mousemove - see _updateRectSelection's own comment for why this
+// is safe even though the page keeps auto-scrolling mid-drag.
+let _dragCardRects = null;
+
 // Mouse only: a mousedown on a photo (not its checkbox, nothing selected
 // yet) doesn't arm a drag immediately - it might just be a click to open
 // the viewer. It's held "pending" until the pointer actually moves past
@@ -97,8 +103,35 @@ function _armDragSelect(card, clientX, clientY) {
     _startDragAutoScroll();
 }
 
+/**
+ * Builds/rebuilds the per-card rect cache in page-content scroll-space
+ * (viewport rect + current scroll offset). Scroll-space coordinates are
+ * scroll-invariant - scrolling shifts a card's viewport rect and the
+ * scroll offset by exactly opposite amounts, so left+scrollLeft/
+ * top+scrollTop stays the same regardless of when it's measured during
+ * the same drag. That's what makes caching this safe even though
+ * auto-scroll (see _dragAutoScrollTick) keeps moving the page mid-drag -
+ * measuring once per gesture instead of once per mousemove event is the
+ * difference between one forced reflow and hundreds per second, which
+ * was visibly janking a drag-select over a few hundred cards.
+ */
+function _buildDragCardRectCache() {
+    const pc = $('page-content');
+    const scrollLeft = pc ? pc.scrollLeft : 0;
+    const scrollTop = pc ? pc.scrollTop : 0;
+    _dragCardRects = new Map();
+    document.querySelectorAll('.photo-card').forEach(card => {
+        const r = card.getBoundingClientRect();
+        _dragCardRects.set(card, {
+            left: r.left + scrollLeft, right: r.right + scrollLeft,
+            top: r.top + scrollTop, bottom: r.bottom + scrollTop,
+        });
+    });
+}
+
 function _updateRectSelection(currentClientX, currentClientY) {
     if (!_dragStartPoint) return;
+    if (!_dragCardRects) _buildDragCardRectCache();
     const pc = $('page-content');
     const scrollLeft = pc ? pc.scrollLeft : 0;
     const scrollTop = pc ? pc.scrollTop : 0;
@@ -108,11 +141,8 @@ function _updateRectSelection(currentClientX, currentClientY) {
     const minY = Math.min(_dragStartPoint.y, current.y);
     const maxY = Math.max(_dragStartPoint.y, current.y);
 
-    document.querySelectorAll('.photo-card').forEach(card => {
-        const r = card.getBoundingClientRect();
-        const left = r.left + scrollLeft, right = r.right + scrollLeft;
-        const top = r.top + scrollTop, bottom = r.bottom + scrollTop;
-        const intersects = left < maxX && right > minX && top < maxY && bottom > minY;
+    _dragCardRects.forEach((rect, card) => {
+        const intersects = rect.left < maxX && rect.right > minX && rect.top < maxY && rect.bottom > minY;
         const id = card.dataset.id;
         const isSelected = state.selectedAssets.has(id);
         if (intersects && !isSelected) {
@@ -169,6 +199,7 @@ function _endDragSelect() {
     _dragSelectActive = false;
     _dragStartPoint = null;
     _dragOriginSelected = null;
+    _dragCardRects = null;
     _pendingDragCard = null;
     _pendingDragStart = null;
     if (_dragAutoScrollRAF) {
