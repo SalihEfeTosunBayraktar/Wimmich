@@ -27,7 +27,7 @@
 .search-input-wrapper input {
     width: 100%;
     padding-left: 42px;
-    padding-right: 42px;
+    padding-right: 14px;
     height: 48px;
     font-size: 1rem;
     border-radius: var(--radius-lg);
@@ -35,15 +35,15 @@
     box-sizing: border-box;
 }
 
-/* OCR-only search mode toggle - dimmed until switched on, matching the
+/* OCR-only search mode toggle - sits next to the calendar/sort/group
+   controls (not inside the search input) so it stays visible even while
+   those hide during an active search (see #gallery-controls-row's own
+   display:none-while-searching). Dimmed until switched on, matching the
    plain-icon "not the current mode" convention used elsewhere (e.g.
-   .photo-cover-btn), then tinted with the accent color once active so
-   it's obvious search results are currently scoped to OCR text only. */
+   .photo-cover-btn); the icon itself also swaps to a filled variant
+   (see gallery.js) so the active state reads clearly even without color. */
 .search-ocr-toggle {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
+    flex-shrink: 0;
     color: var(--text-muted);
 }
 .search-ocr-toggle.active {

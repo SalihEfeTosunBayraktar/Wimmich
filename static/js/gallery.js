@@ -327,9 +327,9 @@ async function renderGallery() {
                 <div class="search-input-wrapper">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <input type="search" id="gallery-search-input" placeholder="${t('gallery.search_placeholder')}" value="${escHtml(g.selectedLabel || g.searchQuery)}">
-                    <button type="button" id="gallery-search-ocr-toggle" class="btn-icon search-ocr-toggle ${g.searchMode === 'ocr' ? 'active' : ''}" title="${t('gallery.ocr_only_toggle_title')}">${icon('file', 16)}</button>
                     <div id="gallery-search-suggestions" class="search-suggestions hidden"></div>
                 </div>
+                <button type="button" id="gallery-search-ocr-toggle" class="btn-icon search-ocr-toggle ${g.searchMode === 'ocr' ? 'active' : ''}" title="${t('gallery.ocr_only_toggle_title')}">${icon(g.searchMode === 'ocr' ? 'fileFilled' : 'file', 18)}</button>
                 <div id="gallery-controls-row" class="gallery-controls-mini" style="${g.searchQuery ? 'display:none' : ''}">
                     <div class="gallery-jump-date-wrap" title="${t('gallery.jump_to_date')}">
                         <button type="button" class="btn-icon" tabindex="-1" aria-hidden="true">${icon('calendar', 18)}</button>
@@ -358,8 +358,9 @@ async function renderGallery() {
     $('gallery-group').onchange = (e) => { g.groupBy = e.target.value; renderGallery(); };
     $('gallery-search-ocr-toggle').onclick = (e) => {
         g.searchMode = g.searchMode === 'ocr' ? 'smart' : 'ocr';
-        e.currentTarget.classList.toggle('active', g.searchMode === 'ocr');
-        e.currentTarget.title = t('gallery.ocr_only_toggle_title');
+        const active = g.searchMode === 'ocr';
+        e.currentTarget.classList.toggle('active', active);
+        e.currentTarget.innerHTML = icon(active ? 'fileFilled' : 'file', 18);
         if (g.searchQuery) _runGallerySearch(g.searchQuery);
     };
     $('gallery-jump-date').onchange = (e) => {

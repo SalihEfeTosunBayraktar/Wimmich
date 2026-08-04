@@ -56,6 +56,7 @@ const ICONS = {
     plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
     phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
     file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    fileFilled: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="currentColor"/><polyline points="14 2 14 8 20 8" fill="none"/>',
     tree: '<path d="M12 2 4 12h4l-4 8h16l-4-8h4z"/><line x1="12" y1="22" x2="12" y2="18"/>',
     paw: '<circle cx="11" cy="4.5" r="2"/><circle cx="18" cy="9" r="2"/><circle cx="4" cy="9" r="2"/><path d="M11.5 12a5 5 0 0 0-5 5c0 1.66 1.34 3 3 3 .83 0 1.5-.67 2-1s1.17-1 2-1 1.5.67 2 1 1.17 1 2 1c1.66 0 3-1.34 3-3a5 5 0 0 0-5-5z"/>',
     utensils: '<path d="M5 2v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2M7 2v20M21 2c-3 0-5 2.5-5 6.5S18 15 21 15"/><line x1="21" y1="2" x2="21" y2="22"/>',

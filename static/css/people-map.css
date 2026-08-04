@@ -36,9 +36,20 @@
     right: 6px;
     width: 26px;
     height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: var(--radius-full);
     border: none;
     background: rgba(0, 0, 0, 0.4);
+    /* Explicit rather than inherited - the icon uses stroke="currentColor",
+       and with no color set here it fell back to the THEME's text color,
+       which on the light theme is near-black (invisible against this
+       already-dark translucent circle) and on dark theme, depending on
+       what it inherited through, wasn't reliably light either - the
+       background itself doesn't change with theme, so the icon color
+       shouldn't either. */
+    color: white;
     cursor: pointer;
     opacity: 0;
     transition: opacity var(--transition-fast);
@@ -52,9 +63,13 @@
     left: 6px;
     width: 26px;
     height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: var(--radius-full);
     border: none;
     background: rgba(239, 68, 68, 0.5);
+    color: white;
     cursor: pointer;
     opacity: 0;
     transition: opacity var(--transition-fast);
