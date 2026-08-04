@@ -48,6 +48,30 @@
 }
 .toast-action-btn:hover { opacity: 0.75; }
 
+/* ─── LAN direct-connection banner ──────────────────────── */
+.lan-switch-banner {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-lg);
+    transform: translateX(-50%);
+    z-index: 950; /* above the selection bar (50), below modals (500+) */
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    font-size: 0.85rem;
+    max-width: 90vw;
+    animation: slideUp 0.3s ease;
+}
+.lan-switch-banner span {
+    flex: 1;
+}
+
 /* ─── Empty States ──────────────────────────────────────── */
 .empty-state {
     display: flex;

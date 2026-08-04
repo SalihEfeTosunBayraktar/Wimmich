@@ -22,7 +22,7 @@ except Exception:
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -355,6 +355,37 @@ async def serve_shared_page(key: str):
 @app.get("/api/health")
 async def health():
     return {"status": "ok", **get_version_info()}
+
+
+@app.get("/api/network/local-info")
+async def local_network_info(request: Request):
+    """Powers the "switch to a direct connection" banner: tells the
+    frontend whether THIS request came in through the Cloudflare tunnel,
+    and if so, this machine's own LAN IP to offer as a faster alternative.
+
+    Can't be done by having the client itself probe the LAN address (e.g.
+    a fetch to http://192.168.x.x from this page) - if this page was
+    loaded over the tunnel's HTTPS, browsers block that outright as mixed
+    content, no way around it. So the server answers instead, using a
+    detail specific to how cloudflared works: it proxies every tunneled
+    request to this app via 127.0.0.1, regardless of the visitor's real
+    IP. A request that's simultaneously "from loopback" AND carries
+    CF-Connecting-IP (only ever set by Cloudflare's edge) can only be
+    tunnel traffic - the plain LAN case (someone typing the LAN IP
+    directly into their browser) arrives as their own real IP, not
+    loopback, and never carries that header at all.
+    """
+    socket_ip = request.client.host if request.client else None
+    via_tunnel = socket_ip in ("127.0.0.1", "::1") and bool(request.headers.get("cf-connecting-ip"))
+    if not via_tunnel:
+        return {"show_banner": False}
+
+    from utils.network_utils import get_local_lan_ip
+    local_ip = get_local_lan_ip()
+    if not local_ip:
+        return {"show_banner": False}
+
+    return {"show_banner": True, "local_url": f"http://{local_ip}:{config.PORT}"}
 
 
 if __name__ == "__main__":
