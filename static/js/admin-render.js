@@ -26,6 +26,17 @@ registerTranslations({
         'admin_render.confirm_reset_backup_settings': 'Reset backup settings (destination, interval, enabled) to their defaults?',
         'admin_render.db_location_hint': 'For database security, the database file is always stored at the fixed location {path}.',
         'admin_render.lan_access_heading': 'Local Network Access',
+        'admin_render.gpu_idle_heading': 'GPU Idle Unload',
+        'admin_render.gpu_idle_info_hint': 'Frees the CLIP/face-recognition models from GPU (or system) memory after they sit idle for a while - the next search/upload just reloads them, with a real multi-second-to-a-minute delay. Never unloads while a CLIP or FACE job is actually running, no matter how long a single call takes.',
+        'admin_render.gpu_idle_toggle_label': 'Unload idle models automatically',
+        'admin_render.gpu_idle_minutes_label': 'Idle timeout (minutes)',
+        'admin_render.gpu_idle_hint': 'Off by default - a real trade-off (reload delay) worth turning on if this GPU is shared with other work, or just to cut idle power draw.',
+        'admin_render.gpu_idle_model_loaded': 'Loaded ({seconds}s idle)',
+        'admin_render.gpu_idle_model_unloaded': 'Not loaded',
+        'admin_render.gpu_idle_clip_label': 'CLIP:',
+        'admin_render.gpu_idle_face_label': 'Face recognition:',
+        'admin_render.gpu_idle_invalid_minutes': 'Enter a number of at least 1',
+        'admin_render.gpu_idle_saved_toast': 'GPU idle-unload setting saved',
         'admin_render.lan_access_info_hint': "Wimmich already listens for connections from any device on your home network, no setup needed - this just shows the address to type on your phone/tablet, and checks whether Windows Firewall is actually letting those connections through. Separate from Cloudflare Tunnel/Tailscale below, which are for access from OUTSIDE your home network.",
         'admin_render.lan_access_hint': 'From another device on the same Wi-Fi/network, open one of these addresses:',
         'admin_render.lan_access_toggle_label': 'Allow access from other devices on this network',
@@ -170,6 +181,17 @@ registerTranslations({
         'admin_render.confirm_reset_backup_settings': 'Yedekleme ayarları (hedef, aralık, etkin) varsayılanlarına sıfırlansın mı?',
         'admin_render.db_location_hint': 'Veri tabanı güvenliği için veritabanı dosyası her zaman sabit olarak {path} konumunda saklanır.',
         'admin_render.lan_access_heading': 'Yerel Ağ Erişimi',
+        'admin_render.gpu_idle_heading': 'GPU Boşta Boşaltma',
+        'admin_render.gpu_idle_info_hint': 'CLIP/yüz tanıma modellerini bir süre boşta kaldıktan sonra GPU (veya sistem) belleğinden serbest bırakır - bir sonraki arama/yükleme onları tekrar yükler, birkaç saniyeden bir dakikaya kadar gerçek bir gecikmeyle. Bir CLIP veya FACE işi gerçekten çalışıyorsa, tek bir çağrı ne kadar sürerse sürsün asla boşaltma yapılmaz.',
+        'admin_render.gpu_idle_toggle_label': 'Boşta kalan modelleri otomatik boşalt',
+        'admin_render.gpu_idle_minutes_label': 'Boşta kalma süresi (dakika)',
+        'admin_render.gpu_idle_hint': 'Varsayılan olarak kapalı - bu GPU başka işlerle paylaşılıyorsa veya sadece boşta güç tüketimini azaltmak için açmaya değer gerçek bir ödünleşim (yeniden yükleme gecikmesi).',
+        'admin_render.gpu_idle_model_loaded': 'Yüklü ({seconds}sn boşta)',
+        'admin_render.gpu_idle_model_unloaded': 'Yüklü değil',
+        'admin_render.gpu_idle_clip_label': 'CLIP:',
+        'admin_render.gpu_idle_face_label': 'Yüz tanıma:',
+        'admin_render.gpu_idle_invalid_minutes': 'En az 1 olan bir sayı girin',
+        'admin_render.gpu_idle_saved_toast': 'GPU boşta boşaltma ayarı kaydedildi',
         'admin_render.lan_access_info_hint': 'Wimmich, ev ağınızdaki herhangi bir cihazdan gelen bağlantıları zaten dinliyor, ekstra kurulum gerekmez - bu bölüm sadece telefonunuza/tabletinize yazacağınız adresi gösterir ve Windows Güvenlik Duvarı\'nın bu bağlantılara gerçekten izin verip vermediğini kontrol eder. Aşağıdaki Cloudflare Tunnel/Tailscale\'den farklıdır - onlar ev ağınızın DIŞINDAN erişim içindir.',
         'admin_render.lan_access_hint': 'Aynı Wi-Fi/ağdaki başka bir cihazdan şu adreslerden birini açın:',
         'admin_render.lan_access_toggle_label': 'Bu ağdaki diğer cihazlardan erişime izin ver',
@@ -314,6 +336,17 @@ registerTranslations({
         'admin_render.confirm_reset_backup_settings': 'Réinitialiser les paramètres de sauvegarde (destination, intervalle, activé) à leurs valeurs par défaut ?',
         'admin_render.db_location_hint': "Pour des raisons de sécurité, le fichier de base de données est toujours stocké à l'emplacement fixe {path}.",
         'admin_render.lan_access_heading': 'Accès au réseau local',
+        'admin_render.gpu_idle_heading': 'Déchargement GPU inactif',
+        'admin_render.gpu_idle_info_hint': "Libère les modèles CLIP/reconnaissance faciale de la mémoire GPU (ou système) après une période d'inactivité - la prochaine recherche/importation les recharge, avec un délai réel de quelques secondes à une minute. Ne décharge jamais pendant qu'une tâche CLIP ou FACE est réellement en cours, quelle que soit la durée d'un seul appel.",
+        'admin_render.gpu_idle_toggle_label': 'Décharger automatiquement les modèles inactifs',
+        'admin_render.gpu_idle_minutes_label': "Délai d'inactivité (minutes)",
+        'admin_render.gpu_idle_hint': "Désactivé par défaut - un vrai compromis (délai de rechargement) qui vaut la peine d'être activé si ce GPU est partagé avec d'autres tâches, ou simplement pour réduire la consommation d'énergie à l'inactivité.",
+        'admin_render.gpu_idle_model_loaded': 'Chargé (inactif depuis {seconds}s)',
+        'admin_render.gpu_idle_model_unloaded': 'Non chargé',
+        'admin_render.gpu_idle_clip_label': 'CLIP :',
+        'admin_render.gpu_idle_face_label': 'Reconnaissance faciale :',
+        'admin_render.gpu_idle_invalid_minutes': 'Entrez un nombre d\'au moins 1',
+        'admin_render.gpu_idle_saved_toast': 'Paramètre de déchargement GPU enregistré',
         'admin_render.lan_access_info_hint': "Wimmich écoute déjà les connexions de tout appareil sur votre réseau domestique, sans configuration nécessaire - ceci affiche simplement l'adresse à saisir sur votre téléphone/tablette, et vérifie si le pare-feu Windows laisse réellement passer ces connexions. Distinct du tunnel Cloudflare/Tailscale ci-dessous, qui sont pour l'accès DEPUIS l'extérieur de votre réseau domestique.",
         'admin_render.lan_access_hint': 'Depuis un autre appareil sur le même Wi-Fi/réseau, ouvrez une de ces adresses :',
         'admin_render.lan_access_toggle_label': "Autoriser l'accès depuis d'autres appareils sur ce réseau",
@@ -585,7 +618,7 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, gpuIdleUnload] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
@@ -596,6 +629,7 @@ async function renderAdmin() {
             API.getJobConcurrency().catch(() => ({ effective: 4, override: null, default: 4, suggested: 4, system: { cpu_count: null, total_ram_gb: null } })),
             API.getAuditLog(1, auditLogLimit).catch(() => ({ entries: [], total: 0 })),
             API.getNetworkStatus().catch(() => ({ lan_ips: [], port: null, firewall_rule_found: null })),
+            API.getGpuIdleUnload().catch(() => ({ enabled: false, minutes: 15, clip_loaded: false, clip_idle_seconds: null, face_loaded: false, face_idle_seconds: null })),
         ]);
 
         pc.innerHTML = `
@@ -848,6 +882,11 @@ async function renderAdmin() {
                     </div>
 
                     <div class="admin-status-card">
+                        <h4>${icon('brain', 16)} ${t('admin_render.gpu_idle_heading')} ${infoBtn(t('admin_render.gpu_idle_info_hint'))}</h4>
+                        <div id="gpu-idle-panel">${renderGpuIdlePanel(gpuIdleUnload)}</div>
+                    </div>
+
+                    <div class="admin-status-card">
                         <h4>${icon('plug', 16)} ${t('admin_render.server_control_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.restart_server_hint')}</p>
                         <button class="btn btn-secondary btn-sm" onclick="restartServer(this)">${icon('refresh')} ${t('admin_render.restart_server_btn')}</button>
@@ -1054,6 +1093,47 @@ async function saveLanAccessEnabled(checkbox) {
         renderAdmin();
     } catch (e) {
         checkbox.checked = !enabling;
+        toast(e.message, 'error');
+    }
+}
+
+function renderGpuIdlePanel(status) {
+    const clipStatusHtml = status.clip_loaded
+        ? `<span class="badge badge-success">${t('admin_render.gpu_idle_model_loaded', { seconds: Math.round(status.clip_idle_seconds || 0) })}</span>`
+        : `<span class="badge">${t('admin_render.gpu_idle_model_unloaded')}</span>`;
+    const faceStatusHtml = status.face_loaded
+        ? `<span class="badge badge-success">${t('admin_render.gpu_idle_model_loaded', { seconds: Math.round(status.face_idle_seconds || 0) })}</span>`
+        : `<span class="badge">${t('admin_render.gpu_idle_model_unloaded')}</span>`;
+
+    return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input type="checkbox" id="gpu-idle-enabled-input" ${status.enabled ? 'checked' : ''} style="width:auto;margin:0">
+            <label for="gpu-idle-enabled-input" class="admin-checkbox-label">${t('admin_render.gpu_idle_toggle_label')}</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <label for="gpu-idle-minutes-input" class="text-muted" style="font-size:13px">${t('admin_render.gpu_idle_minutes_label')}</label>
+            <input type="number" id="gpu-idle-minutes-input" value="${status.minutes}" min="1" style="width:70px">
+        </div>
+        <p class="text-muted admin-field-hint">${t('admin_render.gpu_idle_hint')}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">
+            <span class="text-muted" style="font-size:12px">${t('admin_render.gpu_idle_clip_label')}</span> ${clipStatusHtml}
+            <span class="text-muted" style="font-size:12px">${t('admin_render.gpu_idle_face_label')}</span> ${faceStatusHtml}
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="saveGpuIdleUnload()">${t('admin_render.save_settings_btn')}</button>
+    `;
+}
+
+async function saveGpuIdleUnload() {
+    const enabled = $('gpu-idle-enabled-input').checked;
+    const minutes = parseInt($('gpu-idle-minutes-input').value, 10);
+    if (!minutes || minutes < 1) {
+        toast(t('admin_render.gpu_idle_invalid_minutes'), 'error');
+        return;
+    }
+    try {
+        await API.setGpuIdleUnload(enabled, minutes);
+        toast(t('admin_render.gpu_idle_saved_toast'), 'success');
+    } catch (e) {
         toast(e.message, 'error');
     }
 }
