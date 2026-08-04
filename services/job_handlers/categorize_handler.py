@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Job
-from services.job_core import check_job_cancelled
+from services.job_core import check_job_cancelled, gather_cancellable
 from services.smart_category_service import classify_embedding, NO_CATEGORY
 from services.category_correction_service import load_correction_embeddings
 from utils.embedding_utils import load_embedding
@@ -95,9 +95,9 @@ async def handle_job_categorize(db: AsyncSession, job: Job):
         batch = assets[batch_start:batch_start + concurrency]
         await check_job_cancelled(db, job.id)
 
-        embeddings = await asyncio.gather(
-            *[asyncio.to_thread(load_embedding, asset.clip_embedding_path) for asset in batch],
-            return_exceptions=True,
+        embeddings = await gather_cancellable(
+            db, job.id,
+            [asyncio.to_thread(load_embedding, asset.clip_embedding_path) for asset in batch],
         )
 
         for asset, embedding in zip(batch, embeddings):

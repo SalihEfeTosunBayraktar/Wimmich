@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Job
-from services.job_core import check_job_cancelled
+from services.job_core import check_job_cancelled, gather_cancellable
 from utils.image_utils import _open_any_image
 from utils.path_utils import resolve_data_path
 from utils.ocr_setup import OCR_AVAILABLE
@@ -73,9 +73,9 @@ async def handle_job_ocr(db: AsyncSession, job: Job):
             resolved = resolve_data_path(asset.file_path, config.UPLOAD_DIR)
             paths.append(str(resolved) if resolved and resolved.exists() else None)
 
-        results = await asyncio.gather(
-            *[asyncio.to_thread(_run_ocr, p) if p else asyncio.sleep(0, result=None) for p in paths],
-            return_exceptions=True,
+        results = await gather_cancellable(
+            db, job.id,
+            [asyncio.to_thread(_run_ocr, p) if p else asyncio.sleep(0, result=None) for p in paths],
         )
 
         for asset, text_result in zip(batch, results):

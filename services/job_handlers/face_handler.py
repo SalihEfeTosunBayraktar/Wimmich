@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Face, Job
-from services.job_core import check_job_cancelled
+from services.job_core import check_job_cancelled, gather_cancellable
 from services.face_clustering_service import cluster_user_faces
 from utils.log import error
 
@@ -56,9 +56,9 @@ async def handle_job_face(db: AsyncSession, job: Job):
                 continue
             to_detect.append(asset)
 
-        results = await asyncio.gather(
-            *[asyncio.to_thread(detect_faces, asset.file_path) for asset in to_detect],
-            return_exceptions=True,
+        results = await gather_cancellable(
+            db, job.id,
+            [asyncio.to_thread(detect_faces, asset.file_path) for asset in to_detect],
         )
 
         new_faces = []

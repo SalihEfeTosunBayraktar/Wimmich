@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, Job, User
-from services.job_core import check_job_cancelled, JobAlreadyExistsException
+from services.job_core import check_job_cancelled, gather_cancellable, JobAlreadyExistsException
 from services.job_handlers.import_reference import build_reference_asset
 from services.quota_service import check_server_quota, check_user_quota
 from utils.log import warn, error, success
@@ -161,9 +161,9 @@ async def handle_job_import(db: AsyncSession, job: Job):
 
             to_process.append(file_path)
 
-        results = await asyncio.gather(
-            *[_process_one(fp, user_id, copy_files, path, dest_path) for fp in to_process],
-            return_exceptions=True,
+        results = await gather_cancellable(
+            db, job.id,
+            [_process_one(fp, user_id, copy_files, path, dest_path) for fp in to_process],
         )
 
         new_assets = []

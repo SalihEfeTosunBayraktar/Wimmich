@@ -36,6 +36,52 @@ async def check_job_cancelled(db: AsyncSession, job_id: str):
         raise JobCancelledException("İşlem kullanıcı tarafından iptal edildi.")
 
 
+async def gather_cancellable(db: AsyncSession, job_id: str, coros: list) -> list:
+    """Like asyncio.gather(*coros, return_exceptions=True), but polls the
+    job's cancelled flag every JOB_CANCEL_POLL_SECONDS while the batch is
+    in flight, instead of only checking once before the whole batch
+    starts. Several handlers (CLIP/face-recognition/OCR/CATEGORIZE/IMPORT)
+    fire off one asyncio.to_thread() call per photo in a batch and
+    asyncio.gather() the whole batch - with a large concurrency setting
+    and large/many photos, one single batch could run for many minutes,
+    during which a "Cancel" click had zero effect until every item in it
+    happened to finish. That didn't just leave the cancelled job LOOKING
+    stuck - it actually blocked every other queued job behind it (only one
+    job runs at a time, see JobWorker's docstring) and kept holding onto
+    whatever memory the batch had allocated, for the same reason.
+
+    Cancelling the wrapping asyncio Tasks here does NOT stop the
+    underlying threads - Python can't forcibly interrupt a blocking call
+    (see run_cancellable's docstring / the hang-watchdog's identical
+    limitation) - they keep running orphaned in the background until they
+    finish on their own. What this DOES fix is the job's own coroutine no
+    longer waiting on them: the moment cancellation is detected, this
+    raises immediately instead of blocking on asyncio.wait(), so the job
+    is marked CANCELLED and the worker picks up the next queued job right
+    away - matching what clicking Cancel actually implies, even though the
+    orphaned batch's own memory/CPU use tails off on its own timeline
+    rather than stopping instantly.
+    """
+    tasks = [asyncio.ensure_future(c) for c in coros]
+    pending = set(tasks)
+    while pending:
+        try:
+            await check_job_cancelled(db, job_id)
+        except JobCancelledException:
+            for t in tasks:
+                t.cancel()
+            raise
+        _, pending = await asyncio.wait(pending, timeout=JOB_CANCEL_POLL_SECONDS)
+
+    results = []
+    for t in tasks:
+        try:
+            results.append(t.result())
+        except Exception as e:
+            results.append(e)
+    return results
+
+
 async def run_cancellable(db: AsyncSession, job_id: str, cancel_event: threading.Event, coro: Coroutine) -> Any:
     """Runs `coro` (typically an asyncio.to_thread(...) call wrapping a
     subprocess-based unit of work) while polling the job's cancelled flag
