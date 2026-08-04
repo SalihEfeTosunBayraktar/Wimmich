@@ -265,8 +265,17 @@ async function _loadOcrHighlights(assetId, query) {
         // by the time this resolves - only apply it if still relevant.
         if (!state.viewerAsset || state.viewerAsset.id !== assetId) return;
         _ocrHighlightBoxes = res.boxes || [];
+        if (!_ocrHighlightBoxes.length) {
+            console.warn(`[OCR highlight] no matching boxes for query "${query}" on asset ${assetId} - either OCR hasn't found this word, or nothing above the confidence threshold matched it.`);
+        }
         _renderOcrHighlights();
-    } catch (e) { /* non-critical - just skip the overlay */ }
+    } catch (e) {
+        // Was silently swallowed before - logged now since a failed fetch
+        // here (network/CSP/auth) looked identical to "genuinely no match"
+        // from the user's side, making the actual cause impossible to tell
+        // without opening devtools first.
+        console.error('[OCR highlight] failed to fetch matches:', e);
+    }
 }
 
 function _clearOcrHighlights() {
