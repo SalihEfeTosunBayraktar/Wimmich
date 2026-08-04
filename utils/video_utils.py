@@ -114,11 +114,32 @@ def _run_ffmpeg_killable(
     job kill ffmpeg within about a second instead. Also logs stderr on a
     non-zero exit - a bare True/False return gave no way to tell why a
     failure happened.
+
+    stderr is drained continuously by a background thread rather than read
+    once at the end - ffmpeg writes its progress/stats there, and on
+    Windows the pipe buffer is small (a few KB). A filter chain verbose
+    enough to fill it (confirmed directly: a zoompan-based clip) leaves
+    ffmpeg blocked on its own write() call forever, since nothing was
+    reading the other end - proc.wait() then never returns, and every call
+    site here silently "times out" despite ffmpeg having done nothing wrong
+    except being unable to finish writing its own logs.
     """
     try:
         proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     except FileNotFoundError:
         return False
+
+    stderr_chunks = []
+
+    def _drain_stderr():
+        try:
+            for chunk in iter(lambda: proc.stderr.read(4096), b""):
+                stderr_chunks.append(chunk)
+        except Exception:
+            pass
+
+    reader = threading.Thread(target=_drain_stderr, daemon=True)
+    reader.start()
 
     start = time.monotonic()
     while True:
@@ -130,14 +151,18 @@ def _run_ffmpeg_killable(
 
         if cancel_event is not None and cancel_event.is_set():
             _terminate(proc)
+            reader.join(timeout=2)
             return False
         if time.monotonic() - start > timeout:
             warn(log_prefix, f"Timed out after {timeout}s")
             _terminate(proc)
+            reader.join(timeout=2)
             return False
 
+    reader.join(timeout=5)
+
     if proc.returncode != 0:
-        stderr = (proc.stderr.read() or b"").decode(errors="replace")[-800:] if proc.stderr else ""
+        stderr = b"".join(stderr_chunks).decode(errors="replace")[-800:]
         error(log_prefix, f"Failed (exit {proc.returncode}): {stderr.strip()}")
         return False
 
