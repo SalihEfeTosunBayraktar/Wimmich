@@ -43,9 +43,25 @@ async def list_styles(user: User = Depends(get_current_user)):
     return {"styles": video_style_service.get_style_choices()}
 
 
+@router.get("/formats")
+async def list_formats(user: User = Depends(get_current_user)):
+    return {"formats": video_style_service.get_format_choices()}
+
+
 class SettingsRequest(BaseModel):
     enabled: Optional[bool] = None
     style: Optional[str] = None
+    format: Optional[str] = None
+    show_date: Optional[bool] = None
+
+
+def _settings_dict(user: User) -> dict:
+    return {
+        "enabled": user.memory_video_enabled,
+        "style": user.memory_video_style,
+        "format": user.memory_video_format,
+        "show_date": user.memory_video_show_date,
+    }
 
 
 @router.put("/settings")
@@ -60,19 +76,19 @@ async def update_settings(
         if req.style not in video_style_service.VIDEO_STYLES:
             raise HTTPException(status_code=400, detail="Unknown style")
         user.memory_video_style = req.style
+    if req.format is not None:
+        if req.format not in video_style_service.FORMATS:
+            raise HTTPException(status_code=400, detail="Unknown format")
+        user.memory_video_format = req.format
+    if req.show_date is not None:
+        user.memory_video_show_date = req.show_date
     await db.commit()
-    return {
-        "enabled": user.memory_video_enabled,
-        "style": user.memory_video_style,
-    }
+    return _settings_dict(user)
 
 
 @router.get("/settings")
 async def get_settings(user: User = Depends(get_current_user)):
-    return {
-        "enabled": user.memory_video_enabled,
-        "style": user.memory_video_style,
-    }
+    return _settings_dict(user)
 
 
 class GenerateRequest(BaseModel):

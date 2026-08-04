@@ -19,6 +19,9 @@ class MemoryVideo(Base):
     # changes their style preference later doesn't retroactively mislabel
     # videos generated under a previous style.
     style = Column(String(30), nullable=False)
+    # Which entry in video_style_service.FORMATS built this - same
+    # per-row-not-just-user-setting reasoning as style above.
+    format = Column(String(20), default="landscape", nullable=False)
     title = Column(String(255), nullable=False)
     # Dedup key the generator checks before doing any work, e.g.
     # "daily:2026-08-04:3" (today's date + years_ago) or "weekly:2026-W31" -

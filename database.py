@@ -222,3 +222,25 @@ async def init_db():
             await conn.execute(text("ALTER TABLE assets ADD COLUMN ocr_boxes TEXT"))
         except Exception:
             pass
+
+        # Automatic column migration for memory video output format and
+        # date-caption toggle - see models/user.py's memory_video_format/
+        # memory_video_show_date.
+        try:
+            await conn.execute(text(
+                "ALTER TABLE users ADD COLUMN memory_video_format VARCHAR(20) DEFAULT 'landscape'"
+            ))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text(
+                "ALTER TABLE users ADD COLUMN memory_video_show_date BOOLEAN DEFAULT 0"
+            ))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text(
+                "ALTER TABLE memory_videos ADD COLUMN format VARCHAR(20) DEFAULT 'landscape'"
+            ))
+        except Exception:
+            pass

@@ -52,6 +52,7 @@ def memory_video_to_dict(video: MemoryVideo) -> dict:
         "id": video.id,
         "kind": video.kind,
         "style": video.style,
+        "format": video.format,
         "title": video.title,
         "status": video.status,
         "error_message": video.error_message,

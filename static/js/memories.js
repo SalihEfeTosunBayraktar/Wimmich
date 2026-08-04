@@ -14,7 +14,7 @@ registerTranslations({
         'memories.video_style_label': 'Style',
         'memories.video_generate_daily': 'Create from today\'s memories',
         'memories.video_generate_weekly': 'Create this week\'s summary',
-        'memories.video_empty': 'No memory videos yet - turn on the setting above, or create one now.',
+        'memories.video_empty': 'No memory videos yet - create one now, or turn on automatic generation in the Admin panel.',
         'memories.video_status_pending': 'Generating…',
         'memories.video_status_failed': 'Failed: {error}',
         'memories.video_delete': 'Delete',
@@ -35,7 +35,7 @@ registerTranslations({
         'memories.video_style_label': 'Stil',
         'memories.video_generate_daily': 'Bugünün anılarından oluştur',
         'memories.video_generate_weekly': 'Bu haftanın özetini oluştur',
-        'memories.video_empty': 'Henüz anı videosu yok - yukarıdaki ayarı açın veya şimdi oluşturun.',
+        'memories.video_empty': 'Henüz anı videosu yok - şimdi oluşturun, veya Yönetici Paneli\'nden otomatik oluşturmayı açın.',
         'memories.video_status_pending': 'Oluşturuluyor…',
         'memories.video_status_failed': 'Başarısız: {error}',
         'memories.video_delete': 'Sil',
@@ -56,7 +56,7 @@ registerTranslations({
         'memories.video_style_label': 'Style',
         'memories.video_generate_daily': "Créer à partir des souvenirs d'aujourd'hui",
         'memories.video_generate_weekly': 'Créer le résumé de cette semaine',
-        'memories.video_empty': "Aucune vidéo souvenir pour l'instant - activez le réglage ci-dessus, ou créez-en une maintenant.",
+        'memories.video_empty': "Aucune vidéo souvenir pour l'instant - créez-en une maintenant, ou activez la génération automatique dans le panneau d'administration.",
         'memories.video_status_pending': 'Génération…',
         'memories.video_status_failed': 'Échec : {error}',
         'memories.video_delete': 'Supprimer',
@@ -77,7 +77,7 @@ registerTranslations({
         'memories.video_style_label': 'Stil',
         'memories.video_generate_daily': 'Aus den heutigen Erinnerungen erstellen',
         'memories.video_generate_weekly': 'Zusammenfassung dieser Woche erstellen',
-        'memories.video_empty': 'Noch keine Erinnerungsvideos - aktivieren Sie die Einstellung oben oder erstellen Sie jetzt eines.',
+        'memories.video_empty': 'Noch keine Erinnerungsvideos - erstellen Sie jetzt eines, oder aktivieren Sie die automatische Erstellung im Admin-Panel.',
         'memories.video_status_pending': 'Wird erstellt…',
         'memories.video_status_failed': 'Fehlgeschlagen: {error}',
         'memories.video_delete': 'Löschen',
@@ -91,7 +91,6 @@ registerTranslations({
 });
 
 let _memoryVideoPollInterval = null;
-let _memoryVideoStylesCache = null;
 
 async function renderMemories() {
     try {
@@ -123,14 +122,8 @@ async function _renderMemoryVideoSection() {
     if (!container) return;
 
     try {
-        const [settings, videosData, stylesData] = await Promise.all([
-            API.getMemoryVideoSettings(),
-            API.getMemoryVideos(),
-            _memoryVideoStylesCache ? Promise.resolve({ styles: _memoryVideoStylesCache }) : API.getMemoryVideoStyles(),
-        ]);
-        _memoryVideoStylesCache = stylesData.styles;
+        const videosData = await API.getMemoryVideos();
         const videos = videosData.videos;
-        const lang = getLanguage();
 
         container.innerHTML = `
             <div class="memory-video-section">
@@ -140,13 +133,6 @@ async function _renderMemoryVideoSection() {
                             <strong>${t('memories.video_section_title')}</strong>
                             <p class="text-muted" style="font-size:12px;margin:2px 0 0">${t('memories.video_enable_hint')}</p>
                         </div>
-                        <input type="checkbox" id="memory-video-enabled-toggle" ${settings.enabled ? 'checked' : ''} style="width:auto;margin:0">
-                    </div>
-                    <div class="memory-video-settings-row">
-                        <label for="memory-video-style-select">${t('memories.video_style_label')}</label>
-                        <select id="memory-video-style-select" class="gallery-mini-select">
-                            ${_memoryVideoStylesCache.map(s => `<option value="${s.key}" ${s.key === settings.style ? 'selected' : ''}>${escHtml(s['label_' + lang] || s.label_en)}</option>`).join('')}
-                        </select>
                     </div>
                     <div class="memory-video-generate-actions">
                         <button class="btn btn-secondary btn-sm" onclick="_generateMemoryVideoNow('DAILY')">${icon('camera', 14)} ${t('memories.video_generate_daily')}</button>
@@ -158,20 +144,6 @@ async function _renderMemoryVideoSection() {
                 </div>
             </div>
         `;
-
-        $('memory-video-enabled-toggle').onchange = async (e) => {
-            try {
-                await API.updateMemoryVideoSettings({ enabled: e.target.checked });
-            } catch (err) {
-                toast(err.message, 'error');
-                e.target.checked = !e.target.checked;
-            }
-        };
-        $('memory-video-style-select').onchange = async (e) => {
-            try {
-                await API.updateMemoryVideoSettings({ style: e.target.value });
-            } catch (err) { toast(err.message, 'error'); }
-        };
 
         // While anything is still PENDING, keep refreshing this section
         // every few seconds so a just-triggered generation appears without

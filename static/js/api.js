@@ -183,6 +183,7 @@ const API = {
     // Auto-generated memory videos
     getMemoryVideos() { return this.request('/api/memory-videos'); },
     getMemoryVideoStyles() { return this.request('/api/memory-videos/styles'); },
+    getMemoryVideoFormats() { return this.request('/api/memory-videos/formats'); },
     getMemoryVideoSettings() { return this.request('/api/memory-videos/settings'); },
     updateMemoryVideoSettings(data) { return this.request('/api/memory-videos/settings', { method: 'PUT', body: data }); },
     generateMemoryVideo(kind) { return this.request('/api/memory-videos/generate', { method: 'POST', body: { kind } }); },

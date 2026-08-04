@@ -30,6 +30,21 @@ MIN_PHOTOS_DAILY = 3
 MIN_PHOTOS_WEEKLY = 5
 MAX_PHOTOS_PER_VIDEO = 20
 
+_TR_MONTHS = [
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+]
+
+
+def _date_label(asset: Asset) -> Optional[str]:
+    """"Temmuz 2019"-style caption for the date-overlay option - month name
+    rather than a numeric date, since the video is a "memory" (which
+    month/year this was) not a filing record needing day-level precision."""
+    d = asset.taken_at or asset.created_at
+    if not d:
+        return None
+    return f"{_TR_MONTHS[d.month - 1]} {d.year}"
+
 
 def _source_image_path(asset: Asset) -> Optional[str]:
     """Prefers an existing thumbnail over the original file - a 20-photo
@@ -69,8 +84,11 @@ async def render_group(
     - a render failure for one memory group shouldn't be indistinguishable
     from "nothing was ever attempted" in the UI."""
     style = user.memory_video_style or DEFAULT_STYLE
+    format_key = user.memory_video_format or "landscape"
+    show_date = bool(user.memory_video_show_date)
 
     image_paths = []
+    labels = []
     used_asset_ids = []
     for asset in assets[:MAX_PHOTOS_PER_VIDEO]:
         if asset.file_type != "IMAGE":
@@ -78,10 +96,11 @@ async def render_group(
         path = _source_image_path(asset)
         if path:
             image_paths.append(path)
+            labels.append(_date_label(asset) if show_date else None)
             used_asset_ids.append(asset.id)
 
     video = MemoryVideo(
-        user_id=user.id, kind=kind, style=style, title=title,
+        user_id=user.id, kind=kind, style=style, format=format_key, title=title,
         source_key=source_key, status="PENDING",
     )
     video.asset_ids = used_asset_ids
@@ -100,7 +119,9 @@ async def render_group(
     thumb_path = out_dir / f"{video.id}_thumb.jpg"
 
     try:
-        ok = await asyncio.to_thread(build_video, style, image_paths, str(out_path), cancel_event)
+        ok = await asyncio.to_thread(
+            build_video, style, image_paths, str(out_path), cancel_event, format_key, labels,
+        )
         if not ok:
             video.status = "FAILED"
             video.error_message = "Video oluşturulamadı (ffmpeg hatası)"

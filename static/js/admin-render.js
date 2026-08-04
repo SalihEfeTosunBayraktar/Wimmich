@@ -37,6 +37,14 @@ registerTranslations({
         'admin_render.gpu_idle_face_label': 'Face recognition:',
         'admin_render.gpu_idle_invalid_minutes': 'Enter a number of at least 1',
         'admin_render.gpu_idle_saved_toast': 'GPU idle-unload setting saved',
+        'admin_render.memvid_heading': 'Memory Videos',
+        'admin_render.memvid_info_hint': 'Auto-generated Ken Burns/crossfade-style slideshow videos built from "on this day" and weekly photo groups (see the Memories page). These settings apply to your own account.',
+        'admin_render.memvid_enable_label': 'Automatically create memory videos',
+        'admin_render.memvid_enable_hint': 'Runs in the background every few hours - one video per "on this day" year, plus a weekly summary.',
+        'admin_render.memvid_style_label': 'Style',
+        'admin_render.memvid_format_label': 'Format',
+        'admin_render.memvid_show_date_label': 'Show the photo\'s date on each clip',
+        'admin_render.memvid_saved_toast': 'Memory video settings saved',
         'admin_render.lan_access_info_hint': "Wimmich already listens for connections from any device on your home network, no setup needed - this just shows the address to type on your phone/tablet, and checks whether Windows Firewall is actually letting those connections through. Separate from Cloudflare Tunnel/Tailscale below, which are for access from OUTSIDE your home network.",
         'admin_render.lan_access_hint': 'From another device on the same Wi-Fi/network, open one of these addresses:',
         'admin_render.lan_access_toggle_label': 'Allow access from other devices on this network',
@@ -192,6 +200,14 @@ registerTranslations({
         'admin_render.gpu_idle_face_label': 'Yüz tanıma:',
         'admin_render.gpu_idle_invalid_minutes': 'En az 1 olan bir sayı girin',
         'admin_render.gpu_idle_saved_toast': 'GPU boşta boşaltma ayarı kaydedildi',
+        'admin_render.memvid_heading': 'Anı Videoları',
+        'admin_render.memvid_info_hint': '"Bugün" ve haftalık fotoğraf gruplarından otomatik oluşturulan Ken Burns/geçişli slayt videoları (bkz. Anılar sayfası). Bu ayarlar kendi hesabınız için geçerlidir.',
+        'admin_render.memvid_enable_label': 'Anı videolarını otomatik oluştur',
+        'admin_render.memvid_enable_hint': 'Birkaç saatte bir arka planda çalışır - her "bugün" grubu için ayrı bir video, artı haftalık bir özet.',
+        'admin_render.memvid_style_label': 'Stil',
+        'admin_render.memvid_format_label': 'Format',
+        'admin_render.memvid_show_date_label': 'Her klipte fotoğrafın tarihini göster',
+        'admin_render.memvid_saved_toast': 'Anı video ayarları kaydedildi',
         'admin_render.lan_access_info_hint': 'Wimmich, ev ağınızdaki herhangi bir cihazdan gelen bağlantıları zaten dinliyor, ekstra kurulum gerekmez - bu bölüm sadece telefonunuza/tabletinize yazacağınız adresi gösterir ve Windows Güvenlik Duvarı\'nın bu bağlantılara gerçekten izin verip vermediğini kontrol eder. Aşağıdaki Cloudflare Tunnel/Tailscale\'den farklıdır - onlar ev ağınızın DIŞINDAN erişim içindir.',
         'admin_render.lan_access_hint': 'Aynı Wi-Fi/ağdaki başka bir cihazdan şu adreslerden birini açın:',
         'admin_render.lan_access_toggle_label': 'Bu ağdaki diğer cihazlardan erişime izin ver',
@@ -347,6 +363,14 @@ registerTranslations({
         'admin_render.gpu_idle_face_label': 'Reconnaissance faciale :',
         'admin_render.gpu_idle_invalid_minutes': 'Entrez un nombre d\'au moins 1',
         'admin_render.gpu_idle_saved_toast': 'Paramètre de déchargement GPU enregistré',
+        'admin_render.memvid_heading': 'Vidéos souvenirs',
+        'admin_render.memvid_info_hint': 'Vidéos diaporama Ken Burns/fondu générées automatiquement à partir des groupes de photos "ce jour-là" et hebdomadaires (voir la page Souvenirs). Ces réglages s\'appliquent à votre propre compte.',
+        'admin_render.memvid_enable_label': 'Créer automatiquement des vidéos souvenirs',
+        'admin_render.memvid_enable_hint': "S'exécute en arrière-plan toutes les quelques heures - une vidéo par année \"ce jour-là\", plus un résumé hebdomadaire.",
+        'admin_render.memvid_style_label': 'Style',
+        'admin_render.memvid_format_label': 'Format',
+        'admin_render.memvid_show_date_label': 'Afficher la date de la photo sur chaque clip',
+        'admin_render.memvid_saved_toast': 'Paramètres des vidéos souvenirs enregistrés',
         'admin_render.lan_access_info_hint': "Wimmich écoute déjà les connexions de tout appareil sur votre réseau domestique, sans configuration nécessaire - ceci affiche simplement l'adresse à saisir sur votre téléphone/tablette, et vérifie si le pare-feu Windows laisse réellement passer ces connexions. Distinct du tunnel Cloudflare/Tailscale ci-dessous, qui sont pour l'accès DEPUIS l'extérieur de votre réseau domestique.",
         'admin_render.lan_access_hint': 'Depuis un autre appareil sur le même Wi-Fi/réseau, ouvrez une de ces adresses :',
         'admin_render.lan_access_toggle_label': "Autoriser l'accès depuis d'autres appareils sur ce réseau",
@@ -618,7 +642,7 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, gpuIdleUnload] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, gpuIdleUnload, memvidSettings, memvidStyles, memvidFormats] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
@@ -630,6 +654,9 @@ async function renderAdmin() {
             API.getAuditLog(1, auditLogLimit).catch(() => ({ entries: [], total: 0 })),
             API.getNetworkStatus().catch(() => ({ lan_ips: [], port: null, firewall_rule_found: null })),
             API.getGpuIdleUnload().catch(() => ({ enabled: false, minutes: 15, clip_loaded: false, clip_idle_seconds: null, face_loaded: false, face_idle_seconds: null })),
+            API.getMemoryVideoSettings().catch(() => ({ enabled: false, style: 'ken_burns', format: 'landscape', show_date: false })),
+            API.getMemoryVideoStyles().catch(() => ({ styles: [] })),
+            API.getMemoryVideoFormats().catch(() => ({ formats: [] })),
         ]);
 
         pc.innerHTML = `
@@ -887,6 +914,11 @@ async function renderAdmin() {
                     </div>
 
                     <div class="admin-status-card">
+                        <h4>${icon('film', 16)} ${t('admin_render.memvid_heading')} ${infoBtn(t('admin_render.memvid_info_hint'))}</h4>
+                        <div id="memvid-settings-panel">${renderMemoryVideoSettingsPanel(memvidSettings, memvidStyles.styles, memvidFormats.formats)}</div>
+                    </div>
+
+                    <div class="admin-status-card">
                         <h4>${icon('plug', 16)} ${t('admin_render.server_control_heading')}</h4>
                         <p class="text-muted admin-field-hint">${t('admin_render.restart_server_hint')}</p>
                         <button class="btn btn-secondary btn-sm" onclick="restartServer(this)">${icon('refresh')} ${t('admin_render.restart_server_btn')}</button>
@@ -1133,6 +1165,48 @@ async function saveGpuIdleUnload() {
     try {
         await API.setGpuIdleUnload(enabled, minutes);
         toast(t('admin_render.gpu_idle_saved_toast'), 'success');
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+function renderMemoryVideoSettingsPanel(settings, styles, formats) {
+    const lang = getLanguage();
+    return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input type="checkbox" id="memvid-enabled-input" ${settings.enabled ? 'checked' : ''} style="width:auto;margin:0">
+            <label for="memvid-enabled-input" class="admin-checkbox-label">${t('admin_render.memvid_enable_label')}</label>
+        </div>
+        <p class="text-muted admin-field-hint">${t('admin_render.memvid_enable_hint')}</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <label for="memvid-style-input" class="text-muted" style="font-size:13px;min-width:70px">${t('admin_render.memvid_style_label')}</label>
+            <select id="memvid-style-input" class="gallery-mini-select">
+                ${styles.map(s => `<option value="${s.key}" ${s.key === settings.style ? 'selected' : ''}>${escHtml(s['label_' + lang] || s.label_en)}</option>`).join('')}
+            </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <label for="memvid-format-input" class="text-muted" style="font-size:13px;min-width:70px">${t('admin_render.memvid_format_label')}</label>
+            <select id="memvid-format-input" class="gallery-mini-select">
+                ${formats.map(f => `<option value="${f.key}" ${f.key === settings.format ? 'selected' : ''}>${escHtml(f['label_' + lang] || f.label_en)}</option>`).join('')}
+            </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input type="checkbox" id="memvid-show-date-input" ${settings.show_date ? 'checked' : ''} style="width:auto;margin:0">
+            <label for="memvid-show-date-input" class="admin-checkbox-label">${t('admin_render.memvid_show_date_label')}</label>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="saveMemoryVideoSettings()">${t('admin_render.save_settings_btn')}</button>
+    `;
+}
+
+async function saveMemoryVideoSettings() {
+    try {
+        await API.updateMemoryVideoSettings({
+            enabled: $('memvid-enabled-input').checked,
+            style: $('memvid-style-input').value,
+            format: $('memvid-format-input').value,
+            show_date: $('memvid-show-date-input').checked,
+        });
+        toast(t('admin_render.memvid_saved_toast'), 'success');
     } catch (e) {
         toast(e.message, 'error');
     }

@@ -51,6 +51,13 @@ class User(Base):
     # column rather than an enum so a new style module can be registered
     # without a schema migration.
     memory_video_style = Column(String(30), default="ken_burns", nullable=False)
+    # Which key in video_style_service.FORMATS - same reasoning as
+    # memory_video_style above.
+    memory_video_format = Column(String(20), default="landscape", nullable=False)
+    # Burns a "Temmuz 2019"-style caption of the photo's date onto each
+    # clip - off by default since it changes every style's look, not just
+    # an additive extra.
+    memory_video_show_date = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")
