@@ -8,6 +8,7 @@ GPU with a few GB of headroom.
 """
 import concurrent.futures
 import threading
+import time
 from typing import Optional, List, Tuple
 import numpy as np
 
@@ -20,6 +21,12 @@ _preprocess = None
 _tokenizer = None
 _device = None
 _load_lock = threading.Lock()
+# time.monotonic() of the last actual embedding computation - read by
+# gpu_idle_service.py to decide whether this has been sitting idle long
+# enough to unload. Monotonic rather than wall-clock so a system clock
+# adjustment can't accidentally trigger (or indefinitely postpone) a
+# timeout.
+_last_used: Optional[float] = None
 
 CLIP_AVAILABLE = False
 try:
@@ -36,6 +43,40 @@ def is_clip_loaded() -> bool:
     the very first time either happens that this makes visible to callers
     instead of leaving it silent."""
     return _model is not None
+
+
+def idle_seconds() -> Optional[float]:
+    """How long since the last actual embedding computation, or None if
+    never loaded/already unloaded. Used by gpu_idle_service.py to decide
+    whether this has been idle long enough to unload - not "how long since
+    the model was loaded", which would unload a model still being used
+    continuously just because it happened to load a while ago."""
+    if _model is None or _last_used is None:
+        return None
+    return time.monotonic() - _last_used
+
+
+def unload_clip() -> bool:
+    """Frees the ~4-5GB model from GPU/system memory - the inverse of the
+    lazy-load above, for gpu_idle_service.py's idle-timeout unload. Safe to
+    call whether or not anything is actually loaded. Returns whether
+    anything was actually unloaded (so the caller can log it meaningfully
+    instead of a no-op looking identical to a real unload)."""
+    global _model, _preprocess, _tokenizer, _device, _last_used
+    with _load_lock:
+        if _model is None:
+            return False
+        was_device = _device
+        _model = None
+        _preprocess = None
+        _tokenizer = None
+        _device = None
+        _last_used = None
+        if was_device == "cuda":
+            import torch
+            torch.cuda.empty_cache()
+        success("ML", "CLIP model unloaded (idle timeout) - will reload on next use.")
+        return True
 
 
 def _load_clip():
@@ -108,11 +149,13 @@ def _load_clip():
 
 def compute_clip_embedding(image_path: str) -> Optional[np.ndarray]:
     """Compute a CLIP image embedding."""
+    global _last_used
     if not CLIP_AVAILABLE:
         return None
 
     try:
         _load_clip()
+        _last_used = time.monotonic()
         import torch
         from utils.image_utils import _open_any_image
 
@@ -135,11 +178,13 @@ def compute_clip_embedding(image_path: str) -> Optional[np.ndarray]:
 
 def compute_text_embedding(text: str) -> Optional[np.ndarray]:
     """Compute a CLIP text embedding for a query (any language)."""
+    global _last_used
     if not CLIP_AVAILABLE:
         return None
 
     try:
         _load_clip()
+        _last_used = time.monotonic()
         import torch
 
         tokens = _tokenizer([text]).to(_device)

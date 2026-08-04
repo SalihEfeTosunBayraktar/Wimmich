@@ -2,7 +2,7 @@
 import asyncio
 import shutil
 import sys
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -153,6 +153,47 @@ async def update_lan_access(
     await log_action(db, admin, "network.set_lan_access", detail={"enabled": req.enabled})
     await db.commit()
     return {"lan_access_enabled": config.LAN_ACCESS_ENABLED}
+
+
+@router.get("/gpu-idle-unload")
+async def get_gpu_idle_unload(admin: User = Depends(get_admin_user)):
+    """Current setting plus live status - whether each model is loaded
+    right now and how long it's been idle, so the admin panel can show
+    something more useful than just the on/off toggle."""
+    from services.clip_service import is_clip_loaded, idle_seconds as clip_idle_seconds
+    from services.face_service import is_face_loaded, idle_seconds as face_idle_seconds
+
+    return {
+        "enabled": config.GPU_IDLE_UNLOAD_ENABLED,
+        "minutes": config.GPU_IDLE_UNLOAD_MINUTES,
+        "clip_loaded": is_clip_loaded(),
+        "clip_idle_seconds": clip_idle_seconds(),
+        "face_loaded": is_face_loaded(),
+        "face_idle_seconds": face_idle_seconds(),
+    }
+
+
+class UpdateGpuIdleUnloadRequest(BaseModel):
+    enabled: bool
+    minutes: int = 15
+
+
+@router.put("/gpu-idle-unload")
+async def update_gpu_idle_unload(
+    req: UpdateGpuIdleUnloadRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Toggles whether the CLIP/face-recognition models get unloaded from
+    GPU/system memory after sitting idle for `minutes` - see
+    gpu_idle_service.py for the actual periodic check and its safeguards
+    against unloading a model that's genuinely in use."""
+    if req.minutes < 1:
+        raise HTTPException(status_code=400, detail="minutes must be at least 1")
+    config.set_gpu_idle_unload(req.enabled, req.minutes)
+    await log_action(db, admin, "ml.set_gpu_idle_unload", detail={"enabled": req.enabled, "minutes": req.minutes})
+    await db.commit()
+    return {"enabled": config.GPU_IDLE_UNLOAD_ENABLED, "minutes": config.GPU_IDLE_UNLOAD_MINUTES}
 
 
 @router.get("/users")

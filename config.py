@@ -147,6 +147,41 @@ def set_lan_access_enabled(enabled: bool) -> None:
     with open(env_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
+# Off by default - unloading the CLIP/face models frees several GB of
+# GPU (or system) memory during idle stretches, at the cost of a real
+# multi-second-to-a-minute reload delay the next time either is actually
+# needed. Worth it for a GPU shared with other work, or just to cut idle
+# power draw, but not something to force on everyone.
+GPU_IDLE_UNLOAD_ENABLED = os.getenv("WIMMICH_GPU_IDLE_UNLOAD_ENABLED", "false").lower() == "true"
+GPU_IDLE_UNLOAD_MINUTES = int(os.getenv("WIMMICH_GPU_IDLE_UNLOAD_MINUTES", "15"))
+
+
+def set_gpu_idle_unload(enabled: bool, minutes: int) -> None:
+    global GPU_IDLE_UNLOAD_ENABLED, GPU_IDLE_UNLOAD_MINUTES
+    GPU_IDLE_UNLOAD_ENABLED = enabled
+    GPU_IDLE_UNLOAD_MINUTES = minutes
+
+    env_path = BASE_DIR / ".env"
+    lines = []
+    found_enabled = found_minutes = False
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("WIMMICH_GPU_IDLE_UNLOAD_ENABLED="):
+                    lines.append(f"WIMMICH_GPU_IDLE_UNLOAD_ENABLED={'true' if enabled else 'false'}\n")
+                    found_enabled = True
+                elif line.strip().startswith("WIMMICH_GPU_IDLE_UNLOAD_MINUTES="):
+                    lines.append(f"WIMMICH_GPU_IDLE_UNLOAD_MINUTES={minutes}\n")
+                    found_minutes = True
+                else:
+                    lines.append(line)
+    if not found_enabled:
+        lines.append(f"\nWIMMICH_GPU_IDLE_UNLOAD_ENABLED={'true' if enabled else 'false'}\n")
+    if not found_minutes:
+        lines.append(f"WIMMICH_GPU_IDLE_UNLOAD_MINUTES={minutes}\n")
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
 # Storage warnings shown in the admin panel, checked independently: the
 # quota one only ever fires if an admin bothered to set
 # TOTAL_STORAGE_LIMIT_MB (most installs leave it at 0/unlimited), while the

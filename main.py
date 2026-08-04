@@ -107,6 +107,9 @@ async def lifespan(app: FastAPI):
     from services import memory_video_scheduler
     await memory_video_scheduler.start()
 
+    from services import gpu_idle_service
+    await gpu_idle_service.start()
+
     # Auto start tunnel if enabled
     if getattr(config, "AUTO_START_TUNNEL", False):
         try:
@@ -138,6 +141,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await job_worker.stop()
     await memory_video_scheduler.stop()
+    await gpu_idle_service.stop()
     info("BOOT", "Wimmich shutting down...")
 
 

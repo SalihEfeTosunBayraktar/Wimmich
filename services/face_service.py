@@ -8,7 +8,8 @@ the same torch/CUDA install already working for CLIP.
 """
 import concurrent.futures
 import threading
-from typing import List, Dict, Tuple
+import time
+from typing import List, Dict, Optional, Tuple
 import numpy as np
 
 import config
@@ -25,6 +26,40 @@ _mtcnn = None
 _resnet = None
 _device = None
 _load_lock = threading.Lock()
+# See clip_service.py's identical _last_used for why this is
+# time.monotonic() rather than wall-clock time.
+_last_used: Optional[float] = None
+
+
+def is_face_loaded() -> bool:
+    """See clip_service.is_clip_loaded's identical reasoning."""
+    return _mtcnn is not None and _resnet is not None
+
+
+def idle_seconds() -> Optional[float]:
+    """See clip_service.idle_seconds's identical reasoning."""
+    if _mtcnn is None or _last_used is None:
+        return None
+    return time.monotonic() - _last_used
+
+
+def unload_face_models() -> bool:
+    """See clip_service.unload_clip's identical reasoning - the inverse of
+    the lazy-load below, for gpu_idle_service.py's idle-timeout unload."""
+    global _mtcnn, _resnet, _device, _last_used
+    with _load_lock:
+        if _mtcnn is None:
+            return False
+        was_device = _device
+        _mtcnn = None
+        _resnet = None
+        _device = None
+        _last_used = None
+        if was_device == "cuda":
+            import torch
+            torch.cuda.empty_cache()
+        success("ML", "Face recognition models unloaded (idle timeout) - will reload on next use.")
+        return True
 
 
 def _load_face_models():
@@ -122,6 +157,8 @@ def detect_faces(image_path: str) -> List[Dict]:
     if FACE_AVAILABLE:
         try:
             _load_face_models()
+            global _last_used
+            _last_used = time.monotonic()
             import torch
             from facenet_pytorch import extract_face, fixed_image_standardization
 
