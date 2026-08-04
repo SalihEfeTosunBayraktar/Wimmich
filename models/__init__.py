@@ -12,6 +12,7 @@ from models.album import Album, AlbumAsset, AlbumUser
 from models.face import Person, Face
 from models.sharing import SharedLink
 from models.job import Job
+from models.memory_video import MemoryVideo
 from models.duplicate_ignore import IgnoredDuplicateGroup
 from models.category_correction import CategoryCorrection
 from models.similar_asset import SimilarAsset
@@ -34,6 +35,7 @@ __all__ = [
     "Face",
     "SharedLink",
     "Job",
+    "MemoryVideo",
     "IgnoredDuplicateGroup",
     "CategoryCorrection",
     "SimilarAsset",

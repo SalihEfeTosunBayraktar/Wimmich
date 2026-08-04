@@ -15,6 +15,7 @@ from services.job_handlers.similarity_handler import handle_job_similarity
 from services.job_handlers.repair_handler import handle_job_repair
 from services.job_handlers.export_handler import handle_job_export
 from services.job_handlers.ocr_handler import handle_job_ocr
+from services.job_handlers.memory_video_handler import handle_job_memory_video
 
 JOB_HANDLERS = {
     "THUMBNAIL": handle_job_thumbnail,
@@ -32,6 +33,7 @@ JOB_HANDLERS = {
     "REPAIR": handle_job_repair,
     "EXPORT": handle_job_export,
     "OCR": handle_job_ocr,
+    "MEMORY_VIDEO": handle_job_memory_video,
 }
 
 __all__ = ["JOB_HANDLERS", "handle_cleanup_trash"]

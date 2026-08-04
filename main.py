@@ -104,6 +104,9 @@ async def lifespan(app: FastAPI):
     await job_worker.start()
     success("BOOT", "Background job worker started")
 
+    from services import memory_video_scheduler
+    await memory_video_scheduler.start()
+
     # Auto start tunnel if enabled
     if getattr(config, "AUTO_START_TUNNEL", False):
         try:
@@ -134,6 +137,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     await job_worker.stop()
+    await memory_video_scheduler.stop()
     info("BOOT", "Wimmich shutting down...")
 
 
@@ -271,6 +275,7 @@ from routers.import_router import router as import_router
 from routers.api_keys_router import router as api_keys_router
 from routers.admin_audit_router import router as admin_audit_router
 from routers.tag_router import router as tag_router
+from routers.memory_video_router import router as memory_video_router
 
 app.include_router(auth_router)
 app.include_router(api_keys_router)
@@ -296,6 +301,7 @@ app.include_router(admin_backup_router)
 app.include_router(tunnel_router)
 app.include_router(tailscale_router)
 app.include_router(import_router)
+app.include_router(memory_video_router)
 
 # Static files - "Cache-Control: no-cache" forces every request (browser
 # *and* any CDN edge cache in front of it, e.g. the Cloudflare Tunnel) to

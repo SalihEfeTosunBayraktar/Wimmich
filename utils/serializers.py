@@ -2,7 +2,7 @@
 import math
 from typing import Optional
 
-from models import Asset, Album
+from models import Asset, Album, MemoryVideo
 
 
 def _clean_coord(value: Optional[float]) -> Optional[float]:
@@ -44,6 +44,22 @@ def asset_to_dict(asset: Asset) -> dict:
         "thumb_medium": f"/api/assets/{asset.id}/thumbnail?size=medium" if asset.thumb_medium_path else None,
         "thumb_large": f"/api/assets/{asset.id}/thumbnail?size=large" if asset.thumb_large_path else None,
         "file_url": f"/api/assets/{asset.id}/file",
+    }
+
+
+def memory_video_to_dict(video: MemoryVideo) -> dict:
+    return {
+        "id": video.id,
+        "kind": video.kind,
+        "style": video.style,
+        "title": video.title,
+        "status": video.status,
+        "error_message": video.error_message,
+        "duration_seconds": video.duration_seconds,
+        "asset_count": len(video.asset_ids),
+        "created_at": video.created_at.isoformat() if video.created_at else None,
+        "video_url": f"/api/memory-videos/{video.id}/file" if video.status == "READY" else None,
+        "thumb_url": f"/api/memory-videos/{video.id}/thumbnail" if video.thumb_path else None,
     }
 
 

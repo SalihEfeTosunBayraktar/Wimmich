@@ -182,3 +182,18 @@ async def init_db():
             await conn.execute(text("ALTER TABLE api_keys ADD COLUMN expires_at DATETIME"))
         except Exception:
             pass
+
+        # Automatic column migration for auto-generated memory videos - see
+        # models/user.py's memory_video_enabled/memory_video_style. The
+        # memory_videos table itself needs no migration (new table, already
+        # covered by create_all above).
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN memory_video_enabled BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text(
+                "ALTER TABLE users ADD COLUMN memory_video_style VARCHAR(30) DEFAULT 'ken_burns'"
+            ))
+        except Exception:
+            pass

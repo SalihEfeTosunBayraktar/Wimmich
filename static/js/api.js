@@ -178,6 +178,14 @@ const API = {
     getArchived() { return this.request('/api/assets/archived'); },
     getStatistics() { return this.request('/api/assets/statistics'); },
     getMemories() { return this.request('/api/assets/memories/today'); },
+
+    // Auto-generated memory videos
+    getMemoryVideos() { return this.request('/api/memory-videos'); },
+    getMemoryVideoStyles() { return this.request('/api/memory-videos/styles'); },
+    getMemoryVideoSettings() { return this.request('/api/memory-videos/settings'); },
+    updateMemoryVideoSettings(data) { return this.request('/api/memory-videos/settings', { method: 'PUT', body: data }); },
+    generateMemoryVideo(kind) { return this.request('/api/memory-videos/generate', { method: 'POST', body: { kind } }); },
+    deleteMemoryVideo(id) { return this.request(`/api/memory-videos/${id}`, { method: 'DELETE' }); },
     queuePendingProcessing() { return this.request('/api/assets/process-pending', { method: 'POST' }); },
     getSmartCategories() { return this.request('/api/assets/smart-categories'); },
     correctCategory(assetId, category) {

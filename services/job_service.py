@@ -92,6 +92,24 @@ async def create_job(
                     raise JobAlreadyExistsException("Zaten devam eden bir veri dışa aktarma isteğiniz var.")
             except (json.JSONDecodeError, TypeError):
                 continue
+    elif job_type == "MEMORY_VIDEO" and data and data.get("user_id"):
+        # Same shape as IMPORT/EXPORT above: asset_id is always None here
+        # (a memory video covers a whole photo group, not one asset), so
+        # the generic check below would treat any two different users' (or
+        # even the same user's DAILY vs WEEKLY) requests as duplicates of
+        # each other. Scoped to this (user_id, kind) pair instead.
+        existing_memvid = await db.execute(
+            select(Job.data_json).where(
+                and_(Job.job_type == "MEMORY_VIDEO", or_(Job.status == "PENDING", Job.status == "RUNNING"))
+            )
+        )
+        for (existing_json,) in existing_memvid:
+            try:
+                existing_data = json.loads(existing_json) if existing_json else {}
+                if existing_data.get("user_id") == data["user_id"] and existing_data.get("kind") == data.get("kind"):
+                    raise JobAlreadyExistsException("Zaten devam eden bir anı videosu oluşturma işlemi var.")
+            except (json.JSONDecodeError, TypeError):
+                continue
     else:
         existing = await db.execute(
             select(Job.id).where(

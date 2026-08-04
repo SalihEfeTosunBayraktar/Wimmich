@@ -43,6 +43,15 @@ class User(Base):
     # shared to them is still meant to work normally.
     is_guest = Column(Boolean, default=False, nullable=False)
 
+    # Off by default - an auto-generated video is a much bigger surprise
+    # to wake up to than a new photo group, and it costs real ffmpeg/CPU
+    # time every day, so this stays opt-in same as backup and app-lock.
+    memory_video_enabled = Column(Boolean, default=False, nullable=False)
+    # Which key in video_style_service.VIDEO_STYLES to use - a plain string
+    # column rather than an enum so a new style module can be registered
+    # without a schema migration.
+    memory_video_style = Column(String(30), default="ken_burns", nullable=False)
+
     # Relationships
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")
     albums = relationship("Album", back_populates="user", cascade="all, delete-orphan")

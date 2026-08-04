@@ -21,11 +21,16 @@ AVATAR_DIR = DATA_DIR / "avatars"
 # library, so it shouldn't move around if the data dir is later repointed.
 EXPORT_DIR = BASE_DIR / "data" / "exports"
 
+# Auto-generated "on this day"/weekly slideshow videos - same reasoning as
+# EXPORT_DIR: a generated artifact, not part of the movable photo library
+# itself, so it shouldn't relocate if the data dir is later repointed.
+MEMORY_VIDEO_DIR = BASE_DIR / "data" / "memory_videos"
+
 # Local DB directory (independent of movable data directory to prevent db locks)
 DB_DIR = BASE_DIR / "data"
 
 # Create directories
-for d in [DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, AVATAR_DIR, EXPORT_DIR, DB_DIR]:
+for d in [DATA_DIR, UPLOAD_DIR, THUMB_DIR, ENCODED_DIR, ML_DIR, AVATAR_DIR, EXPORT_DIR, MEMORY_VIDEO_DIR, DB_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 
