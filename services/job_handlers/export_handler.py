@@ -1,5 +1,6 @@
 """EXPORT job handler - zips one user's own non-trashed original files
 plus a JSON metadata manifest (GDPR-style "download my data")."""
+import asyncio
 import json
 import zipfile
 from datetime import datetime
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import config
 from models import Asset, AlbumAsset, Album, AssetTag, Tag, Job
+from services.backup_service import add_file_to_archive
 from services.job_core import check_job_cancelled
 from utils.path_utils import resolve_data_path
 from utils.log import success
@@ -57,7 +59,13 @@ async def handle_job_export(db: AsyncSession, job: Job):
             included = bool(resolved_path and resolved_path.exists())
             if included:
                 arcname = f"files/{asset.id}_{asset.original_file_name}"
-                zf.write(str(resolved_path), arcname)
+                # Off the event loop - zf.write() reads the full original
+                # file (possibly a multi-GB video) and DEFLATE-compresses
+                # it synchronously; unwrapped, this blocked every other
+                # request on the server for however long that took, once
+                # per asset in the export. backup_handler.py already does
+                # this same wrapping for the identical operation.
+                await asyncio.to_thread(add_file_to_archive, zf, str(resolved_path), arcname)
             manifest.append({
                 "id": asset.id,
                 "file_name": asset.original_file_name,

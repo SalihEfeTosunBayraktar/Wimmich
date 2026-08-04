@@ -1,4 +1,5 @@
 """Periodic trash cleanup - not a queued job type, called directly by the worker loop."""
+import asyncio
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,7 +54,11 @@ async def handle_cleanup_trash(db: AsyncSession):
             # where the file is already gone anyway). The retention period
             # is exactly the grace window meant to absorb that: restoring
             # from trash before it expires is the only undo.
-            delete_asset_files(asset, delete_reference_source=True)
+            # Off the event loop - this runs periodically, unprompted by
+            # any user action, so an unwrapped call here would freeze the
+            # whole server (every concurrent request) in the background
+            # for however long a large expired-trash batch takes to unlink.
+            await asyncio.to_thread(delete_asset_files, asset, delete_reference_source=True)
             await db.delete(asset)
 
         total_expired += len(expired)

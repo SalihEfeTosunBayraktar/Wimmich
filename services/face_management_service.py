@@ -26,11 +26,14 @@ async def merge_people(db: AsyncSession, user: User, source_id: str, target_id: 
     source_person = await _get_person_or_404(db, source_id, user.id)
     target_person = await _get_person_or_404(db, target_id, user.id)
 
-    faces = list((await db.execute(
-        select(Face).where(Face.person_id == source_id)
-    )).scalars().all())
-    for face in faces:
-        face.person_id = target_id
+    # Single bulk UPDATE instead of loading every Face row into the ORM
+    # session just to flip one column each - a prolific person with
+    # thousands of faces used to mean thousands of dirty rows flushed in
+    # one transaction for what's fundamentally a one-statement change.
+    from sqlalchemy import update
+    await db.execute(
+        update(Face).where(Face.person_id == source_id).values(person_id=target_id)
+    )
 
     await db.flush()
     # Recompute from actual Face rows rather than adding the two cached

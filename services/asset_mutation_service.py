@@ -1,4 +1,5 @@
 """Asset mutations: upload, metadata updates, favorite/archive/trash, bulk actions."""
+import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import HTTPException
@@ -66,8 +67,40 @@ async def upload_files(
     results = []
     errors = []
 
+    # Batch dedup check using the client-supplied checksums (computed
+    # before upload - see api.js's _computeFileChecksum), one query for
+    # the whole batch instead of one per file after each is processed.
+    # Lets an already-uploaded file (the common case for a repeat backup
+    # sync, where most files are re-checked duplicates every run) skip
+    # process_upload entirely - not just the duplicate query, but the
+    # thumbnail/EXIF work that was previously done first and only THEN
+    # discovered to be wasted. Files with no client checksum (older
+    # clients, or the check silently unavailable - see
+    # _computeFileChecksum's own comment) still get the per-file fallback
+    # check below using process_upload's own computed checksum.
+    known_checksums = [c for c in (checksums or []) if c]
+    existing_by_checksum = {}
+    if known_checksums:
+        dup_stmt = select(Asset.checksum, Asset.id).where(
+            and_(
+                Asset.user_id == user.id,
+                Asset.checksum.in_(known_checksums),
+                Asset.is_trashed == False,
+            )
+        )
+        existing_by_checksum = dict((await db.execute(dup_stmt)).all())
+
     for i, file in enumerate(files):
         try:
+            client_checksum = checksums[i] if checksums and i < len(checksums) else None
+            if client_checksum and client_checksum in existing_by_checksum:
+                results.append({
+                    "file_name": file.filename,
+                    "status": "duplicate",
+                    "existing_id": existing_by_checksum[client_checksum],
+                })
+                continue
+
             file_data = await _read_bounded(file)
             if file_data is None:
                 errors.append({
@@ -299,7 +332,7 @@ async def restore_asset(db: AsyncSession, asset_id: str, user: User) -> dict:
 
 async def delete_permanently(db: AsyncSession, asset_id: str, user: User) -> dict:
     asset = await get_asset_or_404(db, asset_id, user.id)
-    delete_asset_files(asset, delete_reference_source=True)
+    await asyncio.to_thread(delete_asset_files, asset, delete_reference_source=True)
     await db.delete(asset)
     await db.commit()
     return {"message": "Permanently deleted"}
@@ -328,7 +361,10 @@ async def bulk_action(db: AsyncSession, asset_ids: List[str], action: str, user:
             asset.is_trashed = False
             asset.trashed_at = None
         elif action == "delete_permanent":
-            delete_asset_files(asset, delete_reference_source=True)
+            # Off the event loop - see delete_permanently's identical
+            # wrapping above; a bulk permanent-delete over many assets
+            # would otherwise freeze every other request for the whole loop.
+            await asyncio.to_thread(delete_asset_files, asset, delete_reference_source=True)
             await db.delete(asset)
         count += 1
 

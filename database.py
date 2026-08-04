@@ -197,3 +197,21 @@ async def init_db():
             ))
         except Exception:
             pass
+
+        # create_all() only creates indexes for tables it's creating fresh -
+        # an existing assets table never gets a NEW composite index added
+        # to it that way, so these need their own explicit migration. See
+        # models/asset.py's __table_args__ for why these two exist.
+        try:
+            await conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_assets_user_trashed_archived "
+                "ON assets (user_id, is_trashed, is_archived)"
+            ))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_assets_user_checksum ON assets (user_id, checksum)"
+            ))
+        except Exception:
+            pass

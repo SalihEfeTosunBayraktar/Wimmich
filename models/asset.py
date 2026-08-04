@@ -106,6 +106,18 @@ class Asset(Base):
         Index("ix_assets_user_taken", "user_id", "taken_at"),
         Index("ix_assets_user_created", "user_id", "created_at"),
         Index("ix_assets_location", "latitude", "longitude"),
+        # Matches the WHERE clause every gallery/timeline page load runs
+        # (get_timeline_data: user_id + is_trashed + is_archived, before
+        # the file_type/favorites_only extras) - the existing single-column
+        # indexes on is_trashed/is_archived can't be combined with the
+        # user_id index for one lookup, so SQLite had to pick one and scan/
+        # filter the rest. This composite lets it filter the whole
+        # predicate via one index seek.
+        Index("ix_assets_user_trashed_archived", "user_id", "is_trashed", "is_archived"),
+        # Matches upload-time and duplicate-scan checksum lookups
+        # (asset_mutation_service.py's dedup check, duplicate_service.py) -
+        # both always scope by user_id first.
+        Index("ix_assets_user_checksum", "user_id", "checksum"),
     )
 
     @property

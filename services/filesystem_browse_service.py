@@ -1,4 +1,5 @@
 """Local filesystem browsing/scanning for the folder-import feature."""
+import asyncio
 import os
 from pathlib import Path
 from typing import Optional
@@ -191,7 +192,7 @@ async def remove_reference_root(db: AsyncSession, user_id: str, path: str) -> in
     )
     assets = list(result.scalars().all())
     for asset in assets:
-        delete_asset_files(asset)
+        await asyncio.to_thread(delete_asset_files, asset)
         await db.delete(asset)
     await db.commit()
     return len(assets)

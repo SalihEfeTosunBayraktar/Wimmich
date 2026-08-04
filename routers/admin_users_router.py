@@ -1,4 +1,5 @@
 """Admin Users Router - create/delete/quota/approval actions on user accounts."""
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -95,7 +96,11 @@ async def delete_user(
     from services.media_service import delete_asset_files
     assets_result = await db.execute(select(Asset).where(Asset.user_id == user_id))
     for asset in assets_result.scalars().all():
-        delete_asset_files(asset, delete_reference_source=True)
+        # Off the event loop - unlinking thumbnails/encoded video/original
+        # per asset is several blocking syscalls each; unwrapped, deleting
+        # a user with a large library froze every other request on the
+        # server for the whole loop.
+        await asyncio.to_thread(delete_asset_files, asset, delete_reference_source=True)
 
     deleted_email = user.email
     await db.delete(user)

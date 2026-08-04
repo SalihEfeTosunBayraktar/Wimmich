@@ -68,6 +68,16 @@ async def handle_job_categorize(db: AsyncSession, job: Job):
 
     info("JOB", f"Categorizing {total} asset(s)...")
 
+    # Off the event loop, and done once up front rather than left to the
+    # first classify_embedding() call inside the loop below: computing
+    # every category's anchor embedding is ~17 real CLIP text-encoder
+    # forward passes (a few seconds of CPU), and it's cached process-wide
+    # after this - but unwrapped, whichever asset happened to trigger it
+    # would freeze the whole server for that cost, and every request
+    # since this handler auto-triggers after every CLIP batch.
+    from services.smart_category_service import load_category_anchors
+    await asyncio.to_thread(load_category_anchors)
+
     # Corrections are per-user, so this can't load them once for the whole
     # batch - a job with no scoped_user_id processes every user's assets
     # together, and always defaulting to {} (as before) meant the routine

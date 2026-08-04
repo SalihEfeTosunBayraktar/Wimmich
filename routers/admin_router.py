@@ -103,7 +103,14 @@ async def get_server_stats(
             "failed": session_stats["failed"],
         },
         "ml": get_ml_status(),
-        "ffmpeg_available": is_ffmpeg_available(),
+        # Off the event loop: is_ffmpeg_available() can shell out to
+        # `ffmpeg -version` and, on a missing/misconfigured install, all
+        # the way to a network download attempt (ffmpeg_setup.py) - called
+        # unwrapped here, this admin dashboard endpoint (routinely polled)
+        # could freeze the ENTIRE server, every concurrent request, for as
+        # long as that takes. main.py's own startup check already does
+        # this same wrapping for the identical reason.
+        "ffmpeg_available": await asyncio.to_thread(is_ffmpeg_available),
         "storage_warning": _get_storage_warning(total_size),
     }
 

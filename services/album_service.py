@@ -70,7 +70,12 @@ async def get_album_for_user(
 
 
 async def list_albums_for_user(db: AsyncSession, user: User) -> dict:
-    """List all albums for current user (owned + shared)."""
+    """List all albums for current user (owned + shared).
+
+    Batches the per-album asset-count and fallback-cover lookups into two
+    queries total instead of up to two per album (a 50-album page used to
+    mean 100+ round-trips) - confirmed directly as the actual N+1 on this
+    page load."""
     stmt = select(Album).where(Album.user_id == user.id).order_by(Album.updated_at.desc())
     owned = list((await db.execute(stmt)).scalars().all())
 
@@ -84,24 +89,40 @@ async def list_albums_for_user(db: AsyncSession, user: User) -> dict:
     shared_can_edit = {album.id: can_edit for album, can_edit in shared_rows}
     shared = [album for album, _ in shared_rows]
 
-    albums = []
-    for album in owned + shared:
-        count = (await db.execute(
-            select(func.count(AlbumAsset.id)).where(AlbumAsset.album_id == album.id)
-        )).scalar()
+    all_albums = owned + shared
+    album_ids = [a.id for a in all_albums]
 
-        cover_thumb = None
-        cover_id = album.cover_asset_id
-        if not cover_id:
-            first = await db.execute(
-                select(AlbumAsset.asset_id).where(AlbumAsset.album_id == album.id).limit(1)
+    counts_by_album = {}
+    first_asset_by_album = {}
+    if album_ids:
+        count_stmt = (
+            select(AlbumAsset.album_id, func.count(AlbumAsset.id))
+            .where(AlbumAsset.album_id.in_(album_ids))
+            .group_by(AlbumAsset.album_id)
+        )
+        counts_by_album = dict((await db.execute(count_stmt)).all())
+
+        # Fallback cover only needed for albums with no explicit
+        # cover_asset_id - "first added" per album via a window function,
+        # one query for every album in the page instead of one per album.
+        needs_cover = [a.id for a in all_albums if not a.cover_asset_id]
+        if needs_cover:
+            rn = func.row_number().over(
+                partition_by=AlbumAsset.album_id, order_by=AlbumAsset.added_at.asc()
+            ).label("rn")
+            subq = (
+                select(AlbumAsset.album_id, AlbumAsset.asset_id, rn)
+                .where(AlbumAsset.album_id.in_(needs_cover))
+                .subquery()
             )
-            first_row = first.first()
-            if first_row:
-                cover_id = first_row[0]
+            first_stmt = select(subq.c.album_id, subq.c.asset_id).where(subq.c.rn == 1)
+            first_asset_by_album = dict((await db.execute(first_stmt)).all())
 
-        if cover_id:
-            cover_thumb = f"/api/assets/{cover_id}/thumbnail?size=medium"
+    albums = []
+    for album in all_albums:
+        count = counts_by_album.get(album.id, 0)
+        cover_id = album.cover_asset_id or first_asset_by_album.get(album.id)
+        cover_thumb = f"/api/assets/{cover_id}/thumbnail?size=medium" if cover_id else None
 
         albums.append(album_to_dict(
             album, count, cover_thumb,
@@ -299,14 +320,20 @@ async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, ass
     # third party and link it into the album. See _owned_asset_ids.
     owned_ids = await _owned_asset_ids(db, user_id, asset_ids)
 
-    added = 0
-    for aid in owned_ids:
-        existing = await db.execute(
-            select(AlbumAsset).where(
-                and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id == aid)
+    # One existence check for the whole batch instead of one per asset -
+    # adding 100 photos to an album used to mean 100 extra round-trips.
+    existing_ids = set()
+    if owned_ids:
+        existing_result = await db.execute(
+            select(AlbumAsset.asset_id).where(
+                and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id.in_(owned_ids))
             )
         )
-        if not existing.scalar_one_or_none():
+        existing_ids = set(existing_result.scalars().all())
+
+    added = 0
+    for aid in owned_ids:
+        if aid not in existing_ids:
             db.add(AlbumAsset(album_id=album_id, asset_id=aid))
             added += 1
 
@@ -320,15 +347,13 @@ async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, ass
 async def remove_assets_from_album(db: AsyncSession, album_id: str, user_id: str, asset_ids: List[str]) -> dict:
     await get_album_for_user(db, album_id, user_id, require_edit=True)
 
-    for aid in asset_ids:
-        result = await db.execute(
-            select(AlbumAsset).where(
-                and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id == aid)
-            )
+    # Single bulk DELETE instead of one SELECT+DELETE pair per asset.
+    from sqlalchemy import delete
+    await db.execute(
+        delete(AlbumAsset).where(
+            and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id.in_(asset_ids))
         )
-        link = result.scalar_one_or_none()
-        if link:
-            await db.delete(link)
+    )
 
     await db.commit()
     return {"message": "Assets removed from album"}

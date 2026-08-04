@@ -67,8 +67,15 @@ CORRECTION_VETO_THRESHOLD = 0.9
 _category_anchors: Optional[dict] = None
 
 
-def _load_category_anchors() -> dict:
-    """Compute (once per process) the averaged text embedding for each category."""
+def load_category_anchors() -> dict:
+    """Compute (once per process) the averaged text embedding for each
+    category. Public (no leading underscore) specifically so
+    categorize_handler.py can pre-warm this off the event loop via
+    asyncio.to_thread before its per-asset loop starts - the ~17 CLIP
+    text-encoder forward passes this does on the first call are real CPU
+    work (seconds), and classify_embedding() below calls this on every
+    single asset with no way to tell "already cached" from "about to
+    compute" from outside."""
     global _category_anchors
     if _category_anchors is not None:
         return _category_anchors
@@ -98,7 +105,7 @@ def classify_embedding(
     load_correction_embeddings) lets prior "wrong category" feedback veto a
     category that would otherwise match - falls through to the next-best
     category instead of forcing a mismatch."""
-    anchors = _load_category_anchors()
+    anchors = load_category_anchors()
     if not anchors:
         return None
 

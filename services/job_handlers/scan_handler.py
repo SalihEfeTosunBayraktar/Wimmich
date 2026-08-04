@@ -42,7 +42,11 @@ async def handle_job_scan(db: AsyncSession, job: Job):
         if result.first():
             continue
 
-        if os.path.getsize(file_path) == 0:
+        # Off the event loop - same reasoning as the read_file/get_mtime
+        # calls just below, which already are: on a slow network mount
+        # (the realistic case for a large external library scan) even a
+        # stat() call can block for real time, once per file in this loop.
+        if await asyncio.to_thread(os.path.getsize, file_path) == 0:
             # Empty source file - would just create an asset with no actual
             # content, failing CLIP/face processing on every retry.
             warn("JOB", f"Scan skipped {file_path}: empty (0-byte) source file")
