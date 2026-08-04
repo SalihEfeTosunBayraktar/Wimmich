@@ -18,22 +18,31 @@ async def search_metadata(
     is_favorite: Optional[bool] = None,
     limit: int = 100,
     offset: int = 0,
+    ocr_only: bool = False,
 ) -> List[Asset]:
-    """Search assets by metadata (filename, date, type)."""
+    """Search assets by metadata (filename, date, type) - or, with
+    ocr_only, by ONLY the text OCR found inside screenshots/document
+    photos (utils/ocr_setup.py's OCR job), skipping filename/city/country
+    entirely. Useful once a library has enough screenshots that a filename
+    match on something like a common city name buries the screenshot
+    someone was actually looking for."""
     conditions = [
         Asset.user_id == user_id,
         Asset.is_trashed == False,
     ]
 
     if query:
-        conditions.append(
-            or_(
-                Asset.original_file_name.ilike(f"%{query}%"),
-                Asset.city.ilike(f"%{query}%"),
-                Asset.country.ilike(f"%{query}%"),
-                Asset.ocr_text.ilike(f"%{query}%"),
+        if ocr_only:
+            conditions.append(Asset.ocr_text.ilike(f"%{query}%"))
+        else:
+            conditions.append(
+                or_(
+                    Asset.original_file_name.ilike(f"%{query}%"),
+                    Asset.city.ilike(f"%{query}%"),
+                    Asset.country.ilike(f"%{query}%"),
+                    Asset.ocr_text.ilike(f"%{query}%"),
+                )
             )
-        )
 
     if file_type:
         conditions.append(Asset.file_type == file_type.upper())

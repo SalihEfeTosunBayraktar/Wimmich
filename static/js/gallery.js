@@ -33,6 +33,7 @@ registerTranslations({
         'gallery.group_year': 'By Year',
         'gallery.group_type': 'By Type',
         'gallery.search_placeholder': 'Search photos... (e.g. beach, sunset, dog)',
+        'gallery.ocr_only_toggle_title': 'Search only text found in screenshots/documents (OCR)',
         'gallery.sort_title': 'Sort',
         'gallery.group_title': 'Group',
         'gallery.no_results': 'No results found',
@@ -77,6 +78,7 @@ registerTranslations({
         'gallery.group_year': 'Yıla Göre',
         'gallery.group_type': 'Türe Göre',
         'gallery.search_placeholder': 'Fotoğraf ara... (ör: plaj, gün batımı, köpek)',
+        'gallery.ocr_only_toggle_title': 'Sadece ekran görüntüsü/belgelerdeki metni ara (OCR)',
         'gallery.sort_title': 'Sırala',
         'gallery.group_title': 'Grupla',
         'gallery.no_results': 'Sonuç bulunamadı',
@@ -121,6 +123,7 @@ registerTranslations({
         'gallery.group_year': 'Par année',
         'gallery.group_type': 'Par type',
         'gallery.search_placeholder': 'Rechercher des photos... (ex : plage, coucher de soleil, chien)',
+        'gallery.ocr_only_toggle_title': "Rechercher uniquement le texte trouvé dans les captures d'écran/documents (OCR)",
         'gallery.sort_title': 'Trier',
         'gallery.group_title': 'Grouper',
         'gallery.no_results': 'Aucun résultat trouvé',
@@ -165,6 +168,7 @@ registerTranslations({
         'gallery.group_year': 'Nach Jahr',
         'gallery.group_type': 'Nach Typ',
         'gallery.search_placeholder': 'Fotos suchen... (z. B. Strand, Sonnenuntergang, Hund)',
+        'gallery.ocr_only_toggle_title': 'Nur Text in Screenshots/Dokumenten durchsuchen (OCR)',
         'gallery.sort_title': 'Sortieren',
         'gallery.group_title': 'Gruppieren',
         'gallery.no_results': 'Keine Ergebnisse gefunden',
@@ -323,6 +327,7 @@ async function renderGallery() {
                 <div class="search-input-wrapper">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <input type="search" id="gallery-search-input" placeholder="${t('gallery.search_placeholder')}" value="${escHtml(g.selectedLabel || g.searchQuery)}">
+                    <button type="button" id="gallery-search-ocr-toggle" class="btn-icon search-ocr-toggle ${g.searchMode === 'ocr' ? 'active' : ''}" title="${t('gallery.ocr_only_toggle_title')}">${icon('file', 16)}</button>
                     <div id="gallery-search-suggestions" class="search-suggestions hidden"></div>
                 </div>
                 <div id="gallery-controls-row" class="gallery-controls-mini" style="${g.searchQuery ? 'display:none' : ''}">
@@ -351,6 +356,12 @@ async function renderGallery() {
     }
     $('gallery-sort').onchange = (e) => { g.sortBy = e.target.value; renderGallery(); };
     $('gallery-group').onchange = (e) => { g.groupBy = e.target.value; renderGallery(); };
+    $('gallery-search-ocr-toggle').onclick = (e) => {
+        g.searchMode = g.searchMode === 'ocr' ? 'smart' : 'ocr';
+        e.currentTarget.classList.toggle('active', g.searchMode === 'ocr');
+        e.currentTarget.title = t('gallery.ocr_only_toggle_title');
+        if (g.searchQuery) _runGallerySearch(g.searchQuery);
+    };
     $('gallery-jump-date').onchange = (e) => {
         if (!e.target.value) return;
         const [year, month] = e.target.value.split('-').map(Number);
@@ -535,19 +546,26 @@ async function _runGallerySearch(query) {
     // regardless of which one's network response happens to land first.
     const myRequestId = (g.requestId = (g.requestId || 0) + 1);
     const container = $('gallery-grid-container');
-    // The CLIP model is loaded lazily on first use (a real, multi-second
-    // multi-GB load onto the GPU) - without this, someone's very first
-    // search just sat on a blank grid with no clue why it was slower than
-    // every search after it.
-    const clipStatus = await _getClipStatus();
-    if (myRequestId !== g.requestId) return;
+    const ocrOnly = g.searchMode === 'ocr';
+
+    // OCR-only search is a plain indexed text match, not CLIP - no model
+    // to warm up, so skip the whole cold-start dance below for it.
+    let clipStatus = { clip_available: false, clip_loaded: true };
+    if (!ocrOnly) {
+        // The CLIP model is loaded lazily on first use (a real, multi-second
+        // multi-GB load onto the GPU) - without this, someone's very first
+        // search just sat on a blank grid with no clue why it was slower than
+        // every search after it.
+        clipStatus = await _getClipStatus();
+        if (myRequestId !== g.requestId) return;
+    }
     container.innerHTML = (clipStatus.clip_available && !clipStatus.clip_loaded)
         ? `<div class="skeleton" style="height:200px;border-radius:12px;margin-bottom:10px"></div>
            <p class="text-muted" style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px">${icon('brain', 14)} ${t('gallery.clip_warming_hint')}</p>`
         : `<div class="skeleton" style="height:200px;border-radius:12px"></div>`;
 
     try {
-        const data = await API.search(query, 'smart');
+        const data = await API.search(query, ocrOnly ? 'ocr' : 'smart');
         if (myRequestId !== g.requestId) return;
         if (data.clip_was_cold) {
             _clipStatusCache = { clip_available: true, clip_loaded: true };

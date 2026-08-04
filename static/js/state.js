@@ -10,6 +10,12 @@ const state = {
         groups: [], page: 1, totalPages: 0, loading: false,
         sortBy: 'date_desc', groupBy: 'none', filterBy: 'all',
         searchQuery: '', selectedLabel: '',
+        // 'smart' (CLIP semantic search, default) or 'ocr' (text found
+        // inside screenshots/document photos only - see search_service.py's
+        // ocr_only). Not persisted across page loads - each visit starts
+        // back on smart search, matching how sortBy/groupBy/filterBy also
+        // reset rather than remembering a stale mode from a previous session.
+        searchMode: 'smart',
     },
     selectedAssets: new Set(),
     viewerAsset: null,

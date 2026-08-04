@@ -27,12 +27,28 @@
 .search-input-wrapper input {
     width: 100%;
     padding-left: 42px;
-    padding-right: 14px;
+    padding-right: 42px;
     height: 48px;
     font-size: 1rem;
     border-radius: var(--radius-lg);
     background: var(--bg-tertiary);
     box-sizing: border-box;
+}
+
+/* OCR-only search mode toggle - dimmed until switched on, matching the
+   plain-icon "not the current mode" convention used elsewhere (e.g.
+   .photo-cover-btn), then tinted with the accent color once active so
+   it's obvious search results are currently scoped to OCR text only. */
+.search-ocr-toggle {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+.search-ocr-toggle.active {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
 /* Sort/filter/group as compact selects next to the search box instead of

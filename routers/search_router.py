@@ -25,7 +25,7 @@ async def search_status(user: User = Depends(get_current_user)):
 @router.get("")
 async def search(
     q: str = Query(..., min_length=1),
-    search_type: str = Query("smart", pattern="^(smart|metadata)$"),
+    search_type: str = Query("smart", pattern="^(smart|metadata|ocr)$"),
     file_type: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
@@ -57,9 +57,10 @@ async def search(
             is_favorite=is_favorite,
             limit=limit,
             offset=offset,
+            ocr_only=(search_type == "ocr"),
         )
         return {
             "results": [asset_to_dict(a) for a in assets],
             "total": len(assets),
-            "search_type": "metadata",
+            "search_type": search_type,
         }
