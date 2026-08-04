@@ -146,9 +146,10 @@ def _share_rate_keys(request: Request, key: str) -> list:
     honor CF-Connecting-IP/X-Forwarded-For when the request actually came
     through the local reverse proxy, otherwise anyone hitting this server
     directly could set those headers themselves to dodge the limit."""
+    from utils.network_utils import is_loopback_ip
     socket_ip = request.client.host if request.client else None
     ip = None
-    if socket_ip in ("127.0.0.1", "::1"):
+    if is_loopback_ip(socket_ip):
         ip = request.headers.get("cf-connecting-ip")
         if not ip:
             xff = request.headers.get("x-forwarded-for")

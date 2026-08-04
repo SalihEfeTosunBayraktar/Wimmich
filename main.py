@@ -193,8 +193,9 @@ async def lan_access_gate_middleware(request, call_next):
     if config.LAN_ACCESS_ENABLED:
         return await call_next(request)
 
-    client_host = request.client.host if request.client else ""
-    if client_host in ("127.0.0.1", "::1") or client_host.startswith("::ffff:127."):
+    from utils.network_utils import is_loopback_ip
+    client_host = request.client.host if request.client else None
+    if is_loopback_ip(client_host):
         return await call_next(request)
 
     return JSONResponse(
@@ -375,13 +376,9 @@ async def local_network_info(request: Request):
     directly into their browser) arrives as their own real IP, not
     loopback, and never carries that header at all.
     """
-    socket_ip = request.client.host if request.client else ""
-    # Same three loopback forms lan_access_gate_middleware already checks
-    # above - ::ffff:127.x is the IPv4-mapped-IPv6 form some setups report
-    # instead of the plain "127.0.0.1"/"::1" this originally only checked,
-    # which meant this endpoint silently never fired on those.
-    is_loopback = socket_ip in ("127.0.0.1", "::1") or socket_ip.startswith("::ffff:127.")
-    via_tunnel = is_loopback and bool(request.headers.get("cf-connecting-ip"))
+    from utils.network_utils import is_loopback_ip
+    socket_ip = request.client.host if request.client else None
+    via_tunnel = is_loopback_ip(socket_ip) and bool(request.headers.get("cf-connecting-ip"))
     if not via_tunnel:
         return {"show_banner": False}
 

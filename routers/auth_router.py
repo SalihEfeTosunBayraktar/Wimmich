@@ -68,9 +68,10 @@ def _login_rate_keys(request: Request, email: str) -> list:
     reach this server directly (LAN, or a misconfigured/absent proxy) could
     otherwise set CF-Connecting-IP themselves and pin the rate limiter to a
     victim's IP (or a fresh one each attempt) to dodge it entirely."""
+    from utils.network_utils import is_loopback_ip
     socket_ip = request.client.host if request.client else None
     ip = None
-    if socket_ip in ("127.0.0.1", "::1"):
+    if is_loopback_ip(socket_ip):
         ip = request.headers.get("cf-connecting-ip")
         if not ip:
             xff = request.headers.get("x-forwarded-for")
