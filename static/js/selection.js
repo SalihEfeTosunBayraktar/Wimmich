@@ -21,6 +21,7 @@ registerTranslations({
         'selection.permanently_deleted': '{count} items permanently deleted',
         'selection.remove_from_album': 'Remove from Album',
         'selection.removed_from_album': 'Removed from album',
+        'selection.more': 'More actions',
     },
     tr: {
         'selection.restore': 'Geri Yükle',
@@ -41,6 +42,7 @@ registerTranslations({
         'selection.permanently_deleted': '{count} öğe kalıcı olarak silindi',
         'selection.remove_from_album': 'Albümden Çıkar',
         'selection.removed_from_album': 'Albümden çıkarıldı',
+        'selection.more': 'Diğer işlemler',
     },
     fr: {
         'selection.restore': 'Restaurer',
@@ -61,6 +63,7 @@ registerTranslations({
         'selection.permanently_deleted': '{count} éléments supprimés définitivement',
         'selection.remove_from_album': "Retirer de l'album",
         'selection.removed_from_album': "Retiré de l'album",
+        'selection.more': 'Autres actions',
     },
     de: {
         'selection.restore': 'Wiederherstellen',
@@ -81,6 +84,7 @@ registerTranslations({
         'selection.permanently_deleted': '{count} Elemente endgültig gelöscht',
         'selection.remove_from_album': 'Aus Album entfernen',
         'selection.removed_from_album': 'Aus Album entfernt',
+        'selection.more': 'Weitere Aktionen',
     },
 });
 
@@ -162,11 +166,82 @@ function updateSelectionBar() {
         <button class="btn btn-sm btn-secondary" onclick="clearSelection()">${icon('close')} <span>${t('common.cancel')}</span></button>
     `;
     document.body.appendChild(bar);
+    _collapseSelectionBarOnMobile(bar);
+}
+
+/**
+ * On narrow screens, a horizontally-scrollable row of 6-8 icon buttons
+ * still left the delete button crammed right against the edge and hard to
+ * reliably tap without scrolling first. Keeps the first action and any
+ * destructive (btn-danger) action directly visible - the rest move into a
+ * "⋯" popup, so the always-visible row stays short and every button in it
+ * has a comfortable tap target.
+ */
+function _collapseSelectionBarOnMobile(bar) {
+    if (!window.matchMedia('(max-width: 768px)').matches) return;
+
+    const buttons = Array.from(bar.querySelectorAll(':scope > button'));
+    const cancelBtn = buttons[buttons.length - 1]; // always the last one, appended above
+    const actionButtons = buttons.slice(0, -1);
+    if (actionButtons.length <= 3) return; // already short enough, nothing to collapse
+
+    const alwaysVisible = new Set([actionButtons[0]]);
+    actionButtons.forEach(b => { if (b.classList.contains('btn-danger')) alwaysVisible.add(b); });
+
+    const overflow = actionButtons.filter(b => !alwaysVisible.has(b));
+    if (!overflow.length) return;
+
+    const moreBtn = document.createElement('button');
+    moreBtn.className = 'btn btn-sm btn-secondary selection-more-btn';
+    moreBtn.innerHTML = icon('more');
+    moreBtn.title = t('selection.more');
+
+    // Appended to <body>, not nested inside the bar - the bar has
+    // overflow-x: auto for the horizontal-scroll fallback below, and
+    // setting only one axis of overflow makes the OTHER axis compute to
+    // 'auto' too (CSS default), which would clip this popup's own
+    // vertical overflow above the bar. position: fixed + a rect computed
+    // at open time sidesteps that entirely.
+    const menu = document.createElement('div');
+    menu.className = 'selection-more-menu hidden';
+    overflow.forEach(b => {
+        // The collapsed row hides button text via CSS to fit more icons in
+        // less width - inside the dropdown there's room, so labels show.
+        b.classList.add('selection-more-item');
+        menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+
+    moreBtn.onclick = (e) => {
+        e.stopPropagation();
+        const opening = menu.classList.contains('hidden');
+        if (opening) {
+            const rect = moreBtn.getBoundingClientRect();
+            menu.style.right = `${window.innerWidth - rect.right}px`;
+            menu.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+        }
+        menu.classList.toggle('hidden');
+        if (opening) {
+            // Guarded by e.target check (not timing) so this can't close
+            // the menu it was just opened by, regardless of listener order.
+            document.addEventListener('click', (outer) => {
+                if (!menu.contains(outer.target) && outer.target !== moreBtn) {
+                    menu.classList.add('hidden');
+                }
+            }, { once: true });
+        }
+    };
+
+    bar.insertBefore(moreBtn, cancelBtn);
 }
 
 function removeSelectionBar() {
     const bar = $('selection-bar');
     if (bar) bar.remove();
+    // _collapseSelectionBarOnMobile() appends the overflow menu directly to
+    // <body> (see its own comment for why) rather than nesting it inside
+    // the bar, so it isn't cleaned up by the bar.remove() above on its own.
+    document.querySelectorAll('.selection-more-menu').forEach(m => m.remove());
 }
 
 function clearSelection() {

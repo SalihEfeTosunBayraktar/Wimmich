@@ -64,6 +64,42 @@
         flex-shrink: 0;
     }
 
+    /* "More actions" popup - selection.js's _collapseSelectionBarOnMobile()
+       moves everything past the first action (and any btn-danger action,
+       kept visible since destructive actions shouldn't be buried) in here,
+       so the always-visible row stays short instead of relying on scroll
+       to ever reach something like delete. Appended to <body> (not nested
+       in the bar) and positioned via JS-computed left/bottom at open time -
+       see the JS comment for why position: fixed rather than absolute. */
+    .selection-more-menu {
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 170px;
+        padding: 6px;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        z-index: 60; /* above .selection-bar's own z-index: 50 */
+    }
+    .selection-more-menu.hidden { display: none; }
+    /* Higher specificity than ".selection-bar button span"/".selection-bar
+       .btn" above (both apply here too, since these buttons started out as
+       .selection-bar children before being moved into the body-level
+       menu) - .selection-more-menu .selection-more-item beats them so the
+       full-width layout and visible label text actually take effect. */
+    .selection-more-menu .selection-more-item {
+        width: 100%;
+        justify-content: flex-start !important;
+        padding: 8px 10px !important;
+    }
+    .selection-more-menu .selection-more-item span {
+        display: inline !important;
+    }
+
     /* Make photo select checkbox visible on mobile */
     .photo-card .photo-select {
         opacity: 0.8 !important;
