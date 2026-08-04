@@ -382,12 +382,20 @@ async def local_network_info(request: Request):
     """
     from utils.network_utils import is_loopback_ip
     socket_ip = request.client.host if request.client else None
-    via_tunnel = is_loopback_ip(socket_ip) and bool(request.headers.get("cf-connecting-ip"))
+    cf_ip = request.headers.get("cf-connecting-ip")
+    via_tunnel = is_loopback_ip(socket_ip) and bool(cf_ip)
+    # Temporary diagnostic - the banner has been reported as never firing
+    # even over a real tunnel visit; logging exactly what this endpoint saw
+    # is far faster than guessing blind at cloudflared/proxy config we
+    # can't inspect directly. Safe to remove once confirmed working.
+    from utils.log import info as _log_info
+    _log_info("NETWORK", f"local-info check: socket_ip={socket_ip!r} cf-connecting-ip={cf_ip!r} via_tunnel={via_tunnel}")
     if not via_tunnel:
         return {"show_banner": False}
 
     from utils.network_utils import get_local_lan_ip
     local_ip = get_local_lan_ip()
+    _log_info("NETWORK", f"local-info: resolved LAN ip={local_ip!r}")
     if not local_ip:
         return {"show_banner": False}
 
