@@ -34,6 +34,7 @@ registerTranslations({
         'people.hidden_success': 'Person hidden',
         'people.unhidden_success': 'Person unhidden',
         'people.hidden_people_title': 'Hidden People ({count})',
+        'people.hidden_unknown_pool_title': 'Hidden Unknown People ({count})',
         'people.dissolve_title': 'Dissolve this group (wrongly clustered faces)',
         'people.confirm_dissolve': 'Dissolve this group? Its faces go back to the unclustered pool - the group itself is deleted, nothing else is touched.',
         'people.dissolved_success': 'Group dissolved',
@@ -74,6 +75,7 @@ registerTranslations({
         'people.hidden_success': 'Kişi gizlendi',
         'people.unhidden_success': 'Kişi tekrar görünür yapıldı',
         'people.hidden_people_title': 'Gizli Kişiler ({count})',
+        'people.hidden_unknown_pool_title': 'Gizli Bilinmeyen Kişiler ({count})',
         'people.dissolve_title': 'Bu grubu dağıt (yanlış gruplanmış yüzler)',
         'people.confirm_dissolve': 'Bu grup dağıtılsın mı? İçindeki yüzler gruplanmamış havuza geri döner - sadece grup silinir, başka bir şeye dokunulmaz.',
         'people.dissolved_success': 'Grup dağıtıldı',
@@ -114,6 +116,7 @@ registerTranslations({
         'people.hidden_success': 'Personne masquée',
         'people.unhidden_success': 'Personne affichée à nouveau',
         'people.hidden_people_title': 'Personnes masquées ({count})',
+        'people.hidden_unknown_pool_title': 'Personnes inconnues masquées ({count})',
         'people.dissolve_title': 'Dissoudre ce groupe (visages mal regroupés)',
         'people.confirm_dissolve': 'Dissoudre ce groupe ? Ses visages retournent dans le pool non groupé - seul le groupe est supprimé, rien d\'autre n\'est touché.',
         'people.dissolved_success': 'Groupe dissous',
@@ -154,6 +157,7 @@ registerTranslations({
         'people.hidden_success': 'Person ausgeblendet',
         'people.unhidden_success': 'Person wieder eingeblendet',
         'people.hidden_people_title': 'Ausgeblendete Personen ({count})',
+        'people.hidden_unknown_pool_title': 'Ausgeblendete unbekannte Personen ({count})',
         'people.dissolve_title': 'Diese Gruppe auflösen (falsch gruppierte Gesichter)',
         'people.confirm_dissolve': 'Diese Gruppe auflösen? Ihre Gesichter kommen zurück in den nicht gruppierten Pool - nur die Gruppe wird gelöscht, sonst nichts.',
         'people.dissolved_success': 'Gruppe aufgelöst',
@@ -227,7 +231,9 @@ async function renderPeople() {
         const pc = $('page-content');
         const unknownPool = data.unknown_pool || [];
         const hiddenPeople = data.hidden || [];
-        if (!data.people.length && !unknownPool.length && !hiddenPeople.length) {
+        const hiddenUnknownPool = data.hidden_unknown_pool || [];
+        const hiddenTotal = hiddenPeople.length + hiddenUnknownPool.length;
+        if (!data.people.length && !unknownPool.length && !hiddenTotal) {
             pc.innerHTML = renderEmptyState(t('people.empty_title'), t('people.empty_desc'));
             return;
         }
@@ -240,10 +246,14 @@ async function renderPeople() {
                     <div class="people-grid">${unknownPool.map(p => _renderPersonCard(p, { showDissolve: true })).join('')}</div>
                 </div>
             ` : ''}
-            ${hiddenPeople.length ? `
+            ${hiddenTotal ? `
                 <details class="hidden-people-section">
-                    <summary class="hidden-people-title"><span style="display:inline-flex;align-items:center;gap:6px">${icon('eyeOff', 16)} ${t('people.hidden_people_title', { count: hiddenPeople.length })}</span></summary>
-                    <div class="people-grid">${hiddenPeople.map(p => _renderPersonCard(p, { hidden: true, showDissolve: true })).join('')}</div>
+                    <summary class="hidden-people-title"><span style="display:inline-flex;align-items:center;gap:6px">${icon('eyeOff', 16)} ${t('people.hidden_people_title', { count: hiddenTotal })}</span></summary>
+                    ${hiddenPeople.length ? `<div class="people-grid">${hiddenPeople.map(p => _renderPersonCard(p, { hidden: true, showDissolve: true })).join('')}</div>` : ''}
+                    ${hiddenUnknownPool.length ? `
+                        <h4 class="unknown-pool-title" style="display:flex;align-items:center;gap:6px">${icon('question', 16)} ${t('people.hidden_unknown_pool_title', { count: hiddenUnknownPool.length })}</h4>
+                        <div class="people-grid">${hiddenUnknownPool.map(p => _renderPersonCard(p, { hidden: true, showDissolve: true })).join('')}</div>
+                    ` : ''}
                 </details>
             ` : ''}
         `;

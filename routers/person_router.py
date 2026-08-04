@@ -51,7 +51,11 @@ async def list_people(
     pool" (unnamed groups, whether still pending a name or dismissed via
     "Tanımıyorum" - both land in the same pool instead of being scattered),
     and a hidden group kept separate from both so a hidden person doesn't
-    quietly count as unnamed/dismissed for the naming queue either."""
+    quietly count as unnamed/dismissed for the naming queue either. The
+    hidden group gets the same named/unknown split as the visible one -
+    a hidden pool that just dumped named and unnamed people into one list
+    made it hard to tell "someone I named and hid on purpose" apart from
+    "an unnamed cluster I hid to get it out of the naming queue"."""
     stmt = select(Person).where(Person.user_id == user.id).order_by(Person.face_count.desc())
     persons = list((await db.execute(stmt)).scalars().all())
 
@@ -59,11 +63,14 @@ async def list_people(
     hidden = [p for p in persons if p.is_hidden]
     named = [p for p in visible if p.name]
     unknown = [p for p in visible if not p.name]
+    hidden_named = [p for p in hidden if p.name]
+    hidden_unknown = [p for p in hidden if not p.name]
 
     return {
         "people": [_person_to_dict(p) for p in named],
         "unknown_pool": [_person_to_dict(p) for p in unknown],
-        "hidden": [_person_to_dict(p) for p in hidden],
+        "hidden": [_person_to_dict(p) for p in hidden_named],
+        "hidden_unknown_pool": [_person_to_dict(p) for p in hidden_unknown],
     }
 
 
