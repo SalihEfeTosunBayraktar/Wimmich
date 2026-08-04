@@ -94,7 +94,13 @@ async def handle_job_ocr(db: AsyncSession, job: Job):
 
     conditions = [
         Asset.smart_category.in_(OCR_CATEGORIES),
-        Asset.ocr_text.is_(None),
+        # ocr_boxes.is_(None) alongside the original ocr_text check picks up
+        # assets OCR'd before the ocr_boxes column existed (ocr_text already
+        # set, ocr_boxes never populated) - without it those assets never
+        # match ocr_text.is_(None) again and their boxes would stay empty
+        # forever, silently breaking the highlight feature for the entire
+        # library up to this point in time.
+        or_(Asset.ocr_text.is_(None), Asset.ocr_boxes.is_(None)),
         Asset.is_trashed == False,
     ]
     if scoped_user_id:
@@ -131,16 +137,21 @@ async def handle_job_ocr(db: AsyncSession, job: Job):
         for asset, ocr_result in zip(batch, results):
             processed += 1
             if isinstance(ocr_result, Exception) or ocr_result is None:
-                # Empty string (not left NULL) so a missing/unreadable file
-                # doesn't get retried by every future OCR run forever - see
-                # models/asset.py's ocr_text docstring for the NULL-vs-""
-                # distinction this relies on.
+                # Empty string/list (not left NULL) so a missing/unreadable
+                # file doesn't get retried by every future OCR run forever -
+                # see models/asset.py's ocr_text docstring for the NULL-vs-
+                # "" distinction, now mirrored by ocr_boxes so the condition
+                # above (which also matches on ocr_boxes.is_(None)) reaches
+                # a fixed point instead of reprocessing this asset forever.
                 asset.ocr_text = ""
-                asset.ocr_boxes = None
+                asset.ocr_boxes = "[]"
                 continue
             text_result, boxes = ocr_result
             asset.ocr_text = text_result.strip()[:MAX_OCR_TEXT_LENGTH]
-            asset.ocr_boxes = json.dumps(boxes) if boxes else None
+            # Always JSON, even an empty list - a NULL here would look
+            # identical to "never processed" and get endlessly re-picked-up
+            # by the condition above.
+            asset.ocr_boxes = json.dumps(boxes)
 
         job.progress = int(processed / total * 100)
         await db.commit()
