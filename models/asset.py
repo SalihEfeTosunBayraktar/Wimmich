@@ -63,6 +63,17 @@ class Asset(Base):
     # retried forever.
     ocr_text = Column(Text, nullable=True)
 
+    # Per-word positions from the same OCR pass, as a JSON list of
+    # {"text": word, "left": frac, "top": frac, "width": frac, "height": frac} -
+    # each coordinate a FRACTION (0-1) of the image's own width/height at
+    # OCR time, not raw pixels, so the frontend can scale to whatever size
+    # the image is actually displayed at without needing to know the
+    # original pixel dimensions separately. Powers the "highlight where
+    # this matched" overlay in the viewer for OCR search results. NULL
+    # alongside a non-NULL ocr_text means an older OCR run predates this
+    # column (search still works via ocr_text, just no highlight box).
+    ocr_boxes = Column(Text, nullable=True)
+
     # Thumbnails
     thumb_small_path = Column(String(1000), nullable=True)
     thumb_medium_path = Column(String(1000), nullable=True)

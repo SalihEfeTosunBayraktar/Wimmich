@@ -200,11 +200,20 @@ async function openViewer(assetId) {
     _updateSimilarBadge([]);
     _viewerTags = [];
 
+    _clearOcrHighlights();
+
     try {
         const asset = await API.getAsset(assetId);
         state.viewerAsset = asset;
         renderViewerMedia(asset);
         updateViewerControls(asset);
+        // Only while actively browsing OCR-only search results - navigating
+        // away from the search (or leaving OCR mode) naturally stops this
+        // from firing for the next photo opened, which is what "temporary,
+        // clears when the search ends" means here.
+        if (asset.file_type === 'IMAGE' && state.gallery.searchMode === 'ocr' && state.gallery.searchQuery) {
+            _loadOcrHighlights(assetId, state.gallery.searchQuery);
+        }
         // A no-op when the slideshow isn't running (checks _slideshowActive
         // itself) - covers slideshow advances AND manual navigation through
         // this one shared path uniformly, rather than needing every caller
@@ -227,13 +236,75 @@ function renderViewerMedia(asset) {
     if (asset.file_type === 'VIDEO') {
         container.innerHTML = `<video src="${asset.file_url}" controls autoplay style="max-width:100%;max-height:100%"></video>`;
     } else {
-        container.innerHTML = `<img src="${asset.file_url}" alt="${escHtml(asset.file_name)}">`;
+        container.innerHTML = `<img src="${asset.file_url}" alt="${escHtml(asset.file_name)}"><div class="ocr-highlight-layer" id="viewer-ocr-highlight-layer"></div>`;
+        const img = container.querySelector('img');
+        // The layer is positioned from the img's own rendered box (see
+        // _updateOcrHighlightLayerRect) - that box isn't known until the
+        // image has actually loaded and laid out, and cached images can
+        // fire 'load' before this listener attaches, hence both.
+        img.addEventListener('load', _updateOcrHighlightLayerRect);
+        if (img.complete) _updateOcrHighlightLayerRect();
     }
     // A new <img> always starts unzoomed/uncentered - carrying over the
     // previous photo's zoom level here would be disorienting (and the
     // pan-clamp math below is sized to THIS image's own dimensions anyway).
     _resetZoom();
 }
+
+// ─── OCR search-result highlighting ────────────────────────────────
+// Draws temporary boxes over the spot(s) in the currently-open photo that
+// matched an OCR-only search query (see gallery.js's searchMode) - purely
+// visual, nothing persisted; the boxes just aren't fetched/shown once the
+// user leaves OCR search mode or closes the viewer.
+let _ocrHighlightBoxes = [];
+
+async function _loadOcrHighlights(assetId, query) {
+    try {
+        const res = await API.getOcrMatches(assetId, query);
+        // The viewer may have already moved to a different photo (or closed)
+        // by the time this resolves - only apply it if still relevant.
+        if (!state.viewerAsset || state.viewerAsset.id !== assetId) return;
+        _ocrHighlightBoxes = res.boxes || [];
+        _renderOcrHighlights();
+    } catch (e) { /* non-critical - just skip the overlay */ }
+}
+
+function _clearOcrHighlights() {
+    _ocrHighlightBoxes = [];
+}
+
+function _renderOcrHighlights() {
+    const layer = $('viewer-ocr-highlight-layer');
+    if (!layer) return;
+    layer.innerHTML = _ocrHighlightBoxes.map(b => `
+        <div class="ocr-highlight-box" style="left:${b.left * 100}%;top:${b.top * 100}%;width:${b.width * 100}%;height:${b.height * 100}%"></div>
+    `).join('');
+    _updateOcrHighlightLayerRect();
+}
+
+// Positions the highlight layer to exactly cover the <img>'s own rendered
+// box within .viewer-media - recomputed on every zoom/pan/resize since
+// object-fit:contain letterboxing and the img's own CSS transform (see
+// _applyZoomTransform) both affect where that box actually is, and
+// getBoundingClientRect() already accounts for any transform applied.
+function _updateOcrHighlightLayerRect() {
+    const layer = $('viewer-ocr-highlight-layer');
+    const container = $('viewer-media');
+    const img = container && container.querySelector('img');
+    if (!layer || !img) return;
+    if (!_ocrHighlightBoxes.length) {
+        layer.style.display = 'none';
+        return;
+    }
+    const imgRect = img.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    layer.style.display = '';
+    layer.style.left = `${imgRect.left - containerRect.left}px`;
+    layer.style.top = `${imgRect.top - containerRect.top}px`;
+    layer.style.width = `${imgRect.width}px`;
+    layer.style.height = `${imgRect.height}px`;
+}
+window.addEventListener('resize', _updateOcrHighlightLayerRect);
 
 function updateViewerControls(asset) {
     const favBtn = $('viewer-favorite');
@@ -559,6 +630,7 @@ function _applyZoomTransform(smooth) {
     img.style.transition = smooth ? 'transform 150ms ease' : 'none';
     img.style.transform = `translate(${_zoomX}px, ${_zoomY}px) scale(${_zoomScale})`;
     img.classList.toggle('zoomed', _zoomScale > 1);
+    _updateOcrHighlightLayerRect();
 }
 
 function _resetZoom() {

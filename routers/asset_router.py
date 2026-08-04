@@ -172,6 +172,40 @@ async def get_similar_assets(
     purely for browsing related photos, not a duplicate/cleanup suggestion."""
     return await similar_service.get_similar_assets(db, user, asset_id)
 
+@router.get("/{asset_id}/ocr-matches")
+async def get_ocr_matches(
+    asset_id: str,
+    q: str = Query(..., min_length=1),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Per-word bounding boxes (see models/asset.py's ocr_boxes) whose text
+    contains the search query - powers the viewer's "highlight where this
+    matched" overlay for OCR search results. A substring match (not exact
+    word match) so a query like "vize" also highlights "vizesi"."""
+    import json
+    from models import Asset
+    from sqlalchemy import select, and_
+
+    result = await db.execute(
+        select(Asset.ocr_boxes).where(and_(Asset.id == asset_id, Asset.user_id == user.id))
+    )
+    row = result.scalar_one_or_none()
+    if not row:
+        return {"boxes": []}
+
+    try:
+        boxes = json.loads(row)
+    except (json.JSONDecodeError, TypeError):
+        return {"boxes": []}
+
+    needle = q.strip().lower()
+    if not needle:
+        return {"boxes": []}
+
+    matches = [b for b in boxes if needle in (b.get("text") or "").lower()]
+    return {"boxes": matches}
+
 @router.get("/trash")
 async def get_trash(
     user: User = Depends(get_current_user),

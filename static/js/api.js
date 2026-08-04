@@ -137,6 +137,7 @@ const API = {
     },
     getAsset(id) { return this.request(`/api/assets/${id}`); },
     getSimilarAssets(id) { return this.request(`/api/assets/${id}/similar`); },
+    getOcrMatches(id, q) { return this.request(`/api/assets/${id}/ocr-matches?q=${encodeURIComponent(q)}`); },
     getAssetFile(id) { return `/api/assets/${id}/file`; },
     getThumb(id, size = 'medium') { return `/api/assets/${id}/thumbnail?size=${size}`; },
     getDownloadZipUrl(ids) {

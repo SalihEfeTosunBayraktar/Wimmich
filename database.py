@@ -215,3 +215,10 @@ async def init_db():
             ))
         except Exception:
             pass
+
+        # Automatic column migration for per-word OCR positions - see
+        # models/asset.py's ocr_boxes.
+        try:
+            await conn.execute(text("ALTER TABLE assets ADD COLUMN ocr_boxes TEXT"))
+        except Exception:
+            pass
