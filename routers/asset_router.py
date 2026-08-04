@@ -181,8 +181,13 @@ async def get_ocr_matches(
 ):
     """Per-word bounding boxes (see models/asset.py's ocr_boxes) whose text
     contains the search query - powers the viewer's "highlight where this
-    matched" overlay for OCR search results. A substring match (not exact
-    word match) so a query like "vize" also highlights "vizesi"."""
+    matched" overlay for OCR search results. Each box is a SINGLE word
+    (Tesseract's own tokenization), but a search query is often more than
+    one word ("elektrik faturası") - matching the whole query string
+    against one box's text would never match anything in that case, so the
+    query is split into tokens and a box lights up if it contains ANY of
+    them. Still a substring match per token (not exact word match) so a
+    token like "vize" also highlights "vizesi"."""
     import json
     from models import Asset
     from sqlalchemy import select, and_
@@ -199,11 +204,14 @@ async def get_ocr_matches(
     except (json.JSONDecodeError, TypeError):
         return {"boxes": []}
 
-    needle = q.strip().lower()
-    if not needle:
+    tokens = [t for t in q.strip().lower().split() if t]
+    if not tokens:
         return {"boxes": []}
 
-    matches = [b for b in boxes if needle in (b.get("text") or "").lower()]
+    matches = [
+        b for b in boxes
+        if any(token in (b.get("text") or "").lower() for token in tokens)
+    ]
     return {"boxes": matches}
 
 @router.get("/trash")
