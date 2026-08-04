@@ -13,28 +13,55 @@
     .sidebar.open { transform: translateX(0); }
     .sidebar-toggle { display: flex; }
 
-    /* Mobile selection bar styles */
+    /* App-wide fullscreen toggle: fixed bottom-left with a high z-index
+       (900, see modals.css) so it stays clickable over ordinary page
+       content - but at mobile widths that same corner is also where the
+       off-canvas sidebar's own footer (avatar/settings/logout) and the
+       selection bar (95% width, spans nearly the whole bottom edge) sit,
+       both at lower z-index. The button was winning that stack and
+       rendering on top of both, looking like it was "crowding into" the
+       selection bar and covering the sidebar's account info. The
+       Fullscreen API is marginal on mobile anyway (unsupported in iOS
+       Safari), so hiding it here is a straightforward fix rather than
+       juggling per-state visibility for every element it could collide
+       with. */
+    .app-fullscreen-btn { display: none; }
+
+    /* Mobile selection bar styles. Some pages offer 7-8 actions at once
+       (favorite/album/share/download/edit-date/archive/delete, plus the
+       count and a cancel button) - squeezing all of that into one
+       space-between row on a ~360px-wide phone was the actual "dağınık"
+       (cluttered) complaint: icons ended up pressed edge-to-edge with
+       barely any tap-target margin between them. Letting the row scroll
+       horizontally instead keeps every button a normal, comfortably
+       tappable size; nothing is ever cut off, just reachable with a swipe. */
     .selection-bar {
         bottom: 12px !important;
         width: 95% !important;
         max-width: 480px !important;
         padding: 8px 12px !important;
         gap: 8px !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
     }
-    
+    .selection-bar::-webkit-scrollbar { display: none; }
+
     .selection-bar button span {
         display: none !important;
     }
-    
+
     .selection-count {
         min-width: unset !important;
         font-size: 13px !important;
+        flex-shrink: 0;
     }
-    
+
     .selection-bar .btn {
         padding: 6px 10px !important;
         font-size: 12px !important;
+        flex-shrink: 0;
     }
 
     /* Make photo select checkbox visible on mobile */
