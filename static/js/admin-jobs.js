@@ -25,6 +25,8 @@ registerTranslations({
         'admin_jobs.similarity_desc': 'Linking visually similar photos to each other',
         'admin_jobs.repair_title': 'Broken File Repair',
         'admin_jobs.repair_desc': 'Checking reference/imported files for missing or broken sources, fixing what it can',
+        'admin_jobs.ocr_title': 'Extract Text (OCR)',
+        'admin_jobs.ocr_desc': 'Extracting visible text from screenshot and document photos so it can be found by search',
         'admin_jobs.unknown_job_title': 'Unknown Job',
         'admin_jobs.unknown_job_desc': 'Running system operation',
         'admin_jobs.status_completed': 'Completed',
@@ -72,6 +74,8 @@ registerTranslations({
         'admin_jobs.similarity_desc': 'Görsel olarak birbirine benzeyen fotoğraflar arasında bağlantı kuruluyor',
         'admin_jobs.repair_title': 'Bozuk Dosya Onarımı',
         'admin_jobs.repair_desc': 'Referans/içe aktarılan dosyalarda eksik veya bozuk kaynak kontrol ediliyor, yapılabilenler düzeltiliyor',
+        'admin_jobs.ocr_title': 'Metin Çıkar (OCR)',
+        'admin_jobs.ocr_desc': 'Ekran görüntüsü ve belge fotoğraflarındaki görünür metin çıkarılıyor, böylece arama ile bulunabilir',
         'admin_jobs.unknown_job_title': 'Bilinmeyen İş',
         'admin_jobs.unknown_job_desc': 'Sistem işlemi yürütülüyor',
         'admin_jobs.status_completed': 'Tamamlandı',
@@ -119,6 +123,8 @@ registerTranslations({
         'admin_jobs.similarity_desc': 'Établissement de liens entre les photos visuellement similaires',
         'admin_jobs.repair_title': 'Réparation de fichiers cassés',
         'admin_jobs.repair_desc': 'Vérification des fichiers référencés/importés pour une source manquante ou cassée, réparation de ce qui est possible',
+        'admin_jobs.ocr_title': 'Extraire le texte (OCR)',
+        'admin_jobs.ocr_desc': "Extraction du texte visible des captures d'écran et des photos de documents pour qu'il soit trouvable par la recherche",
         'admin_jobs.unknown_job_title': 'Tâche inconnue',
         'admin_jobs.unknown_job_desc': "Exécution d'une opération système",
         'admin_jobs.status_completed': 'Terminé',
@@ -166,6 +172,8 @@ registerTranslations({
         'admin_jobs.similarity_desc': 'Visuell ähnliche Fotos werden miteinander verknüpft',
         'admin_jobs.repair_title': 'Reparatur defekter Dateien',
         'admin_jobs.repair_desc': 'Referenzierte/importierte Dateien werden auf fehlende oder defekte Quellen geprüft, Behebbares wird repariert',
+        'admin_jobs.ocr_title': 'Text extrahieren (OCR)',
+        'admin_jobs.ocr_desc': 'Sichtbarer Text wird aus Screenshot- und Dokumentfotos extrahiert, damit er über die Suche gefunden werden kann',
         'admin_jobs.unknown_job_title': 'Unbekannte Aufgabe',
         'admin_jobs.unknown_job_desc': 'Systemvorgang wird ausgeführt',
         'admin_jobs.status_completed': 'Abgeschlossen',
@@ -201,7 +209,7 @@ const JOB_TYPE_INFO = {
     BACKUP: { title: t('admin_jobs.backup_title'), icon: 'save', desc: t('admin_jobs.backup_desc') },
     SIMILARITY: { title: t('admin_jobs.similarity_title'), icon: 'link', desc: t('admin_jobs.similarity_desc') },
     REPAIR: { title: t('admin_jobs.repair_title'), icon: 'wrench', desc: t('admin_jobs.repair_desc') },
-    OCR: { title: t('admin_render.job_ocr_btn'), icon: 'file', desc: t('admin_render.job_ocr_title') },
+    OCR: { title: t('admin_jobs.ocr_title'), icon: 'file', desc: t('admin_jobs.ocr_desc') },
 };
 
 const JOB_STATUS_INFO = {
@@ -383,7 +391,6 @@ function _setButtonBusy(btn, label) {
 }
 
 async function shutdownServer(btn) {
-    if (!confirm(t('admin_render.confirm_shutdown'))) return;
     _setButtonBusy(btn, t('admin_render.shutting_down_message'));
     _showServerActionOverlay(t('admin_render.shutdown_overlay_message'));
     try {
@@ -399,7 +406,6 @@ async function shutdownServer(btn) {
 }
 
 async function restartServer(btn) {
-    if (!confirm(t('admin_render.confirm_restart'))) return;
     _setButtonBusy(btn, t('admin_render.restarting_message'));
     _showServerActionOverlay(t('admin_render.restart_overlay_message'));
     try {
@@ -464,7 +470,6 @@ async function checkForUpdate() {
 }
 
 async function applyUpdate(btn) {
-    if (!confirm(t('admin_render.confirm_apply_update'))) return;
     _setButtonBusy(btn, t('admin_render.applying_update_msg'));
     _showServerActionOverlay(t('admin_render.applying_update_msg'));
     try {
