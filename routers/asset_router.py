@@ -197,22 +197,27 @@ async def get_ocr_matches(
     )
     row = result.scalar_one_or_none()
     if not row:
-        return {"boxes": []}
+        # total_boxes distinguishes "this photo has no stored word positions
+        # at all" (OCR never ran on it, or ran before ocr_boxes existed)
+        # from "it has positions, none of them matched" - without that, both
+        # look identical as an empty list and the feature silently doing
+        # nothing is impossible to diagnose from the client side.
+        return {"boxes": [], "total_boxes": 0}
 
     try:
         boxes = json.loads(row)
     except (json.JSONDecodeError, TypeError):
-        return {"boxes": []}
+        return {"boxes": [], "total_boxes": 0}
 
     tokens = [t for t in q.strip().lower().split() if t]
     if not tokens:
-        return {"boxes": []}
+        return {"boxes": [], "total_boxes": len(boxes)}
 
     matches = [
         b for b in boxes
         if any(token in (b.get("text") or "").lower() for token in tokens)
     ]
-    return {"boxes": matches}
+    return {"boxes": matches, "total_boxes": len(boxes)}
 
 @router.get("/trash")
 async def get_trash(

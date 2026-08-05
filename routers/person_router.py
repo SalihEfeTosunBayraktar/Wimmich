@@ -96,6 +96,19 @@ async def naming_queue(
     }
 
 
+@router.get("/name-suggestions")
+async def name_suggestions(
+    q: str = "",
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Existing person names for the naming input's autocomplete. Declared
+    BEFORE /{person_id} - FastAPI matches routes in definition order, so
+    the path-param route would otherwise swallow "name-suggestions" as a
+    person id."""
+    return {"suggestions": await face_management_service.suggest_person_names(db, user, q)}
+
+
 @router.get("/{person_id}")
 async def get_person(
     person_id: str,
@@ -233,3 +246,15 @@ async def dissolve_person(
     """Discard a whole unnamed group ("bu bir kişi değil") - unassigns its
     faces back to the unclustered pool and deletes the group."""
     return await face_management_service.dissolve_person(db, user, person_id)
+
+
+@router.delete("/{person_id}/with-assets")
+async def delete_person_with_assets(
+    person_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Move every photo this person appears in to the trash, then delete the
+    person. Distinct from /dissolve, which only discards the grouping and
+    leaves the photos completely untouched."""
+    return await face_management_service.delete_person_with_assets(db, user, person_id)

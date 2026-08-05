@@ -247,6 +247,12 @@ const API = {
     dissolvePerson(personId) {
         return this.request(`/api/people/${personId}/dissolve`, { method: 'POST' });
     },
+    deletePersonWithAssets(personId) {
+        return this.request(`/api/people/${personId}/with-assets`, { method: 'DELETE' });
+    },
+    getPersonNameSuggestions(q = '') {
+        return this.request(`/api/people/name-suggestions?q=${encodeURIComponent(q)}`);
+    },
 
     // Map
     getMapMarkers() { return this.request('/api/map/markers'); },

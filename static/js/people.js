@@ -39,6 +39,11 @@ registerTranslations({
         'people.confirm_dissolve': 'Dissolve this group? Its faces go back to the unclustered pool - the group itself is deleted, nothing else is touched.',
         'people.dissolved_success': 'Group dissolved',
         'people.dissolve_button': 'Dissolve Group',
+        'people.delete_with_assets_button': 'Delete Person + Photos',
+        'people.delete_with_assets_title': 'Move every photo this person appears in to the trash, then delete the person',
+        'people.delete_with_assets_confirm': 'Move all {count} photos of this person to the trash and delete the person?\n\nPhotos that also show other people will be trashed too. They stay recoverable from the trash.',
+        'people.delete_with_assets_done': '{count} photos moved to trash, person deleted',
+        'people.name_suggestions_hint': 'Existing names',
         'people.blacklist_button': 'Select Photos to Review/Delete',
         'people.photos_selected_for_review': '{count} photos selected - review and delete the ones you don\'t want',
         'people.no_photos_to_select': 'This person has no photos',
@@ -80,6 +85,11 @@ registerTranslations({
         'people.confirm_dissolve': 'Bu grup dağıtılsın mı? İçindeki yüzler gruplanmamış havuza geri döner - sadece grup silinir, başka bir şeye dokunulmaz.',
         'people.dissolved_success': 'Grup dağıtıldı',
         'people.dissolve_button': 'Grubu Dağıt',
+        'people.delete_with_assets_button': 'Kişiyi + Fotoğraflarını Sil',
+        'people.delete_with_assets_title': 'Bu kişinin göründüğü tüm fotoğrafları çöp kutusuna taşı, sonra kişiyi sil',
+        'people.delete_with_assets_confirm': 'Bu kişiye ait {count} fotoğrafın tamamı çöp kutusuna taşınsın ve kişi silinsin mi?\n\nİçinde başka kişiler de olan fotoğraflar da çöpe gider. Çöp kutusundan geri alınabilirler.',
+        'people.delete_with_assets_done': '{count} fotoğraf çöp kutusuna taşındı, kişi silindi',
+        'people.name_suggestions_hint': 'Mevcut isimler',
         'people.blacklist_button': 'Fotoğrafları Seç (İncele/Sil)',
         'people.photos_selected_for_review': '{count} fotoğraf seçildi - istemediklerinizi inceleyip silebilirsiniz',
         'people.no_photos_to_select': 'Bu kişiye ait fotoğraf yok',
@@ -121,6 +131,11 @@ registerTranslations({
         'people.confirm_dissolve': 'Dissoudre ce groupe ? Ses visages retournent dans le pool non groupé - seul le groupe est supprimé, rien d\'autre n\'est touché.',
         'people.dissolved_success': 'Groupe dissous',
         'people.dissolve_button': 'Dissoudre le groupe',
+        'people.delete_with_assets_button': 'Supprimer la personne + photos',
+        'people.delete_with_assets_title': 'Mettre à la corbeille toutes les photos où apparaît cette personne, puis la supprimer',
+        'people.delete_with_assets_confirm': 'Mettre à la corbeille les {count} photos de cette personne et la supprimer ?\n\nLes photos montrant aussi d\'autres personnes seront également mises à la corbeille. Elles restent récupérables.',
+        'people.delete_with_assets_done': '{count} photos mises à la corbeille, personne supprimée',
+        'people.name_suggestions_hint': 'Noms existants',
         'people.blacklist_button': 'Sélectionner les photos à examiner/supprimer',
         'people.photos_selected_for_review': '{count} photos sélectionnées - examinez et supprimez celles que vous ne voulez pas',
         'people.no_photos_to_select': 'Cette personne n\'a aucune photo',
@@ -162,6 +177,11 @@ registerTranslations({
         'people.confirm_dissolve': 'Diese Gruppe auflösen? Ihre Gesichter kommen zurück in den nicht gruppierten Pool - nur die Gruppe wird gelöscht, sonst nichts.',
         'people.dissolved_success': 'Gruppe aufgelöst',
         'people.dissolve_button': 'Gruppe auflösen',
+        'people.delete_with_assets_button': 'Person + Fotos löschen',
+        'people.delete_with_assets_title': 'Alle Fotos, auf denen diese Person erscheint, in den Papierkorb verschieben und die Person löschen',
+        'people.delete_with_assets_confirm': 'Alle {count} Fotos dieser Person in den Papierkorb verschieben und die Person löschen?\n\nFotos, auf denen auch andere Personen zu sehen sind, landen ebenfalls im Papierkorb. Sie bleiben wiederherstellbar.',
+        'people.delete_with_assets_done': '{count} Fotos in den Papierkorb verschoben, Person gelöscht',
+        'people.name_suggestions_hint': 'Vorhandene Namen',
         'people.blacklist_button': 'Fotos zur Prüfung/Löschung auswählen',
         'people.photos_selected_for_review': '{count} Fotos ausgewählt - prüfen und löschen Sie die unerwünschten',
         'people.no_photos_to_select': 'Diese Person hat keine Fotos',
@@ -276,13 +296,17 @@ async function openPerson(id) {
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:200px">
                     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                        <input type="text" id="person-name-input" value="${escHtml(person.name || '')}" style="flex:1;max-width:300px;margin:0" placeholder="${t('people.name_input_placeholder')}">
+                        <div class="person-name-input-wrapper" style="position:relative;flex:1;max-width:300px">
+                            <input type="text" id="person-name-input" value="${escHtml(person.name || '')}" style="width:100%;margin:0" placeholder="${t('people.name_input_placeholder')}" autocomplete="off">
+                            <div id="person-name-suggestions" class="person-name-suggestions hidden"></div>
+                        </div>
                         <button class="btn btn-primary btn-sm" onclick="renamePerson('${id}')">${t('common.save')}</button>
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button class="btn btn-secondary btn-sm" onclick="navigateTo('people')">${t('people.back_to_list')}</button>
                         <button class="btn btn-secondary btn-sm" onclick="blacklistPersonAction('${id}')">${icon('ban')} ${t('people.blacklist_button')}</button>
                         <button class="btn btn-danger btn-sm" onclick="dissolvePersonAction('${id}')" title="${t('people.dissolve_title')}">${icon('explosion')} ${t('people.dissolve_button')}</button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePersonWithAssetsAction('${id}', ${person.assets.length})" title="${t('people.delete_with_assets_title')}">${icon('trash')} ${t('people.delete_with_assets_button')}</button>
                     </div>
                 </div>
             </div>
@@ -297,10 +321,74 @@ async function openPerson(id) {
             </div>
         `;
         
+        _initPersonNameAutocomplete(id);
+
         if (subTab === 'photos') {
             bindPhotoCards(pc);
             state.viewerList = person.assets.map(a => a.id);
         }
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Name autocomplete ─────────────────────────────────────────────
+// Suggests names already used elsewhere in the library while typing, so
+// assigning a face to someone who's already named is a pick from a list
+// rather than retyping it - which is also what keeps "Ahmet" and "ahmet "
+// from silently becoming two separate people.
+let _personNameSuggestTimer = null;
+
+function _initPersonNameAutocomplete(personId) {
+    const input = $('person-name-input');
+    const box = $('person-name-suggestions');
+    if (!input || !box) return;
+
+    const hide = () => box.classList.add('hidden');
+
+    const run = async () => {
+        try {
+            const res = await API.getPersonNameSuggestions(input.value);
+            // Never suggest the name this person already has - picking it
+            // would be a no-op rename.
+            const items = (res.suggestions || []).filter(s => s.name !== input.value.trim());
+            if (!items.length) { hide(); return; }
+            box.innerHTML = items.map(s => `
+                <button type="button" class="person-name-suggestion-row" data-name="${escHtml(s.name)}">
+                    ${icon('person', 14)} <span>${escHtml(s.name)}</span>
+                    <span class="person-name-suggestion-count">${s.face_count}</span>
+                </button>
+            `).join('');
+            box.querySelectorAll('.person-name-suggestion-row').forEach(row => {
+                // mousedown, not click - the input's own blur fires first on
+                // a plain click and would hide the list before the click
+                // ever lands on it.
+                row.onmousedown = (e) => {
+                    e.preventDefault();
+                    input.value = row.dataset.name;
+                    hide();
+                };
+            });
+            box.classList.remove('hidden');
+        } catch (e) { hide(); }
+    };
+
+    input.addEventListener('input', () => {
+        clearTimeout(_personNameSuggestTimer);
+        _personNameSuggestTimer = setTimeout(run, 200);
+    });
+    input.addEventListener('focus', run);
+    input.addEventListener('blur', () => setTimeout(hide, 150));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+        if (e.key === 'Enter') { hide(); renamePerson(personId); }
+    });
+}
+
+async function deletePersonWithAssetsAction(personId, photoCount) {
+    if (!confirm(t('people.delete_with_assets_confirm', { count: photoCount }))) return;
+    try {
+        const res = await API.deletePersonWithAssets(personId);
+        toast(t('people.delete_with_assets_done', { count: res.trashed }), 'success');
+        navigateTo('people');
     } catch (e) { toast(e.message, 'error'); }
 }
 

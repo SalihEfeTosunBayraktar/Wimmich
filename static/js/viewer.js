@@ -207,11 +207,16 @@ async function openViewer(assetId) {
         state.viewerAsset = asset;
         renderViewerMedia(asset);
         updateViewerControls(asset);
-        // Only while actively browsing OCR-only search results - navigating
-        // away from the search (or leaving OCR mode) naturally stops this
-        // from firing for the next photo opened, which is what "temporary,
-        // clears when the search ends" means here.
-        if (asset.file_type === 'IMAGE' && state.gallery.searchMode === 'ocr' && state.gallery.searchQuery) {
+        // Any active search, not just OCR-mode search. Gating this on
+        // searchMode === 'ocr' too meant the highlight silently never
+        // appeared for anyone who searched normally, and gave the feature
+        // three separate ways to no-op with no visible difference between
+        // them. A photo found by CLIP can still contain the searched word,
+        // so highlighting it there is useful rather than wrong - and when
+        // the photo has no matching OCR text the request just comes back
+        // empty and nothing is drawn, which is the same outcome the
+        // narrower condition produced anyway.
+        if (asset.file_type === 'IMAGE' && state.gallery.searchQuery) {
             _loadOcrHighlights(assetId, state.gallery.searchQuery);
         }
         // A no-op when the slideshow isn't running (checks _slideshowActive
@@ -265,8 +270,15 @@ async function _loadOcrHighlights(assetId, query) {
         // by the time this resolves - only apply it if still relevant.
         if (!state.viewerAsset || state.viewerAsset.id !== assetId) return;
         _ocrHighlightBoxes = res.boxes || [];
-        if (!_ocrHighlightBoxes.length) {
-            console.warn(`[OCR highlight] no matching boxes for query "${query}" on asset ${assetId} - either OCR hasn't found this word, or nothing above the confidence threshold matched it.`);
+        // One always-on line saying exactly which link in the chain ended
+        // the attempt - the feature failing used to be indistinguishable
+        // from it never having been asked to run at all.
+        if (_ocrHighlightBoxes.length) {
+            console.info(`[OCR highlight] drawing ${_ocrHighlightBoxes.length} box(es) for "${query}".`);
+        } else if (!res.total_boxes) {
+            console.warn(`[OCR highlight] asset ${assetId} has NO stored OCR word positions - it isn't categorised as screenshot/document, or the OCR job hasn't processed it since word positions were added. Re-run the OCR job from the admin panel.`);
+        } else {
+            console.info(`[OCR highlight] asset has ${res.total_boxes} OCR word(s), none matching "${query}".`);
         }
         _renderOcrHighlights();
     } catch (e) {

@@ -5,7 +5,7 @@ This is the user-correction layer on top of automatic clustering
 """
 from typing import Optional
 from fastapi import HTTPException
-from sqlalchemy import select, and_, func, update
+from sqlalchemy import select, and_, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User, Person, Face, Asset
@@ -122,6 +122,82 @@ async def dissolve_person(db: AsyncSession, user: User, person_id: str) -> dict:
     await db.commit()
 
     return {"message": "Grup dağıtıldı"}
+
+
+async def delete_person_with_assets(db: AsyncSession, user: User, person_id: str) -> dict:
+    """Move every photo this person appears in to the trash, then delete the
+    person group itself.
+
+    The photos go to the TRASH, not permanent deletion - this removes a lot
+    at once (and a photo of this person may well have other people in it
+    too), so it stays recoverable from the trash for the normal retention
+    window like any other delete.
+
+    Scoped through a subquery rather than fetching the asset ids and
+    passing them back in an IN() list, which would hit SQLite's
+    bound-parameter ceiling for a prolific person (see utils/sql_utils.py).
+    """
+    from datetime import datetime, timezone
+
+    person = await _get_person_or_404(db, person_id, user.id)
+
+    asset_ids_subq = (
+        select(Face.asset_id)
+        .where(Face.person_id == person_id)
+        .scalar_subquery()
+    )
+
+    result = await db.execute(
+        update(Asset)
+        .where(and_(
+            Asset.id.in_(asset_ids_subq),
+            Asset.user_id == user.id,
+            Asset.is_trashed == False,
+        ))
+        .values(is_trashed=True, trashed_at=datetime.now(timezone.utc))
+    )
+    trashed = result.rowcount or 0
+
+    # The faces themselves go with the person - their photos are in the
+    # trash, so leaving the detections behind would just have a future
+    # RECLUSTER rebuild the very group that was explicitly deleted.
+    await db.execute(delete(Face).where(Face.person_id == person_id))
+    await db.delete(person)
+    await db.commit()
+
+    return {"message": f"{trashed} fotoğraf çöp kutusuna taşındı, kişi silindi", "trashed": trashed}
+
+
+async def suggest_person_names(db: AsyncSession, user: User, query: str = "") -> list:
+    """Existing person names for the naming autocomplete - so assigning a
+    face to someone already in the library is a pick from a list rather
+    than retyping (and risking "Ahmet" vs "ahmet " becoming two people).
+
+    Ordered by face_count so the people who actually appear most come
+    first, which is what a short suggestion list should surface.
+    """
+    conditions = [Person.user_id == user.id, Person.name.isnot(None)]
+    if query.strip():
+        conditions.append(Person.name.ilike(f"%{query.strip()}%"))
+
+    stmt = (
+        select(Person.name, Person.face_count)
+        .where(and_(*conditions))
+        .order_by(Person.face_count.desc())
+        .limit(10)
+    )
+    rows = (await db.execute(stmt)).all()
+    # Distinct on name - two separate groups can legitimately carry the
+    # same name (not yet merged), and the suggestion list shouldn't show
+    # the same name twice.
+    seen = set()
+    out = []
+    for name, count in rows:
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append({"name": name, "face_count": count})
+    return out
 
 
 async def delete_face(db: AsyncSession, user: User, face_id: str) -> dict:
