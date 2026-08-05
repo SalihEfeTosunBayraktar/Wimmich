@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import Asset, User, IgnoredDuplicateGroup, IgnoredSimilarAsset
 from utils.serializers import asset_to_dict
 from utils.embedding_utils import load_embedding
+from utils.sql_utils import select_in_chunks
 
 
 def _sort_groups(groups: list, sort_by: str) -> list:
@@ -67,16 +68,21 @@ async def get_duplicate_groups(
     if not duplicate_checksums:
         return {"groups": []}
 
-    stmt = select(Asset).where(
-        and_(
-            Asset.user_id == user.id,
-            Asset.is_trashed == False,
-            Asset.is_archived == False,
-            Asset.checksum.in_(duplicate_checksums),
-        )
+    # Chunked IN() - duplicate_checksums scales with the library, so a
+    # single statement blows past SQLite's bound-parameter ceiling on a
+    # big library. See utils/sql_utils.py.
+    assets = await select_in_chunks(
+        db,
+        lambda chunk: select(Asset).where(
+            and_(
+                Asset.user_id == user.id,
+                Asset.is_trashed == False,
+                Asset.is_archived == False,
+                Asset.checksum.in_(chunk),
+            )
+        ),
+        duplicate_checksums,
     )
-    res = await db.execute(stmt)
-    assets = res.scalars().all()
 
     groups_dict = {}
     for asset in assets:
@@ -218,8 +224,11 @@ async def get_visual_duplicate_groups(
     clustered_ids = {aid for asset_ids, _ in clusters for aid in asset_ids}
     assets_by_id = {}
     if clustered_ids:
-        full_result = await db.execute(select(Asset).where(Asset.id.in_(clustered_ids)))
-        assets_by_id = {a.id: a for a in full_result.scalars().all()}
+        # Chunked for the same reason as the checksum lookup above.
+        clustered_assets = await select_in_chunks(
+            db, lambda chunk: select(Asset).where(Asset.id.in_(chunk)), clustered_ids,
+        )
+        assets_by_id = {a.id: a for a in clustered_assets}
 
     groups = []
     for asset_ids, avg_sim in clusters:

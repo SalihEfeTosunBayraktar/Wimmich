@@ -13,6 +13,7 @@ from services.job_service import create_job, JobAlreadyExistsException
 from services.quota_service import check_all_quotas
 from services.asset_query_service import get_asset_or_404
 from utils.serializers import asset_to_dict
+from utils.sql_utils import select_in_chunks
 
 
 def _parse_client_timestamp(raw: Optional[str]) -> Optional[datetime]:
@@ -253,10 +254,12 @@ async def bulk_update_metadata(
     at once - for correcting a whole trip/album's date or location in one
     go instead of one photo at a time (e.g. a camera with the wrong clock,
     or an import that arrived with no GPS on any of them)."""
-    result = await db.execute(
-        select(Asset).where(and_(Asset.id.in_(asset_ids), Asset.user_id == user.id))
+    # Chunked for the same reason as bulk_action below.
+    assets = await select_in_chunks(
+        db,
+        lambda chunk: select(Asset).where(and_(Asset.id.in_(chunk), Asset.user_id == user.id)),
+        asset_ids,
     )
-    assets = list(result.scalars().all())
     for asset in assets:
         if taken_at is not None:
             asset.taken_at = taken_at
@@ -339,10 +342,14 @@ async def delete_permanently(db: AsyncSession, asset_id: str, user: User) -> dic
 
 
 async def bulk_action(db: AsyncSession, asset_ids: List[str], action: str, user: User) -> dict:
-    result = await db.execute(
-        select(Asset).where(and_(Asset.id.in_(asset_ids), Asset.user_id == user.id))
+    # Chunked IN() - "select all" over a big library sends every id at
+    # once, which exceeds SQLite's bound-parameter ceiling. See
+    # utils/sql_utils.py.
+    assets = await select_in_chunks(
+        db,
+        lambda chunk: select(Asset).where(and_(Asset.id.in_(chunk), Asset.user_id == user.id)),
+        asset_ids,
     )
-    assets = list(result.scalars().all())
 
     count = 0
     for asset in assets:

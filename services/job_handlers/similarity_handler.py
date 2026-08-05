@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Asset, SimilarAsset, Job
 from services.job_core import check_job_cancelled
+from utils.sql_utils import chunked
 
 SIMILAR_THRESHOLD = 0.80
 SIMILAR_LIMIT = 24
@@ -80,8 +81,13 @@ async def handle_job_similarity(db: AsyncSession, job: Job):
     job.progress = 60
     await db.commit()
 
+    # Chunked, not one giant IN() - this list is every embedded image in
+    # the library, which blew past SQLite's bound-parameter ceiling
+    # ("too many SQL variables") on any real-sized library. See
+    # utils/sql_utils.py.
     asset_ids = [aid for aid, _ in items]
-    await db.execute(delete(SimilarAsset).where(SimilarAsset.asset_id.in_(asset_ids)))
+    for chunk in chunked(asset_ids):
+        await db.execute(delete(SimilarAsset).where(SimilarAsset.asset_id.in_(chunk)))
 
     for asset_id, matches in similarity_map.items():
         for similar_id, score in matches:

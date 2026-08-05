@@ -75,10 +75,15 @@ async def create_share(
         # public, unauthenticated URL serving that file (IDOR). Silently
         # drops ids the caller doesn't own rather than 404ing, same
         # reasoning as album_service._owned_asset_ids.
-        owned_result = await db.execute(
-            select(Asset.id).where(and_(Asset.user_id == user.id, Asset.id.in_(req.asset_ids)))
-        )
-        owned_ids = set(owned_result.scalars().all())
+        # Chunked IN() - sharing a whole search result can send thousands
+        # of ids, past SQLite's bound-parameter ceiling. See
+        # utils/sql_utils.py.
+        from utils.sql_utils import select_in_chunks
+        owned_ids = set(await select_in_chunks(
+            db,
+            lambda chunk: select(Asset.id).where(and_(Asset.user_id == user.id, Asset.id.in_(chunk))),
+            req.asset_ids,
+        ))
         share.asset_ids = [aid for aid in req.asset_ids if aid in owned_ids]
         if not share.asset_ids:
             raise HTTPException(status_code=400, detail="Invalid share configuration")

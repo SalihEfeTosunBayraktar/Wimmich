@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import config
 from models import Asset
 from utils.path_utils import resolve_data_path
+from utils.sql_utils import select_in_chunks
 
 
 def _build_zip_sync(file_paths_and_names: List[tuple]) -> io.BytesIO:
@@ -27,10 +28,13 @@ async def build_zip_archive(db: AsyncSession, user_id: str, asset_ids: List[str]
     one owner - takes a bare user_id (not a User object) so a public share
     endpoint can pass the share owner's id without needing to load their
     User row at all."""
-    result = await db.execute(
-        select(Asset).where(and_(Asset.id.in_(asset_ids), Asset.user_id == user_id))
+    # Chunked IN() - a "download everything" selection sends every id at
+    # once, past SQLite's bound-parameter ceiling. See utils/sql_utils.py.
+    assets = await select_in_chunks(
+        db,
+        lambda chunk: select(Asset).where(and_(Asset.id.in_(chunk), Asset.user_id == user_id)),
+        asset_ids,
     )
-    assets = list(result.scalars().all())
 
     used_names = set()
     file_paths_and_names = []

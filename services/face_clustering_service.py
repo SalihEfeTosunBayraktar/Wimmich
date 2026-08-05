@@ -194,9 +194,14 @@ async def recluster_user_faces(db: AsyncSession, user_id: str) -> dict:
     unnamed_ids = [pid for (pid,) in (await db.execute(unnamed_stmt)).all()]
 
     if unnamed_ids:
-        await db.execute(
-            update(Face).where(Face.person_id.in_(unnamed_ids)).values(person_id=None)
-        )
+        # Chunked IN() - a big library can accumulate thousands of unnamed
+        # face groups, past SQLite's bound-parameter ceiling. See
+        # utils/sql_utils.py.
+        from utils.sql_utils import chunked
+        for chunk in chunked(unnamed_ids):
+            await db.execute(
+                update(Face).where(Face.person_id.in_(chunk)).values(person_id=None)
+            )
         for pid in unnamed_ids:
             person = (await db.execute(select(Person).where(Person.id == pid))).scalar_one_or_none()
             if person:

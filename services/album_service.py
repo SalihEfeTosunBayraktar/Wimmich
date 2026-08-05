@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User, Album, AlbumAsset, AlbumUser, Asset
 from utils.serializers import album_to_dict, asset_to_dict
+from utils.sql_utils import chunked, select_in_chunks
 
 
 async def _owned_asset_ids(db: AsyncSession, user_id: str, asset_ids: List[str]) -> List[str]:
@@ -22,10 +23,14 @@ async def _owned_asset_ids(db: AsyncSession, user_id: str, asset_ids: List[str])
     a plain filter callers can apply without changing their error shape."""
     if not asset_ids:
         return []
-    result = await db.execute(
-        select(Asset.id).where(and_(Asset.user_id == user_id, Asset.id.in_(asset_ids)))
-    )
-    owned = set(result.scalars().all())
+    # Chunked IN() - "add all search results to an album" can send
+    # thousands of ids, past SQLite's bound-parameter ceiling. See
+    # utils/sql_utils.py.
+    owned = set(await select_in_chunks(
+        db,
+        lambda chunk: select(Asset.id).where(and_(Asset.user_id == user_id, Asset.id.in_(chunk))),
+        asset_ids,
+    ))
     return [aid for aid in asset_ids if aid in owned]
 
 # Same acceptance bar search_smart() uses for its CLIP results - if a query
@@ -324,12 +329,14 @@ async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, ass
     # adding 100 photos to an album used to mean 100 extra round-trips.
     existing_ids = set()
     if owned_ids:
-        existing_result = await db.execute(
-            select(AlbumAsset.asset_id).where(
-                and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id.in_(owned_ids))
-            )
-        )
-        existing_ids = set(existing_result.scalars().all())
+        # Chunked for the same reason as _owned_asset_ids above.
+        existing_ids = set(await select_in_chunks(
+            db,
+            lambda chunk: select(AlbumAsset.asset_id).where(
+                and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id.in_(chunk))
+            ),
+            owned_ids,
+        ))
 
     added = 0
     for aid in owned_ids:
@@ -347,13 +354,16 @@ async def add_assets_to_album(db: AsyncSession, album_id: str, user_id: str, ass
 async def remove_assets_from_album(db: AsyncSession, album_id: str, user_id: str, asset_ids: List[str]) -> dict:
     await get_album_for_user(db, album_id, user_id, require_edit=True)
 
-    # Single bulk DELETE instead of one SELECT+DELETE pair per asset.
+    # Single bulk DELETE instead of one SELECT+DELETE pair per asset,
+    # chunked so a whole-album removal stays under SQLite's bound-parameter
+    # ceiling. See utils/sql_utils.py.
     from sqlalchemy import delete
-    await db.execute(
-        delete(AlbumAsset).where(
-            and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id.in_(asset_ids))
+    for chunk in chunked(asset_ids):
+        await db.execute(
+            delete(AlbumAsset).where(
+                and_(AlbumAsset.album_id == album_id, AlbumAsset.asset_id.in_(chunk))
+            )
         )
-    )
 
     await db.commit()
     return {"message": "Assets removed from album"}
