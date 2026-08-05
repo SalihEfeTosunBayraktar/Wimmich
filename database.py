@@ -11,6 +11,20 @@ engine = create_async_engine(
     # "database is locked" - critical now that background jobs run in their
     # own sessions concurrently with web-request sessions.
     connect_args={"check_same_thread": False, "timeout": 30},
+    # SQLAlchemy 2.0 rewrites a batch of INSERTs into ONE multi-row
+    # "VALUES (?,?,..),(?,?,..),.." statement, whose bound-parameter count
+    # is page_size * column_count. The default page size (1000) times the
+    # widest table here (assets, 38 columns) is ~38k parameters, far past
+    # SQLITE_MAX_VARIABLE_NUMBER - which is 999 on SQLite < 3.32, so this
+    # depends entirely on which SQLite the running Python happens to
+    # bundle. Reproduced directly: with the limit forced to 999, the
+    # SIMILARITY job's bulk insert fails with "too many SQL variables"
+    # while everything else about it is fine.
+    #
+    # 25 * 38 = 950 keeps even the widest table under the 999 floor. This
+    # is a global net for every bulk insert in the app, not just the one
+    # that surfaced the problem.
+    insertmanyvalues_page_size=25,
 )
 
 

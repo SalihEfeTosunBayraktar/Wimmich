@@ -7,15 +7,22 @@ Lower than duplicate_service's VISUAL_DUP_THRESHOLD (0.975) on purpose -
 that one gates actual deletion, so it stays strict; this one only ever
 surfaces a browsing suggestion, and the goal is casting a wide net for
 genuinely-related photos, not just near-duplicates."""
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, and_, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Asset, SimilarAsset, Job
+from models.common import generate_uuid, utcnow
 from services.job_core import check_job_cancelled
 from utils.sql_utils import chunked
 
 SIMILAR_THRESHOLD = 0.80
 SIMILAR_LIMIT = 24
+
+# similar_assets has 5 columns, so this stays well under SQLite's 999
+# bound-parameter floor (5 * 150 = 750) independently of the engine-wide
+# insertmanyvalues_page_size net in database.py - belt and braces for the
+# one insert that actually produced the reported failure.
+SIMILAR_INSERT_CHUNK = 150
 
 
 def _compute_similarity_map(items: list) -> dict:
@@ -89,9 +96,26 @@ async def handle_job_similarity(db: AsyncSession, job: Job):
     for chunk in chunked(asset_ids):
         await db.execute(delete(SimilarAsset).where(SimilarAsset.asset_id.in_(chunk)))
 
-    for asset_id, matches in similarity_map.items():
-        for similar_id, score in matches:
-            db.add(SimilarAsset(asset_id=asset_id, similar_asset_id=similar_id, score=score))
+    # Core bulk insert in explicit chunks rather than one ORM object per
+    # row: a library of N images produces up to N * SIMILAR_LIMIT rows
+    # (tens to hundreds of thousands), and db.add()-ing each one holds
+    # every single object in the session's identity map until the final
+    # commit. Committing per chunk also means a failure part-way through
+    # doesn't discard all the work before it.
+    rows = [
+        {
+            "id": generate_uuid(),
+            "asset_id": asset_id,
+            "similar_asset_id": similar_id,
+            "score": score,
+            "created_at": utcnow(),
+        }
+        for asset_id, matches in similarity_map.items()
+        for similar_id, score in matches
+    ]
+    for chunk in chunked(rows, SIMILAR_INSERT_CHUNK):
+        await db.execute(insert(SimilarAsset), chunk)
+        await db.commit()
 
     job.progress = 100
     await db.commit()
