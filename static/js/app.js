@@ -90,10 +90,11 @@ function playBrandTypewriter() {
     setTimeout(tick, 200);
 }
 
-// How many hearts one tap on Favourites drops, and how long the slowest of
-// them takes to fall out of view.
-const HEART_RAIN_COUNT = 14;
-const HEART_RAIN_MS = 1300;
+// Mini hearts per tap, and how long the one that becomes the icon takes to
+// settle. The throwaway ones are all done before it lands.
+const FAV_MINI_HEARTS = 5;
+const FAV_LAND_MS = 620;
+const FAV_RAIN_MS = 900;
 
 function _prefersReducedMotion() {
     return matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -115,37 +116,55 @@ function initGearSpin() {
     });
 }
 
-/** Hearts spilling out of the Favourites nav item. The item's own icon is
- *  untouched - these are separate throwaway nodes appended to <body>, both
- *  so the sidebar can't clip them and so nothing about the nav item's own
- *  layout or state depends on an animation. */
+/** Tiny hearts falling INSIDE the Favourites icon - clipped to its own 20px
+ *  box, so nothing spills into the nav row - with the last one growing into
+ *  the icon itself as it lands. The real icon is only hidden while that is
+ *  in flight and comes back underneath the lander's final frame, which is
+ *  the same heart at the same size and position, so the swap is invisible. */
 function initHeartRain() {
     const nav = $('nav-favorites');
-    if (!nav) return;
-    nav.addEventListener('click', () => {
-        if (_prefersReducedMotion()) return;
-        const box = nav.getBoundingClientRect();
-        const layer = document.createElement('div');
-        layer.className = 'heart-rain';
-        layer.setAttribute('aria-hidden', 'true');   // decoration, not content
+    const mainIcon = nav?.querySelector('svg');
+    if (!nav || !mainIcon) return;
 
-        for (let i = 0; i < HEART_RAIN_COUNT; i++) {
-            const heart = document.createElement('span');
-            heart.className = 'heart-rain-drop';
-            heart.innerHTML = icon('heart', 12 + Math.round(Math.random() * 8));
-            heart.style.left = (box.left + Math.random() * box.width) + 'px';
-            heart.style.top = (box.top + box.height / 2) + 'px';
-            heart.style.setProperty('--drift', (Math.random() * 60 - 30).toFixed(1) + 'px');
-            heart.style.setProperty('--spin', (Math.random() * 120 - 60).toFixed(1) + 'deg');
-            heart.style.animationDelay = (Math.random() * 260).toFixed(0) + 'ms';
-            heart.style.animationDuration = (HEART_RAIN_MS * (0.7 + Math.random() * 0.5)).toFixed(0) + 'ms';
-            layer.appendChild(heart);
+    // Wrap the existing icon rather than editing index.html: the slot is
+    // what gives the animation a positioning context and something to clip
+    // against, and no other nav item needs one.
+    const slot = document.createElement('span');
+    slot.className = 'fav-icon-slot';
+    mainIcon.replaceWith(slot);
+    mainIcon.classList.add('fav-icon-main');
+    slot.appendChild(mainIcon);
+
+    let running = false;
+    nav.addEventListener('click', () => {
+        if (running || _prefersReducedMotion()) return;
+        running = true;
+        slot.classList.add('is-raining');
+
+        const spawned = [];
+        for (let i = 0; i < FAV_MINI_HEARTS; i++) {
+            const mini = document.createElement('span');
+            mini.className = 'fav-heart-mini';
+            mini.innerHTML = icon('heart', 5 + Math.round(Math.random() * 3));
+            mini.style.left = (10 + Math.random() * 70).toFixed(0) + '%';
+            mini.style.animationDelay = (i * 70 + Math.random() * 60).toFixed(0) + 'ms';
+            mini.style.animationDuration = (420 + Math.random() * 220).toFixed(0) + 'ms';
+            slot.appendChild(mini);
+            spawned.push(mini);
         }
 
-        document.body.appendChild(layer);
-        // Longest possible delay + longest possible duration, so nothing is
-        // cut off mid-fall and no layer is ever left behind in the DOM.
-        setTimeout(() => layer.remove(), HEART_RAIN_MS * 1.2 + 300);
+        const lander = document.createElement('span');
+        lander.className = 'fav-heart-land';
+        lander.innerHTML = icon('heart', 20);
+        lander.style.animationDelay = (FAV_RAIN_MS - FAV_LAND_MS) + 'ms';
+        slot.appendChild(lander);
+        spawned.push(lander);
+
+        setTimeout(() => {
+            slot.classList.remove('is-raining');
+            spawned.forEach(el => el.remove());
+            running = false;
+        }, FAV_RAIN_MS);
     });
 }
 
