@@ -178,3 +178,57 @@
 .job-card-cancel-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--danger); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .job-card-cancel-btn:hover { background: rgba(239, 68, 68, 0.2); }
 
+
+/* ─── Admin panel density ───────────────────────────────────
+   .admin-grid had no rule at all, so every card stretched to the full
+   panel width in a single column - a handful of short settings turned
+   into a very tall page of half-empty boxes. Cards now flow into as many
+   columns as fit, which is what makes the page scannable rather than a
+   scroll. */
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: var(--space-md);
+    align-items: start;
+}
+
+/* Tighter than the generic card padding: these hold 2-4 short controls,
+   not article content. */
+.admin-status-card {
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+    gap: 8px;
+}
+
+.admin-status-card h4 {
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+/* Hints were reading as body copy and driving most of the wasted height. */
+.admin-status-card .admin-field-hint {
+    font-size: 0.76rem;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* A full-width button implies "primary action for this whole page", which
+   none of these are - size them to their label and let them sit inline. */
+.admin-status-card .btn {
+    align-self: flex-start;
+    width: auto;
+}
+
+.admin-status-card .admin-field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Selects were stretching to the column width for two-word options. */
+.admin-status-card select,
+.admin-status-card input[type="number"] {
+    width: auto;
+    min-width: 140px;
+}
