@@ -796,8 +796,8 @@ async function renderAdmin() {
                 <div class="admin-dash-col">
                     <div class="admin-status-card admin-dash-head">
                         <div class="admin-dash-facts">
-                            ${_dashFact('library', t('admin_render.stat_photos'), stats.photos, 'stat-photos')}
-                            ${_dashFact('library', t('admin_render.stat_videos'), stats.videos, 'stat-videos')}
+                            ${_dashFact('import', t('admin_render.stat_photos'), stats.photos, 'stat-photos')}
+                            ${_dashFact('import', t('admin_render.stat_videos'), stats.videos, 'stat-videos')}
                             ${_dashFact('storage', t('admin_render.stat_total_size'), formatSize(stats.total_size), 'stat-total-size')}
                             ${_dashFact('content', t('admin_render.stat_albums'), stats.albums, 'stat-albums')}
                             ${_dashFact('content', t('admin_render.stat_people'), stats.people, 'stat-people')}
@@ -810,9 +810,15 @@ async function renderAdmin() {
                         </div>
 
                         <div class="admin-dash-server">
-                            <div class="admin-dash-server-title">${icon('radio', 14)} ${t('admin_render.server_status_heading')}</div>
+                            <button type="button" class="admin-dash-server-title dash-fact" data-dash="performance"
+                                    aria-expanded="false" aria-controls="admin-dash-detail"
+                                    onclick="toggleDashDetail('performance')">
+                                ${icon('radio', 14)} ${t('admin_render.server_status_heading')}
+                            </button>
                             <div class="admin-dash-server-lines">
-                                <span class="badge" id="server-ping-badge">${t('admin_render.ping_checking')}</span>
+                                <button type="button" class="badge dash-fact" id="server-ping-badge" data-dash="network"
+                                        aria-expanded="false" aria-controls="admin-dash-detail"
+                                        onclick="toggleDashDetail('network')">${t('admin_render.ping_checking')}</button>
                                 <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
                                 <span class="badge ${stats.ml.face_detection_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_face_detection', { status: stats.ml.face_detection_available ? t('admin_render.status_active_opencv') : t('admin_render.status_unavailable') })}</span>
                                 <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
@@ -832,15 +838,6 @@ async function renderAdmin() {
                             ${_dashJobsLine(stats.jobs)}
                         </div>
 
-                        <div class="admin-dash-tools">
-                            ${_dashTool('users', icon('users', 14), t('admin_render.tab_users'))}
-                            ${_dashTool('storage', icon('folder', 14), t('admin_render.tab_storage_backup'))}
-                            ${_dashTool('import', icon('upload', 14), t('admin_render.tab_import'))}
-                            ${_dashTool('network', icon('globe', 14), t('admin_render.tab_network_system'))}
-                            ${_dashTool('performance', icon('brain', 14), t('admin_render.tab_performance'))}
-                            ${_dashTool('system', icon('settings', 14), t('admin_render.tab_system'))}
-                        </div>
-
                         ${(!stats.ml.ocr_available || !stats.ml.person_clustering_available || stats.storage_warning.disk_warning || stats.storage_warning.quota_warning) ? `
                             <div class="admin-dash-notes">
                                 ${!stats.ml.ocr_available ? `<p class="text-muted admin-field-hint">${t('admin_render.ocr_unavailable_hint')}</p>` : ''}
@@ -854,7 +851,11 @@ async function renderAdmin() {
                 </div>
 
                 <div class="admin-status-card admin-dash-about">
-                    <h4>${icon('rocket', 16)} ${t('admin_dash.about_heading')}</h4>
+                    <button type="button" class="admin-dash-about-heading dash-fact" data-dash="system"
+                            aria-expanded="false" aria-controls="admin-dash-detail"
+                            onclick="toggleDashDetail('system')">
+                        ${icon('rocket', 16)} ${t('admin_dash.about_heading')}
+                    </button>
                     <div class="admin-dash-version">
                         <span class="admin-dash-version-label">${t('admin_dash.version_label')}</span>
                         <span class="admin-dash-version-value">${versionInfo.full_version || t('admin_dash.version_unknown')}</span>
@@ -1093,11 +1094,19 @@ async function refreshServerPing() {
         await API.getHealth();
         const ms = Math.round(performance.now() - start);
         badge.textContent = t('admin_render.ping_label', { ms });
-        badge.className = 'badge ' + (ms < 150 ? 'badge-success' : ms < 500 ? 'badge-warning' : 'badge-danger');
+        _setPingTone(badge, ms < 150 ? 'badge-success' : ms < 500 ? 'badge-warning' : 'badge-danger');
     } catch (e) {
         badge.textContent = t('admin_render.ping_offline');
-        badge.className = 'badge badge-danger';
+        _setPingTone(badge, 'badge-danger');
     }
+}
+
+// Swaps only the colour class. This badge doubles as the Network drill-down
+// trigger, so the old blanket `className = 'badge ...'` would have stripped
+// .dash-fact (and its open state) off it on the very first ping.
+function _setPingTone(badge, tone) {
+    badge.classList.remove('badge-success', 'badge-warning', 'badge-danger');
+    badge.classList.add(tone);
 }
 
 // Updates just the 6 dashboard stat-card values in place (not a full
@@ -1224,15 +1233,6 @@ const DASH_PANELS = {
     performance: { title: 'admin_render.tab_performance' },
     system: { title: 'admin_render.tab_system' },
 };
-
-function _dashTool(key, iconHtml, label) {
-    return `
-        <button type="button" class="dash-fact dash-tool" data-dash="${key}"
-                aria-expanded="false" aria-controls="admin-dash-detail"
-                onclick="toggleDashDetail('${key}')">
-            ${iconHtml}<span>${label}</span>
-        </button>`;
-}
 
 /** Put a moved panel back in the store so the drill-down can be emptied
  *  without destroying it. */
