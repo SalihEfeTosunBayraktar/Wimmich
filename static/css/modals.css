@@ -265,7 +265,12 @@ kbd {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 500;
+    /* A modal is the topmost interactive surface short of toasts (3000) and
+       info tooltips (2500), so it has to clear the mobile sidebar (1000),
+       the viewer sidebar (1002), the floating bars (1500) and Leaflet's
+       control panes. At its old 500 it lost to all of them - the map's zoom
+       buttons and attribution kept drawing over an open modal. */
+    z-index: 2000;
     animation: fadeIn 0.2s ease;
 }
 

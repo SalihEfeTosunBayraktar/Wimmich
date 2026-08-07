@@ -358,7 +358,13 @@ async function deleteCurrentViewerAsset() {
 
 function closeViewer() {
     stopSlideshow();
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    // Only give up fullscreen if it was THIS overlay's. The app-wide toggle
+    // fullscreens document.documentElement, and closing a preview opened
+    // from inside it used to drop that too - so a quick look at a photo
+    // kicked you out of fullscreen entirely.
+    if (document.fullscreenElement === $('viewer-overlay')) {
+        document.exitFullscreen().catch(() => {});
+    }
     $('viewer-overlay').classList.add('hidden');
     $('viewer-sidebar').classList.add('hidden');
     $('viewer-more-menu').classList.add('hidden');
@@ -399,7 +405,10 @@ let _slideshowTimer = null;
 // a video-specific webkitEnterFullscreen()), so this silently no-ops there
 // rather than pretending to support it; every other target platform works.
 function toggleFullscreen() {
-    if (document.fullscreenElement) {
+    // Compared against the overlay rather than just truthiness so that
+    // pressing this while the app-wide toggle already has documentElement
+    // fullscreen promotes the overlay instead of exiting outright.
+    if (document.fullscreenElement === $('viewer-overlay')) {
         document.exitFullscreen().catch(() => {});
     } else {
         $('viewer-overlay').requestFullscreen?.().catch(() => {});
@@ -409,7 +418,7 @@ function toggleFullscreen() {
 function _updateFullscreenButton() {
     const btn = $('viewer-fullscreen');
     if (!btn) return;
-    const active = !!document.fullscreenElement;
+    const active = document.fullscreenElement === $('viewer-overlay');
     btn.classList.toggle('active', active);
     btn.title = active ? t('viewer.fullscreen_exit') : t('viewer.fullscreen_enter');
 }

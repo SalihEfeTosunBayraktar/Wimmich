@@ -97,15 +97,12 @@ registerTranslations({
         'admin_dash.jobs_completed': 'done',
         'admin_dash.detail_library': 'Library',
         'admin_dash.detail_content': 'Content',
-        'admin_dash.detail_users': 'Users',
         'admin_dash.total_assets': 'Total items',
         'admin_dash.disk_free': 'Free disk space',
         'admin_dash.quota': 'Storage limit',
         'admin_dash.shared_links': 'Share links',
         'admin_dash.jobs_failed': 'Failed',
-        'admin_dash.goto_users': 'Open user management',
         'admin_dash.goto_people': 'Open People page',
-        'admin_dash.goto_storage': 'Open storage settings',
         'admin_dash.close': 'Close',
         'admin_dash.no_limit': 'No limit set',
         'admin_render.ping_checking': 'Checking...',
@@ -294,15 +291,12 @@ registerTranslations({
         'admin_dash.jobs_completed': 'tamamlanan',
         'admin_dash.detail_library': 'Kitaplık',
         'admin_dash.detail_content': 'İçerik',
-        'admin_dash.detail_users': 'Kullanıcılar',
         'admin_dash.total_assets': 'Toplam öğe',
         'admin_dash.disk_free': 'Boş disk alanı',
         'admin_dash.quota': 'Depolama sınırı',
         'admin_dash.shared_links': 'Paylaşım bağlantıları',
         'admin_dash.jobs_failed': 'Başarısız',
-        'admin_dash.goto_users': 'Kullanıcı yönetimini aç',
         'admin_dash.goto_people': 'Kişiler sayfasını aç',
-        'admin_dash.goto_storage': 'Depolama ayarlarını aç',
         'admin_dash.close': 'Kapat',
         'admin_dash.no_limit': 'Sınır belirlenmemiş',
         'admin_render.ping_checking': 'Kontrol ediliyor...',
@@ -491,15 +485,12 @@ registerTranslations({
         'admin_dash.jobs_completed': "terminées",
         'admin_dash.detail_library': "Bibliothèque",
         'admin_dash.detail_content': "Contenu",
-        'admin_dash.detail_users': "Utilisateurs",
         'admin_dash.total_assets': "Éléments au total",
         'admin_dash.disk_free': "Espace disque libre",
         'admin_dash.quota': "Limite de stockage",
         'admin_dash.shared_links': "Liens de partage",
         'admin_dash.jobs_failed': "Échouées",
-        'admin_dash.goto_users': "Ouvrir la gestion des utilisateurs",
         'admin_dash.goto_people': "Ouvrir la page Personnes",
-        'admin_dash.goto_storage': "Ouvrir les paramètres de stockage",
         'admin_dash.close': "Fermer",
         'admin_dash.no_limit': "Aucune limite définie",
         'admin_render.ping_checking': 'Vérification...',
@@ -669,15 +660,12 @@ registerTranslations({
         'admin_dash.jobs_completed': 'erledigt',
         'admin_dash.detail_library': 'Bibliothek',
         'admin_dash.detail_content': 'Inhalt',
-        'admin_dash.detail_users': 'Benutzer',
         'admin_dash.total_assets': 'Elemente insgesamt',
         'admin_dash.disk_free': 'Freier Speicherplatz',
         'admin_dash.quota': 'Speicherlimit',
         'admin_dash.shared_links': 'Freigabelinks',
         'admin_dash.jobs_failed': 'Fehlgeschlagen',
-        'admin_dash.goto_users': 'Benutzerverwaltung öffnen',
         'admin_dash.goto_people': 'Personen-Seite öffnen',
-        'admin_dash.goto_storage': 'Speichereinstellungen öffnen',
         'admin_dash.close': 'Schließen',
         'admin_dash.no_limit': 'Kein Limit gesetzt',
         'admin_render.ping_checking': 'Wird geprüft...',
@@ -810,10 +798,14 @@ async function renderAdmin() {
                         <div class="admin-dash-facts">
                             ${_dashFact('library', t('admin_render.stat_photos'), stats.photos, 'stat-photos')}
                             ${_dashFact('library', t('admin_render.stat_videos'), stats.videos, 'stat-videos')}
-                            ${_dashFact('library', t('admin_render.stat_total_size'), formatSize(stats.total_size), 'stat-total-size')}
+                            ${_dashFact('storage', t('admin_render.stat_total_size'), formatSize(stats.total_size), 'stat-total-size')}
                             ${_dashFact('content', t('admin_render.stat_albums'), stats.albums, 'stat-albums')}
                             ${_dashFact('content', t('admin_render.stat_people'), stats.people, 'stat-people')}
                             ${_dashFact('users', t('admin_render.stat_users'), stats.users, 'stat-users')}
+                            <!-- Each figure leads to the panel that actually
+                                 acts on it: total size opens Storage & Backup,
+                                 the user count opens user management. -->
+
                             <p class="admin-dash-hint">${t('admin_dash.click_hint')}</p>
                         </div>
 
@@ -838,6 +830,15 @@ async function renderAdmin() {
 
                         <div class="admin-dash-jobsline">
                             ${_dashJobsLine(stats.jobs)}
+                        </div>
+
+                        <div class="admin-dash-tools">
+                            ${_dashTool('users', icon('users', 14), t('admin_render.tab_users'))}
+                            ${_dashTool('storage', icon('folder', 14), t('admin_render.tab_storage_backup'))}
+                            ${_dashTool('import', icon('upload', 14), t('admin_render.tab_import'))}
+                            ${_dashTool('network', icon('globe', 14), t('admin_render.tab_network_system'))}
+                            ${_dashTool('performance', icon('brain', 14), t('admin_render.tab_performance'))}
+                            ${_dashTool('system', icon('settings', 14), t('admin_render.tab_system'))}
                         </div>
 
                         ${(!stats.ml.ocr_available || !stats.ml.person_clustering_available || stats.storage_warning.disk_warning || stats.storage_warning.quota_warning) ? `
@@ -867,17 +868,11 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div class="admin-tabs">
-                <button class="admin-tab-btn ${activeAdminTab === 'users' ? 'active' : ''}" data-tab="users" onclick="switchAdminTab('users')">${icon('users')} ${t('admin_render.tab_users')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'storage' ? 'active' : ''}" data-tab="storage" onclick="switchAdminTab('storage')">${icon('folder')} ${t('admin_render.tab_storage_backup')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'import' ? 'active' : ''}" data-tab="import" onclick="switchAdminTab('import')">${icon('upload')} ${t('admin_render.tab_import')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'network' ? 'active' : ''}" data-tab="network" onclick="switchAdminTab('network')">${icon('globe')} ${t('admin_render.tab_network_system')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'performance' ? 'active' : ''}" data-tab="performance" onclick="switchAdminTab('performance')">${icon('brain')} ${t('admin_render.tab_performance')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">${icon('settings')} ${t('admin_render.tab_system')}</button>
-            </div>
-
-
-            <div id="admin-tab-users" class="admin-tab-panel" ${activeAdminTab === 'users' ? '' : 'hidden'}>
+            <!-- Panels live here until a header button pulls one into the
+                 drill-down slot; moving the node (rather than copying its
+                 HTML) keeps every id unique and every handler attached. -->
+            <div id="admin-panel-store" hidden>
+            <div id="admin-tab-users" class="admin-tab-panel">
                 <div class="admin-section">
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <h3 style="display:flex;align-items:center;gap:6px">${icon('users', 18)} ${t('admin_render.stat_users')} ${infoBtn(t('admin_users.priority_info_hint'))}</h3>
@@ -887,7 +882,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-storage" class="admin-tab-panel" ${activeAdminTab === 'storage' ? '' : 'hidden'}>
+            <div id="admin-tab-storage" class="admin-tab-panel">
                 <div class="admin-row">
                     <div class="admin-status-card">
                         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -962,7 +957,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-import" class="admin-tab-panel" ${activeAdminTab === 'import' ? '' : 'hidden'}>
+            <div id="admin-tab-import" class="admin-tab-panel">
                 <div class="admin-row">
                     <div class="admin-status-card">
                         <h4>${icon('folder', 16)} ${t('admin_render.folder_import_heading')}</h4>
@@ -995,7 +990,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-network" class="admin-tab-panel" ${activeAdminTab === 'network' ? '' : 'hidden'}>
+            <div id="admin-tab-network" class="admin-tab-panel">
                 <div class="admin-status-matrix">
                     <div class="admin-status-card">
                         <h4>${icon('home', 16)} ${t('admin_render.lan_access_heading')} ${infoBtn(t('admin_render.lan_access_info_hint'))}</h4>
@@ -1021,7 +1016,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-performance" class="admin-tab-panel" ${activeAdminTab === 'performance' ? '' : 'hidden'}>
+            <div id="admin-tab-performance" class="admin-tab-panel">
                 <div class="admin-grid">
                     <div class="admin-status-card">
                         <h4>${icon('brain', 16)} ${t('admin_render.perf_heading')} ${infoBtn(t('admin_render.perf_info_hint'))}</h4>
@@ -1036,7 +1031,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
+            <div id="admin-tab-system" class="admin-tab-panel">
                 <div class="admin-grid">
                     <div class="admin-status-card">
                         <h4>${icon('film', 16)} ${t('admin_render.memvid_heading')} ${infoBtn(t('admin_render.memvid_info_hint'))}</h4>
@@ -1060,10 +1055,8 @@ async function renderAdmin() {
                     </div>
                 </div>
             </div>
+            </div>
         `;
-
-        if (!resumeScanIfActive()) browsePath('');
-        resumeImportProgressIfActive();
 
         pollAdminJobs();
         if (!adminPollInterval) {
@@ -1209,6 +1202,47 @@ function _dashJobsPanelHtml(s, jc) {
     `;
 }
 
+// The six panels that used to be tabs. Each is a real node parked in
+// #admin-panel-store; opening one moves it into the drill-down and closing
+// moves it back, so ids stay unique and nothing has to be re-rendered or
+// re-wired. `onOpen` runs after the move for panels that need to kick off
+// their own loading.
+const DASH_PANELS = {
+    users: { title: 'admin_render.tab_users' },
+    storage: { title: 'admin_render.tab_storage_backup' },
+    import: {
+        title: 'admin_render.tab_import',
+        // The file browser starts empty and only fills in on demand, so it
+        // has to be told to load the first listing - and an import already
+        // running has to be re-attached to rather than restarted.
+        onOpen: () => {
+            if (!resumeScanIfActive()) browsePath('');
+            resumeImportProgressIfActive();
+        },
+    },
+    network: { title: 'admin_render.tab_network_system' },
+    performance: { title: 'admin_render.tab_performance' },
+    system: { title: 'admin_render.tab_system' },
+};
+
+function _dashTool(key, iconHtml, label) {
+    return `
+        <button type="button" class="dash-fact dash-tool" data-dash="${key}"
+                aria-expanded="false" aria-controls="admin-dash-detail"
+                onclick="toggleDashDetail('${key}')">
+            ${iconHtml}<span>${label}</span>
+        </button>`;
+}
+
+/** Put a moved panel back in the store so the drill-down can be emptied
+ *  without destroying it. */
+function _stashOpenPanel() {
+    const store = $('admin-panel-store');
+    const panel = $('admin-dash-detail');
+    if (!store || !panel) return;
+    panel.querySelectorAll('.admin-tab-panel').forEach(el => store.appendChild(el));
+}
+
 function _dashRow(label, value) {
     return `<div class="dash-detail-row"><span>${label}</span><span class="dash-detail-value">${value}</span></div>`;
 }
@@ -1234,7 +1268,6 @@ function _dashDetailContent(key) {
                     ? (sw.total_storage_limit_mb / 1024).toFixed(1) + ' GB'
                     : t('admin_dash.no_limit')),
             ].join(''),
-            action: { label: t('admin_dash.goto_storage'), fn: "switchAdminTab('storage')" },
         };
     }
     if (key === 'content') {
@@ -1248,12 +1281,8 @@ function _dashDetailContent(key) {
             action: { label: t('admin_dash.goto_people'), fn: "navigateTo('people')" },
         };
     }
-    if (key === 'users') {
-        return {
-            title: t('admin_dash.detail_users'),
-            body: _dashRow(t('admin_render.stat_users'), s.users),
-            action: { label: t('admin_dash.goto_users'), fn: "switchAdminTab('users')" },
-        };
+    if (DASH_PANELS[key]) {
+        return { title: t(DASH_PANELS[key].title), node: key, live: true };
     }
     if (key === 'jobs') {
         if (!_adminJobConcurrency) return null;
@@ -1279,6 +1308,7 @@ function _paintDashDetail({ isRefresh = false } = {}) {
     // A `live` panel renders once and then updates itself in place; only the
     // static row lists get redrawn from a stats tick.
     if (isRefresh && content.live) return;
+    _stashOpenPanel();
     panel.innerHTML = `
         <div class="dash-detail-head">
             <h4>${content.title}</h4>
@@ -1287,11 +1317,16 @@ function _paintDashDetail({ isRefresh = false } = {}) {
                 ${icon('close', 14)}
             </button>
         </div>
-        <div class="dash-detail-body">${content.body}</div>
+        ${content.node ? '' : `<div class="dash-detail-body">${content.body}</div>`}
         ${content.action ? `
             <button class="btn btn-secondary btn-sm" onclick="${content.action.fn}">${content.action.label}</button>
         ` : ''}
     `;
+    if (content.node) {
+        const stored = $(`admin-tab-${content.node}`);
+        if (stored) panel.appendChild(stored);
+        DASH_PANELS[content.node].onOpen?.();
+    }
 }
 
 function _syncDashPressedState() {
@@ -1309,6 +1344,7 @@ function toggleDashDetail(key) {
     const panel = $('admin-dash-detail');
     if (!panel) return;
     if (!_openDashDetail) {
+        _stashOpenPanel();
         panel.hidden = true;
         panel.innerHTML = '';
     } else {
@@ -1379,20 +1415,7 @@ function _setStatValue(id, value) {
     el.classList.add('stat-value-updated');
 }
 
-// Users, not the old 'overview' - that tab was removed once the jobs
-// panel moved into the dashboard drill-down, leaving nothing behind it.
-let activeAdminTab = 'users';
 let auditLogLimit = 20;
-
-function switchAdminTab(tabName) {
-    activeAdminTab = tabName;
-    document.querySelectorAll('.admin-tab-panel').forEach(el => {
-        el.hidden = el.id !== `admin-tab-${tabName}`;
-    });
-    document.querySelectorAll('.admin-tab-btn').forEach(el => {
-        el.classList.toggle('active', el.dataset.tab === tabName);
-    });
-}
 
 // Copy buttons here carry their text in a data-copy-text attribute rather
 // than an inline onclick string - the firewall fix command contains its own
