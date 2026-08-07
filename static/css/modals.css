@@ -461,12 +461,14 @@ kbd {
 
 /* App-wide fullscreen toggle: floating in a corner (not dead-center, so it
    never sits over photo content) and present on every page, not just inside
-   the photo viewer's own toolbar. Bottom-left, since bottom-right is already
-   used by the upload-mini pill. */
+   the photo viewer's own toolbar. Bottom-right per request; the
+   upload-mini pill also lives in that corner but only while an upload is
+   actually in flight, so this sits one row above it rather than beside it
+   and the two never overlap. */
 .app-fullscreen-btn {
     position: fixed;
-    left: var(--space-lg);
-    bottom: var(--space-lg);
+    right: var(--space-lg);
+    bottom: calc(var(--space-lg) + 52px);
     z-index: 900;
     display: flex;
     align-items: center;

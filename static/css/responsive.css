@@ -13,7 +13,7 @@
     .sidebar.open { transform: translateX(0); }
     .sidebar-toggle { display: flex; }
 
-    /* App-wide fullscreen toggle: fixed bottom-left with a high z-index
+    /* App-wide fullscreen toggle: fixed bottom-right with a high z-index
        (900, see modals.css) so it stays clickable over ordinary page
        content - but at mobile widths that same corner is also where the
        off-canvas sidebar's own footer (avatar/settings/logout) and the
