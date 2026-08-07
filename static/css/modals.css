@@ -497,3 +497,42 @@ kbd {
 .upload-mini svg { opacity: 0.6; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+
+/* ─── Collapsible settings sections ─────────────────────────
+   Sessions / API keys / password sat permanently expanded, so the profile
+   modal opened as one long scroll of things most visits never touch.
+   <details> gives the open/closed behaviour natively (keyboard and screen
+   readers included) - this only styles it. */
+.collapse-group > .collapse-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+    padding: 4px 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    user-select: none;
+}
+.collapse-group > .collapse-summary::-webkit-details-marker { display: none; }
+.collapse-group > .collapse-summary:hover { color: var(--text-primary); }
+.collapse-group > .collapse-summary:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Points right when closed, rotates a quarter turn to point down when
+   open - the rotation is what ties the two states together. */
+.collapse-chevron {
+    flex: none;
+    transition: transform 180ms ease;
+}
+.collapse-group[open] > .collapse-summary .collapse-chevron {
+    transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+    .collapse-chevron { transition: none; }
+}
