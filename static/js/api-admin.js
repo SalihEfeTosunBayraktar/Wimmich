@@ -28,6 +28,8 @@ Object.assign(API, {
     getAuditLog(page = 1, perPage = 20) { return this.request(`/api/admin/audit-log?page=${page}&per_page=${perPage}`); },
     getNetworkStatus() { return this.request('/api/admin/network-status'); },
     setLanAccessEnabled(enabled) { return this.request('/api/admin/network/lan-access', { method: 'PUT', body: { enabled } }); },
+    getPerformance() { return this.request('/api/admin/performance'); },
+    setPerformance(body) { return this.request('/api/admin/performance', { method: 'PUT', body }); },
     getGpuIdleUnload() { return this.request('/api/admin/gpu-idle-unload'); },
     setGpuIdleUnload(enabled, minutes) {
         return this.request('/api/admin/gpu-idle-unload', { method: 'PUT', body: { enabled, minutes } });

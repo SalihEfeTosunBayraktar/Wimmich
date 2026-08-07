@@ -162,7 +162,19 @@ registerTranslations({
         'admin_render.tab_users': 'Users',
         'admin_render.tab_storage_backup': 'Storage & Backup',
         'admin_render.tab_import': 'Import',
-        'admin_render.tab_network_system': 'Network & System',
+        'admin_render.tab_network_system': 'Network',
+        'admin_render.tab_performance': 'Performance',
+        'admin_render.tab_system': 'System',
+        'admin_render.perf_heading': 'Job CPU usage',
+        'admin_render.perf_info_hint': 'Background jobs share this machine with the web server. Without a limit a transcode takes every core and the whole app crawls until it finishes. Lower priority lets jobs use idle cores while instantly giving CPU back when a request arrives.',
+        'admin_render.perf_profile_label': 'Profile',
+        'admin_render.perf_recommend_prefix': 'Recommended for this machine',
+        'admin_render.perf_apply_recommend_btn': 'Apply recommendation',
+        'admin_render.perf_low_priority_label': 'Run jobs at lower priority',
+        'admin_render.perf_threads_label': 'Max cores per job',
+        'admin_render.perf_cores_suffix': 'of {total} cores',
+        'admin_render.perf_saved_toast': 'Performance settings saved',
+        'admin_render.perf_running_note': 'Applies to the next job step - a job already running keeps the settings it started with.',
         'admin_render.jobs_status_card_heading': 'Jobs',
     },
     tr: {
@@ -325,7 +337,19 @@ registerTranslations({
         'admin_render.tab_users': 'Kullanıcılar',
         'admin_render.tab_storage_backup': 'Depolama & Yedekleme',
         'admin_render.tab_import': 'İçe Aktarma',
-        'admin_render.tab_network_system': 'Ağ & Sistem',
+        'admin_render.tab_network_system': 'Ağ',
+        'admin_render.tab_performance': 'Performans',
+        'admin_render.tab_system': 'Sistem',
+        'admin_render.perf_heading': 'İşlerin CPU kullanımı',
+        'admin_render.perf_info_hint': 'Arka plan işleri bu makineyi web sunucusuyla paylaşıyor. Sınır olmadan bir video dönüştürme tüm çekirdekleri alıyor ve bitene kadar uygulama sürünüyor. Düşük öncelik, işlerin boş çekirdekleri kullanmasına izin verirken bir istek geldiği anda CPU gücünü hemen ona geri veriyor.',
+        'admin_render.perf_profile_label': 'Profil',
+        'admin_render.perf_recommend_prefix': 'Bu makine için önerilen',
+        'admin_render.perf_apply_recommend_btn': 'Öneriyi uygula',
+        'admin_render.perf_low_priority_label': 'İşleri düşük öncelikle çalıştır',
+        'admin_render.perf_threads_label': 'İş başına en fazla çekirdek',
+        'admin_render.perf_cores_suffix': '/ {total} çekirdek',
+        'admin_render.perf_saved_toast': 'Performans ayarları kaydedildi',
+        'admin_render.perf_running_note': 'Bir sonraki iş adımında geçerli olur - halihazırda çalışan bir iş başladığı ayarlarla devam eder.',
         'admin_render.jobs_status_card_heading': 'İşler',
     },
     fr: {
@@ -488,7 +512,19 @@ registerTranslations({
         'admin_render.tab_users': 'Utilisateurs',
         'admin_render.tab_storage_backup': 'Stockage & Sauvegarde',
         'admin_render.tab_import': 'Importation',
-        'admin_render.tab_network_system': 'Réseau & Système',
+        'admin_render.tab_network_system': 'Réseau',
+        'admin_render.tab_performance': 'Performance',
+        'admin_render.tab_system': 'Système',
+        'admin_render.perf_heading': 'Utilisation CPU des tâches',
+        "admin_render.perf_info_hint": "Les tâches de fond partagent cette machine avec le serveur web. Sans limite, un transcodage prend tous les cœurs et toute l'application rame jusqu'à la fin.",
+        'admin_render.perf_profile_label': 'Profil',
+        'admin_render.perf_recommend_prefix': 'Recommandé pour cette machine',
+        'admin_render.perf_apply_recommend_btn': 'Appliquer la recommandation',
+        'admin_render.perf_low_priority_label': 'Exécuter les tâches en priorité basse',
+        'admin_render.perf_threads_label': 'Cœurs max par tâche',
+        'admin_render.perf_cores_suffix': 'sur {total} cœurs',
+        'admin_render.perf_saved_toast': 'Réglages de performance enregistrés',
+        "admin_render.perf_running_note": "S'applique à la prochaine étape - une tâche en cours garde ses réglages de départ.",
         'admin_render.jobs_status_card_heading': 'Tâches',
     },
     de: {
@@ -632,7 +668,19 @@ registerTranslations({
         'admin_render.tab_users': 'Benutzer',
         'admin_render.tab_storage_backup': 'Speicher & Sicherung',
         'admin_render.tab_import': 'Import',
-        'admin_render.tab_network_system': 'Netzwerk & System',
+        'admin_render.tab_network_system': 'Netzwerk',
+        'admin_render.tab_performance': 'Leistung',
+        'admin_render.tab_system': 'System',
+        'admin_render.perf_heading': 'CPU-Nutzung der Jobs',
+        'admin_render.perf_info_hint': 'Hintergrund-Jobs teilen sich diese Maschine mit dem Webserver. Ohne Limit belegt ein Transkodieren alle Kerne und die ganze App kriecht, bis es fertig ist.',
+        'admin_render.perf_profile_label': 'Profil',
+        'admin_render.perf_recommend_prefix': 'Empfohlen für diese Maschine',
+        'admin_render.perf_apply_recommend_btn': 'Empfehlung übernehmen',
+        'admin_render.perf_low_priority_label': 'Jobs mit niedriger Priorität ausführen',
+        'admin_render.perf_threads_label': 'Max. Kerne pro Job',
+        'admin_render.perf_cores_suffix': 'von {total} Kernen',
+        'admin_render.perf_saved_toast': 'Leistungseinstellungen gespeichert',
+        'admin_render.perf_running_note': 'Gilt ab dem nächsten Job-Schritt - ein laufender Job behält seine Startwerte.',
         'admin_render.jobs_status_card_heading': 'Aufgaben',
     },
 });
@@ -642,7 +690,7 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, gpuIdleUnload, memvidSettings, memvidStyles, memvidFormats] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, performance, gpuIdleUnload, memvidSettings, memvidStyles, memvidFormats] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
@@ -653,6 +701,7 @@ async function renderAdmin() {
             API.getJobConcurrency().catch(() => ({ effective: 4, override: null, default: 4, suggested: 4, system: { cpu_count: null, total_ram_gb: null } })),
             API.getAuditLog(1, auditLogLimit).catch(() => ({ entries: [], total: 0 })),
             API.getNetworkStatus().catch(() => ({ lan_ips: [], port: null, firewall_rule_found: null })),
+            API.getPerformance().catch(() => null),
             API.getGpuIdleUnload().catch(() => ({ enabled: false, minutes: 15, clip_loaded: false, clip_idle_seconds: null, face_loaded: false, face_idle_seconds: null })),
             API.getMemoryVideoSettings().catch(() => ({ enabled: false, style: 'ken_burns', format: 'landscape', show_date: false })),
             API.getMemoryVideoStyles().catch(() => ({ styles: [] })),
@@ -674,7 +723,9 @@ async function renderAdmin() {
                 <button class="admin-tab-btn ${activeAdminTab === 'users' ? 'active' : ''}" data-tab="users" onclick="switchAdminTab('users')">${icon('users')} ${t('admin_render.tab_users')}</button>
                 <button class="admin-tab-btn ${activeAdminTab === 'storage' ? 'active' : ''}" data-tab="storage" onclick="switchAdminTab('storage')">${icon('folder')} ${t('admin_render.tab_storage_backup')}</button>
                 <button class="admin-tab-btn ${activeAdminTab === 'import' ? 'active' : ''}" data-tab="import" onclick="switchAdminTab('import')">${icon('upload')} ${t('admin_render.tab_import')}</button>
-                <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">${icon('globe')} ${t('admin_render.tab_network_system')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'network' ? 'active' : ''}" data-tab="network" onclick="switchAdminTab('network')">${icon('globe')} ${t('admin_render.tab_network_system')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'performance' ? 'active' : ''}" data-tab="performance" onclick="switchAdminTab('performance')">${icon('brain')} ${t('admin_render.tab_performance')}</button>
+                <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">${icon('settings')} ${t('admin_render.tab_system')}</button>
             </div>
 
             <div id="admin-tab-overview" class="admin-tab-panel" ${activeAdminTab === 'overview' ? '' : 'hidden'}>
@@ -878,7 +929,7 @@ async function renderAdmin() {
                 </div>
             </div>
 
-            <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
+            <div id="admin-tab-network" class="admin-tab-panel" ${activeAdminTab === 'network' ? '' : 'hidden'}>
                 <div class="admin-status-matrix">
                     <div class="admin-status-card">
                         <h4>${icon('home', 16)} ${t('admin_render.lan_access_heading')} ${infoBtn(t('admin_render.lan_access_info_hint'))}</h4>
@@ -901,16 +952,31 @@ async function renderAdmin() {
                         <p class="text-muted admin-field-hint admin-field-hint--bordered">${t('admin_tunnel.reverse_proxy_hint')}</p>
                     </div>
 
+                </div>
+            </div>
+
+            <div id="admin-tab-performance" class="admin-tab-panel" ${activeAdminTab === 'performance' ? '' : 'hidden'}>
+                <div class="admin-grid">
                     <div class="admin-status-card">
-                        <h4>${icon('upload', 16)} ${t('admin_render.updates_heading')}</h4>
-                        <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
-                        <div id="update-status-container"></div>
-                        <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">${icon('search')} ${t('admin_render.check_update_btn')}</button>
+                        <h4>${icon('brain', 16)} ${t('admin_render.perf_heading')} ${infoBtn(t('admin_render.perf_info_hint'))}</h4>
+                        <div id="perf-panel">${renderPerformancePanel(performance)}</div>
                     </div>
 
                     <div class="admin-status-card">
                         <h4>${icon('brain', 16)} ${t('admin_render.gpu_idle_heading')} ${infoBtn(t('admin_render.gpu_idle_info_hint'))}</h4>
                         <div id="gpu-idle-panel">${renderGpuIdlePanel(gpuIdleUnload)}</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
+                <div class="admin-grid">
+                    <div class="admin-status-card">
+                        <h4>${icon('upload', 16)} ${t('admin_render.updates_heading')}</h4>
+                        <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
+                        <div id="update-status-container"></div>
+                        <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">${icon('search')} ${t('admin_render.check_update_btn')}</button>
                     </div>
 
                     <div class="admin-status-card">
@@ -1127,6 +1193,81 @@ async function saveLanAccessEnabled(checkbox) {
         checkbox.checked = !enabling;
         toast(e.message, 'error');
     }
+}
+
+function renderPerformancePanel(perf) {
+    // Null when the request failed (older server, or an error) - render
+    // nothing rather than a half-broken control.
+    if (!perf) return '';
+    const lang = getLanguage();
+    const rec = perf.recommendation || {};
+    const total = perf.total_cores;
+    const activeProfile = (perf.profiles || []).find(p =>
+        p.low_priority === perf.effective_low_priority &&
+        p.max_cpu_threads === perf.effective_max_cpu_threads
+    );
+
+    return `
+        <p class="text-muted admin-field-hint" style="margin-bottom:10px">
+            ${icon('info', 13)} ${escHtml(t('admin_render.perf_recommend_prefix'))}:
+            <strong>${escHtml(rec[`reason_${lang}`] || rec.reason_en || '')}</strong>
+        </p>
+        <div class="admin-field-row">
+            <label for="perf-profile-select">${t('admin_render.perf_profile_label')}</label>
+            <select id="perf-profile-select" class="gallery-mini-select">
+                ${(perf.profiles || []).map(p => `
+                    <option value="${p.key}" ${activeProfile && activeProfile.key === p.key ? 'selected' : ''}>
+                        ${escHtml(p[`label_${lang}`] || p.label_en)}
+                    </option>`).join('')}
+                <option value="custom" ${activeProfile ? '' : 'selected'}>${escHtml(t('common.other') || 'Custom')}</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="applyPerformanceRecommendation()">${t('admin_render.perf_apply_recommend_btn')}</button>
+        </div>
+        <div class="admin-field-row" style="margin-top:10px">
+            <input type="checkbox" id="perf-low-priority" ${perf.effective_low_priority ? 'checked' : ''} style="width:auto;margin:0">
+            <label for="perf-low-priority" class="admin-checkbox-label">${t('admin_render.perf_low_priority_label')}</label>
+        </div>
+        <div class="admin-field-row" style="margin-top:10px">
+            <label for="perf-threads">${t('admin_render.perf_threads_label')}</label>
+            <input type="number" id="perf-threads" min="1" max="${total}" value="${perf.effective_max_cpu_threads}" style="width:80px;margin:0">
+            <span class="text-muted" style="font-size:12px">${t('admin_render.perf_cores_suffix', { total })}</span>
+            <button class="btn btn-secondary btn-sm" onclick="savePerformanceSettings()" style="margin-left:auto">${t('admin_render.save_settings_btn')}</button>
+        </div>
+        <p class="text-muted admin-field-hint" style="margin-top:10px">${t('admin_render.perf_running_note')}</p>
+    `;
+}
+
+async function _refreshPerformancePanel() {
+    const perf = await API.getPerformance().catch(() => null);
+    const el = $('perf-panel');
+    if (el) el.innerHTML = renderPerformancePanel(perf);
+}
+
+async function applyPerformanceRecommendation() {
+    try {
+        const current = await API.getPerformance();
+        await API.setPerformance({ profile: current.recommendation.profile });
+        toast(t('admin_render.perf_saved_toast'), 'success');
+        await _refreshPerformancePanel();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function savePerformanceSettings() {
+    const profileEl = $('perf-profile-select');
+    const profile = profileEl ? profileEl.value : 'custom';
+    try {
+        // A named profile carries its own preset values; "custom" is the
+        // only case where the two inputs below are what the admin means.
+        const body = profile && profile !== 'custom'
+            ? { profile }
+            : {
+                low_priority: $('perf-low-priority').checked,
+                max_cpu_threads: parseInt($('perf-threads').value, 10) || null,
+            };
+        await API.setPerformance(body);
+        toast(t('admin_render.perf_saved_toast'), 'success');
+        await _refreshPerformancePanel();
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderGpuIdlePanel(status) {
