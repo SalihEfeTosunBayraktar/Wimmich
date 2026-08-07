@@ -19,12 +19,26 @@ from utils.path_utils import resolve_data_path
 # session+user lookup and asset lookup, which is precisely the load that
 # made browsing painful while a job was running. "private" keeps them out
 # of shared/CDN caches, since these URLs are per-user authenticated.
+#
+# NOT applied to video responses. A <video> element fetches with a Range
+# header, FileResponse answers 206 Partial Content, and the header would
+# then mark that *partial* body cacheable for the whole URL - the browser
+# replays the fragment for later requests and playback breaks. Videos are
+# one request per view anyway, so there was nothing to win there.
 _MEDIA_CACHE_CONTROL = "private, max-age=604800"  # 7 days
 
 
 def _cached(response: FileResponse) -> FileResponse:
     response.headers["Cache-Control"] = _MEDIA_CACHE_CONTROL
     return response
+
+
+def _is_video(asset: Asset) -> bool:
+    return asset.file_type == "VIDEO" or (asset.mime_type or "").startswith("video/")
+
+
+def _cached_unless_video(asset: Asset, response: FileResponse) -> FileResponse:
+    return response if _is_video(asset) else _cached(response)
 
 
 def build_thumbnail_response(asset: Asset, size: str) -> FileResponse:
@@ -53,7 +67,7 @@ def build_thumbnail_response(asset: Asset, size: str) -> FileResponse:
 def build_file_response(asset: Asset, original: bool = False) -> FileResponse:
     encoded_path = resolve_data_path(asset.encoded_video_path, config.ENCODED_DIR)
     if not original and encoded_path and encoded_path.exists():
-        return _cached(FileResponse(encoded_path, media_type="video/mp4", filename=asset.original_file_name))
+        return FileResponse(encoded_path, media_type="video/mp4", filename=asset.original_file_name)
 
     is_raw = Path(asset.file_path).suffix.lower() in RAW_EXTENSIONS
     thumb_large_path = resolve_data_path(asset.thumb_large_path, config.THUMB_DIR)
@@ -65,7 +79,7 @@ def build_file_response(asset: Asset, original: bool = False) -> FileResponse:
     if not file_path or not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found on disk")
 
-    return _cached(FileResponse(
+    return _cached_unless_video(asset, FileResponse(
         file_path,
         media_type=asset.mime_type,
         filename=asset.original_file_name,

@@ -245,6 +245,13 @@ async def priority_gate_middleware(request, call_next):
 @app.middleware("http")
 async def security_headers_middleware(request, call_next):
     response = await call_next(request)
+    # A cacheable 206 is a trap: the browser stores the fragment under the
+    # full URL and replays it for later requests, which silently breaks
+    # media playback and resumed downloads. Nothing we serve wants that,
+    # so strip the header from every partial response rather than relying
+    # on each handler to remember.
+    if response.status_code == 206 and "cache-control" in response.headers:
+        del response.headers["cache-control"]
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
