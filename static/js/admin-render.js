@@ -98,7 +98,6 @@ registerTranslations({
         'admin_dash.detail_library': 'Library',
         'admin_dash.detail_content': 'Content',
         'admin_dash.detail_users': 'Users',
-        'admin_dash.detail_jobs': 'Jobs',
         'admin_dash.total_assets': 'Total items',
         'admin_dash.disk_free': 'Free disk space',
         'admin_dash.quota': 'Storage limit',
@@ -107,7 +106,6 @@ registerTranslations({
         'admin_dash.goto_users': 'Open user management',
         'admin_dash.goto_people': 'Open People page',
         'admin_dash.goto_storage': 'Open storage settings',
-        'admin_dash.goto_jobs': 'Open job panel',
         'admin_dash.close': 'Close',
         'admin_dash.no_limit': 'No limit set',
         'admin_render.ping_checking': 'Checking...',
@@ -183,7 +181,6 @@ registerTranslations({
         'admin_render.git_pull_only_hint': 'Works on any install - a git clone pulls the latest commit, a zip download fetches and applies a fresh archive.',
         'admin_render.tab_general': 'General',
         'admin_render.tab_storage_system': 'Storage & System',
-        'admin_render.tab_overview': 'Overview',
         'admin_render.tab_users': 'Users',
         'admin_render.tab_storage_backup': 'Storage & Backup',
         'admin_render.tab_import': 'Import',
@@ -298,7 +295,6 @@ registerTranslations({
         'admin_dash.detail_library': 'Kitaplık',
         'admin_dash.detail_content': 'İçerik',
         'admin_dash.detail_users': 'Kullanıcılar',
-        'admin_dash.detail_jobs': 'İşler',
         'admin_dash.total_assets': 'Toplam öğe',
         'admin_dash.disk_free': 'Boş disk alanı',
         'admin_dash.quota': 'Depolama sınırı',
@@ -307,7 +303,6 @@ registerTranslations({
         'admin_dash.goto_users': 'Kullanıcı yönetimini aç',
         'admin_dash.goto_people': 'Kişiler sayfasını aç',
         'admin_dash.goto_storage': 'Depolama ayarlarını aç',
-        'admin_dash.goto_jobs': 'İş panelini aç',
         'admin_dash.close': 'Kapat',
         'admin_dash.no_limit': 'Sınır belirlenmemiş',
         'admin_render.ping_checking': 'Kontrol ediliyor...',
@@ -383,7 +378,6 @@ registerTranslations({
         'admin_render.git_pull_only_hint': 'Her kurulumda çalışır - git clone kurulumu en son commit\'i çeker, zip ile indirilen kurulum ise güncel bir arşiv indirip uygular.',
         'admin_render.tab_general': 'Genel',
         'admin_render.tab_storage_system': 'Depolama & Sistem',
-        'admin_render.tab_overview': 'Genel Bakış',
         'admin_render.tab_users': 'Kullanıcılar',
         'admin_render.tab_storage_backup': 'Depolama & Yedekleme',
         'admin_render.tab_import': 'İçe Aktarma',
@@ -498,7 +492,6 @@ registerTranslations({
         'admin_dash.detail_library': "Bibliothèque",
         'admin_dash.detail_content': "Contenu",
         'admin_dash.detail_users': "Utilisateurs",
-        'admin_dash.detail_jobs': "Tâches",
         'admin_dash.total_assets': "Éléments au total",
         'admin_dash.disk_free': "Espace disque libre",
         'admin_dash.quota': "Limite de stockage",
@@ -507,7 +500,6 @@ registerTranslations({
         'admin_dash.goto_users': "Ouvrir la gestion des utilisateurs",
         'admin_dash.goto_people': "Ouvrir la page Personnes",
         'admin_dash.goto_storage': "Ouvrir les paramètres de stockage",
-        'admin_dash.goto_jobs': "Ouvrir le panneau des tâches",
         'admin_dash.close': "Fermer",
         'admin_dash.no_limit': "Aucune limite définie",
         'admin_render.ping_checking': 'Vérification...',
@@ -583,7 +575,6 @@ registerTranslations({
         'admin_render.git_pull_only_hint': "Fonctionne avec toute installation - un git clone récupère le dernier commit, un téléchargement zip récupère et applique une archive à jour.",
         'admin_render.tab_general': 'Général',
         'admin_render.tab_storage_system': 'Stockage & Système',
-        'admin_render.tab_overview': "Vue d'ensemble",
         'admin_render.tab_users': 'Utilisateurs',
         'admin_render.tab_storage_backup': 'Stockage & Sauvegarde',
         'admin_render.tab_import': 'Importation',
@@ -679,7 +670,6 @@ registerTranslations({
         'admin_dash.detail_library': 'Bibliothek',
         'admin_dash.detail_content': 'Inhalt',
         'admin_dash.detail_users': 'Benutzer',
-        'admin_dash.detail_jobs': 'Aufgaben',
         'admin_dash.total_assets': 'Elemente insgesamt',
         'admin_dash.disk_free': 'Freier Speicherplatz',
         'admin_dash.quota': 'Speicherlimit',
@@ -688,7 +678,6 @@ registerTranslations({
         'admin_dash.goto_users': 'Benutzerverwaltung öffnen',
         'admin_dash.goto_people': 'Personen-Seite öffnen',
         'admin_dash.goto_storage': 'Speichereinstellungen öffnen',
-        'admin_dash.goto_jobs': 'Aufgabenbereich öffnen',
         'admin_dash.close': 'Schließen',
         'admin_dash.no_limit': 'Kein Limit gesetzt',
         'admin_render.ping_checking': 'Wird geprüft...',
@@ -764,7 +753,6 @@ registerTranslations({
         'admin_render.git_pull_only_hint': 'Funktioniert bei jeder Installation - ein git clone zieht den neuesten Commit, ein Zip-Download lädt ein aktuelles Archiv herunter und wendet es an.',
         'admin_render.tab_general': 'Allgemein',
         'admin_render.tab_storage_system': 'Speicher & System',
-        'admin_render.tab_overview': 'Übersicht',
         'admin_render.tab_users': 'Benutzer',
         'admin_render.tab_storage_backup': 'Speicher & Sicherung',
         'admin_render.tab_import': 'Import',
@@ -813,6 +801,7 @@ async function renderAdmin() {
         ]);
 
         _adminStats = stats;
+        _adminJobConcurrency = jobConcurrency;
 
         pc.innerHTML = `
             <div class="admin-dash">
@@ -879,7 +868,6 @@ async function renderAdmin() {
             </div>
 
             <div class="admin-tabs">
-                <button class="admin-tab-btn ${activeAdminTab === 'overview' ? 'active' : ''}" data-tab="overview" onclick="switchAdminTab('overview')">${icon('dashboard')} ${t('admin_render.tab_overview')}</button>
                 <button class="admin-tab-btn ${activeAdminTab === 'users' ? 'active' : ''}" data-tab="users" onclick="switchAdminTab('users')">${icon('users')} ${t('admin_render.tab_users')}</button>
                 <button class="admin-tab-btn ${activeAdminTab === 'storage' ? 'active' : ''}" data-tab="storage" onclick="switchAdminTab('storage')">${icon('folder')} ${t('admin_render.tab_storage_backup')}</button>
                 <button class="admin-tab-btn ${activeAdminTab === 'import' ? 'active' : ''}" data-tab="import" onclick="switchAdminTab('import')">${icon('upload')} ${t('admin_render.tab_import')}</button>
@@ -888,58 +876,6 @@ async function renderAdmin() {
                 <button class="admin-tab-btn ${activeAdminTab === 'system' ? 'active' : ''}" data-tab="system" onclick="switchAdminTab('system')">${icon('settings')} ${t('admin_render.tab_system')}</button>
             </div>
 
-            <div id="admin-tab-overview" class="admin-tab-panel" ${activeAdminTab === 'overview' ? '' : 'hidden'}>
-              <div class="admin-status-matrix">
-                <div class="admin-status-card admin-status-card--jobs">
-                    <h4>${icon('settings', 16)} ${t('admin_render.jobs_status_card_heading')}</h4>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge ${stats.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}" id="jobs-pending-badge">${t('admin_render.jobs_pending_badge', { count: stats.jobs.pending })}</span>
-                        <span class="badge ${stats.jobs.running > 0 ? 'badge-admin' : 'badge-success'}" id="jobs-running-badge">${t('admin_render.jobs_running_badge', { count: stats.jobs.running })}</span>
-                        <span class="badge badge-success" id="jobs-completed-badge">${t('admin_render.jobs_completed_badge', { count: stats.jobs.completed })}</span>
-                        <span class="badge ${stats.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}" id="jobs-failed-badge">${t('admin_render.jobs_failed_badge', { count: stats.jobs.failed })}</span>
-                    </div>
-                    <p class="text-muted admin-field-hint" style="margin-bottom:8px">${t('admin_render.jobs_session_stats_hint')}</p>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap">
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">${icon('brain')} ${t('admin_render.job_clip_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">${icon('person')} ${t('admin_render.job_face_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">${icon('image')} ${t('admin_render.job_thumbnail_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">${icon('pin')} ${t('admin_render.job_geocode_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">${icon('film')} ${t('admin_render.job_transcode_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">${icon('repeat')} ${t('admin_render.job_recluster_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">${icon('category')} ${t('admin_render.job_categorize_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('REPAIR')" title="${t('admin_render.job_repair_title')}">${icon('wrench')} ${t('admin_render.job_repair_btn')}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="runAdminJob('OCR')" title="${t('admin_render.job_ocr_title')}" ${!stats.ml.ocr_available ? 'disabled' : ''}>${icon('file')} ${t('admin_render.job_ocr_btn')}</button>
-                        <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">${icon('stop')} ${t('admin_render.cancel_all_jobs_btn')}</button>
-                    </div>
-                    <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">
-                        <div style="display:flex;justify-content:space-between;align-items:center">
-                            <label class="admin-field-label">${t('admin_jobs.concurrency_label')}</label>
-                            <button class="btn btn-secondary btn-sm" onclick="resetJobConcurrency()">${icon('undo')} ${t('admin_jobs.reset_concurrency_btn')}</button>
-                        </div>
-                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                            <input type="number" id="job-concurrency-input" min="1" max="32"
-                                   value="${jobConcurrency.override ?? jobConcurrency.effective}" style="width:80px">
-                            <button class="btn btn-secondary btn-sm" onclick="saveJobConcurrency()">${t('admin_render.save_settings_btn')}</button>
-                            <button class="btn btn-secondary btn-sm" onclick="applyJobConcurrencySuggestion()">
-                                ${t('admin_jobs.apply_suggestion_btn', { value: jobConcurrency.suggested })}
-                            </button>
-                        </div>
-                        <p class="text-muted admin-field-hint">${t('admin_jobs.concurrency_hint', {
-                            cpu: jobConcurrency.system.cpu_count ?? '?',
-                            ram: jobConcurrency.system.total_ram_gb != null ? jobConcurrency.system.total_ram_gb + ' GB' : '?',
-                            suggested: jobConcurrency.suggested,
-                        })}</p>
-                    </div>
-                    <div id="job-list-container" style="max-height:160px;overflow-y:auto;border-top:1px solid var(--border-color);padding-top:8px">
-                        <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">
-                            <span>${t('admin_render.recent_jobs_label')}</span>
-                            <span style="font-size:9px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
-                        </div>
-                        <div id="job-list-content">${t('common.loading')}</div>
-                    </div>
-                </div>
-              </div>
-            </div>
 
             <div id="admin-tab-users" class="admin-tab-panel" ${activeAdminTab === 'users' ? '' : 'hidden'}>
                 <div class="admin-section">
@@ -1187,6 +1123,7 @@ async function refreshServerPing() {
 // Last stats payload, kept so a drill-down opened minutes after page load
 // still shows current numbers rather than the ones baked into the markup.
 let _adminStats = null;
+let _adminJobConcurrency = null;
 let _openDashDetail = null;
 
 function _dashFact(detailKey, label, value, valueId) {
@@ -1216,6 +1153,60 @@ function _dashJobsLine(jobs) {
             <span class="dash-fact-value">${jobs.completed}</span>
             <span class="dash-fact-unit">${t('admin_dash.jobs_completed')}</span>
         </button>`;
+}
+
+// The jobs card used to be the whole "Genel Bakış" tab. It now lives in the
+// dashboard's own drill-down instead, so the tab strip has no near-empty
+// landing page and every figure on the header leads somewhere for the same
+// reason.
+function _dashJobsPanelHtml(s, jc) {
+    return `
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+            <span class="badge ${s.jobs.pending > 0 ? 'badge-warning' : 'badge-success'}" id="jobs-pending-badge">${t('admin_render.jobs_pending_badge', { count: s.jobs.pending })}</span>
+            <span class="badge ${s.jobs.running > 0 ? 'badge-admin' : 'badge-success'}" id="jobs-running-badge">${t('admin_render.jobs_running_badge', { count: s.jobs.running })}</span>
+            <span class="badge badge-success" id="jobs-completed-badge">${t('admin_render.jobs_completed_badge', { count: s.jobs.completed })}</span>
+            <span class="badge ${s.jobs.failed > 0 ? 'badge-danger' : 'badge-success'}" id="jobs-failed-badge">${t('admin_render.jobs_failed_badge', { count: s.jobs.failed })}</span>
+        </div>
+        <p class="text-muted admin-field-hint" style="margin-bottom:8px">${t('admin_render.jobs_session_stats_hint')}</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CLIP')">${icon('brain')} ${t('admin_render.job_clip_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('FACE')">${icon('person')} ${t('admin_render.job_face_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('THUMBNAIL')">${icon('image')} ${t('admin_render.job_thumbnail_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('GEOCODE')">${icon('pin')} ${t('admin_render.job_geocode_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('TRANSCODE')">${icon('film')} ${t('admin_render.job_transcode_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('RECLUSTER')" title="${t('admin_render.job_recluster_title')}">${icon('repeat')} ${t('admin_render.job_recluster_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('CATEGORIZE')" title="${t('admin_render.job_categorize_title')}">${icon('category')} ${t('admin_render.job_categorize_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('REPAIR')" title="${t('admin_render.job_repair_title')}">${icon('wrench')} ${t('admin_render.job_repair_btn')}</button>
+            <button class="btn btn-secondary btn-sm" onclick="runAdminJob('OCR')" title="${t('admin_render.job_ocr_title')}" ${!s.ml.ocr_available ? 'disabled' : ''}>${icon('file')} ${t('admin_render.job_ocr_btn')}</button>
+            <button class="btn btn-danger btn-sm" onclick="cancelAllAdminJobs()" title="${t('admin_render.cancel_all_jobs_title')}">${icon('stop')} ${t('admin_render.cancel_all_jobs_btn')}</button>
+        </div>
+        <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <label class="admin-field-label">${t('admin_jobs.concurrency_label')}</label>
+                <button class="btn btn-secondary btn-sm" onclick="resetJobConcurrency()">${icon('undo')} ${t('admin_jobs.reset_concurrency_btn')}</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input type="number" id="job-concurrency-input" min="1" max="32"
+                       value="${jc.override ?? jc.effective}" style="width:80px">
+                <button class="btn btn-secondary btn-sm" onclick="saveJobConcurrency()">${t('admin_render.save_settings_btn')}</button>
+                <button class="btn btn-secondary btn-sm" onclick="applyJobConcurrencySuggestion()">
+                    ${t('admin_jobs.apply_suggestion_btn', { value: jc.suggested })}
+                </button>
+            </div>
+            <p class="text-muted admin-field-hint">${t('admin_jobs.concurrency_hint', {
+                cpu: jc.system.cpu_count ?? '?',
+                ram: jc.system.total_ram_gb != null ? jc.system.total_ram_gb + ' GB' : '?',
+                suggested: jc.suggested,
+            })}</p>
+        </div>
+        <div id="job-list-container" style="max-height:160px;overflow-y:auto;border-top:1px solid var(--border-color);padding-top:8px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center">
+                <span>${t('admin_render.recent_jobs_label')}</span>
+                <span style="font-size:9px;font-weight:normal;opacity:0.6">${t('admin_render.auto_updates_label')}</span>
+            </div>
+            <div id="job-list-content">${t('common.loading')}</div>
+        </div>
+    `;
 }
 
 function _dashRow(label, value) {
@@ -1265,25 +1256,29 @@ function _dashDetailContent(key) {
         };
     }
     if (key === 'jobs') {
+        if (!_adminJobConcurrency) return null;
         return {
-            title: t('admin_dash.detail_jobs'),
-            body: [
-                _dashRow(t('admin_dash.jobs_running'), s.jobs.running),
-                _dashRow(t('admin_dash.jobs_pending'), s.jobs.pending),
-                _dashRow(t('admin_dash.jobs_completed'), s.jobs.completed),
-                _dashRow(t('admin_dash.jobs_failed'), s.jobs.failed),
-            ].join(''),
-            action: { label: t('admin_dash.goto_jobs'), fn: "switchAdminTab('overview')" },
+            title: t('admin_render.jobs_status_card_heading'),
+            body: _dashJobsPanelHtml(s, _adminJobConcurrency),
+            // Unlike the read-only drill-downs this one owns live controls
+            // (the concurrency input, the auto-updating job list), so a
+            // blind repaint on every stats tick would wipe out whatever the
+            // admin was mid-way through typing. Its own pollers keep it
+            // current instead - see _paintDashDetail.
+            live: true,
         };
     }
     return null;
 }
 
-function _paintDashDetail() {
+function _paintDashDetail({ isRefresh = false } = {}) {
     const panel = $('admin-dash-detail');
     if (!panel || !_openDashDetail) return;
     const content = _dashDetailContent(_openDashDetail);
     if (!content) return;
+    // A `live` panel renders once and then updates itself in place; only the
+    // static row lists get redrawn from a stats tick.
+    if (isRefresh && content.live) return;
     panel.innerHTML = `
         <div class="dash-detail-head">
             <h4>${content.title}</h4>
@@ -1342,7 +1337,7 @@ async function refreshAdminStats() {
         _adminStats = stats;
         const jobsLine = document.querySelector('.admin-dash-jobsline');
         if (jobsLine) jobsLine.innerHTML = _dashJobsLine(stats.jobs);
-        if (_openDashDetail) _paintDashDetail();
+        if (_openDashDetail) _paintDashDetail({ isRefresh: true });
         _syncDashPressedState();
         _setStatValue('stat-photos', stats.photos);
         _setStatValue('stat-videos', stats.videos);
@@ -1384,7 +1379,9 @@ function _setStatValue(id, value) {
     el.classList.add('stat-value-updated');
 }
 
-let activeAdminTab = 'overview';
+// Users, not the old 'overview' - that tab was removed once the jobs
+// panel moved into the dashboard drill-down, leaving nothing behind it.
+let activeAdminTab = 'users';
 let auditLogLimit = 20;
 
 function switchAdminTab(tabName) {
