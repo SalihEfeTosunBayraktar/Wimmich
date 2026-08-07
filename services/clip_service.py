@@ -45,6 +45,13 @@ def is_clip_loaded() -> bool:
     return _model is not None
 
 
+def get_device() -> Optional[str]:
+    """"cuda"/"cpu" once a model has been loaded, None before that - callers
+    use it to report where inference is actually running without importing
+    torch (and its several hundred MB) themselves just to ask."""
+    return _device
+
+
 def idle_seconds() -> Optional[float]:
     """How long since the last actual embedding computation, or None if
     never loaded/already unloaded. Used by gpu_idle_service.py to decide
@@ -109,6 +116,13 @@ def _load_clip():
         logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
         _device = "cuda" if torch.cuda.is_available() else "cpu"
+        if _device == "cpu":
+            # Left unset, torch runs its ops across every core, which makes
+            # the web server sharing this process unusable for as long as a
+            # CLIP job runs. Irrelevant on CUDA, where the work isn't on the
+            # CPU in the first place.
+            from services.performance_settings_service import get_effective_max_cpu_threads
+            torch.set_num_threads(get_effective_max_cpu_threads())
         cache_dir = str(config.ML_DIR / "clip_cache")
 
         info("ML", f"Loading CLIP model: {config.ML_CLIP_MODEL} ({config.ML_CLIP_PRETRAINED}) on device: {_device}...")

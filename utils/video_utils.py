@@ -1,4 +1,5 @@
 """Video Processing Utilities (FFmpeg)"""
+import os
 import subprocess
 import json
 import re
@@ -8,6 +9,35 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 import config
 from utils.log import warn, error
+
+
+def low_priority_popen_kwargs() -> dict:
+    """Popen kwargs that start a child process below normal scheduling
+    priority, so a long ffmpeg run can't starve the web server sharing this
+    machine (see config.JOB_LOW_PRIORITY).
+
+    Priority beats a hard core cap here: the OS hands CPU back to request
+    handling the moment a request arrives, yet the job still gets every
+    idle core when nothing else wants them.
+    """
+    from services.performance_settings_service import get_effective_low_priority
+    if not get_effective_low_priority():
+        return {}
+    if os.name == "nt":
+        # BELOW_NORMAL_PRIORITY_CLASS exists on the subprocess module only
+        # on Windows; guarded by the os.name check rather than getattr so a
+        # typo here fails loudly instead of silently doing nothing.
+        return {"creationflags": subprocess.BELOW_NORMAL_PRIORITY_CLASS}
+    # POSIX: nice() the child after fork, before exec.
+    return {"preexec_fn": lambda: os.nice(10)}
+
+
+def ffmpeg_thread_args() -> list:
+    """`-threads N` for an ffmpeg invocation. Without it ffmpeg helps itself
+    to every core on the machine, which is what made the whole app
+    unresponsive for the entire length of a transcode."""
+    from services.performance_settings_service import get_effective_max_cpu_threads
+    return ["-threads", str(get_effective_max_cpu_threads())]
 
 
 def _run_ffprobe(file_path: str) -> Optional[Dict[str, Any]]:
@@ -125,7 +155,10 @@ def _run_ffmpeg_killable(
     except being unable to finish writing its own logs.
     """
     try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+            **low_priority_popen_kwargs(),
+        )
     except FileNotFoundError:
         return False
 
@@ -202,6 +235,7 @@ def create_video_thumbnail(
     cmd = [
         config.FFMPEG_PATH,
         "-y",
+        *ffmpeg_thread_args(),
         "-i", str(video_path),
         "-ss", time_offset,
         "-vframes", "1",
@@ -228,6 +262,7 @@ def transcode_video(
     cmd = [
         config.FFMPEG_PATH,
         "-y",
+        *ffmpeg_thread_args(),
         "-i", str(input_path),
         "-c:v", "libx264",
         "-preset", "medium",

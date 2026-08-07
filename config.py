@@ -357,6 +357,27 @@ JOB_IMPORT_CONCURRENCY = int(os.getenv("WIMMICH_JOB_IMPORT_CONCURRENCY", "4"))
 # batches rather than being VRAM-bound. If CUDA OOM errors show up in the
 # logs during a CLIP+FACE overlap, lower this back down.
 FACE_DETECT_CONCURRENCY = int(os.getenv("WIMMICH_FACE_DETECT_CONCURRENCY", "6"))
+
+# ─── Keeping the server responsive while jobs run ──────────────────
+# Jobs share this single process with the web server, so anything that
+# saturates every CPU core makes the whole app (thumbnails, video
+# playback, even login) crawl for as long as the job runs. Two knobs:
+#
+# LOW_PRIORITY: run ffmpeg below normal OS scheduling priority. This is
+# the more important of the two - the scheduler then hands CPU back to
+# request handling the instant a request arrives, while still letting a
+# job use every idle core when nothing else needs them. A hard core cap
+# alone can't do that (it throttles the job even on an idle machine).
+JOB_LOW_PRIORITY = os.getenv("WIMMICH_JOB_LOW_PRIORITY", "true").lower() == "true"
+# MAX_CPU_THREADS: ceiling on cores any single ffmpeg/torch call may use.
+# 0 means "half the machine's cores, at least 1" - deliberately not all of
+# them, so decoding/serving media never has to fight the job for the last
+# core. Raise it for a dedicated server that nobody browses while jobs run.
+CPU_TOTAL_CORES = os.cpu_count() or 4
+JOB_MAX_CPU_THREADS = int(os.getenv("WIMMICH_JOB_MAX_CPU_THREADS", "0")) or max(1, CPU_TOTAL_CORES // 2)
+# Both of the above are only the DEFAULTS - the live values come from
+# services/performance_settings_service.py, so an admin can retune them
+# for this particular machine without a restart.
 # How long a single job can run before the worker gives up waiting on it and
 # moves on to the next PENDING job - see JobWorker._check_hang_watchdog.
 # Comfortably above transcode_handler.py's own legitimate 3600s/60min ceiling

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, TypedDict
 
 import config
-from utils.video_utils import _run_ffmpeg_killable
+from utils.video_utils import _run_ffmpeg_killable, ffmpeg_thread_args
 from utils.log import warn
 
 _FPS = 25
@@ -106,6 +106,7 @@ def _concat_clips(clip_paths: List[Path], tmp_dir: Path, output_path: str, cance
     list_file.write_text("\n".join(f"file '{p.name}'" for p in clip_paths), encoding="utf-8")
     cmd = [
         config.FFMPEG_PATH, "-y",
+        *ffmpeg_thread_args(),
         "-f", "concat", "-safe", "0",
         "-i", str(list_file),
         "-c", "copy",
@@ -160,6 +161,7 @@ def _build_ken_burns(
             vf += ",format=yuv420p"
             cmd = [
                 config.FFMPEG_PATH, "-y",
+                *ffmpeg_thread_args(),
                 "-loop", "1", "-i", str(img_path),
                 "-vf", vf,
                 "-t", str(clip_seconds),
@@ -203,6 +205,7 @@ def _build_crossfade(
             vf = vf.replace(",format=yuv420p", f",{text_vf},format=yuv420p")
         cmd = [
             config.FFMPEG_PATH, "-y",
+            *ffmpeg_thread_args(),
             "-loop", "1", "-t", str(clip_seconds), "-i", str(image_paths[0]),
             "-vf", vf,
             "-r", str(_FPS), "-c:v", "libx264", "-preset", "veryfast",
@@ -236,6 +239,7 @@ def _build_crossfade(
     filter_complex = ";".join(per_stream_filters + chain_filters)
     cmd = [
         config.FFMPEG_PATH, "-y",
+        *ffmpeg_thread_args(),
         *inputs,
         "-filter_complex", filter_complex,
         "-map", "[vout]",
@@ -275,6 +279,7 @@ def _build_simple_cut(
             vf += ",format=yuv420p"
             cmd = [
                 config.FFMPEG_PATH, "-y",
+                *ffmpeg_thread_args(),
                 "-loop", "1", "-i", str(img_path),
                 "-vf", vf,
                 "-t", str(clip_seconds),
@@ -316,6 +321,7 @@ def _build_fast_montage(
             vf += ",format=yuv420p"
             cmd = [
                 config.FFMPEG_PATH, "-y",
+                *ffmpeg_thread_args(),
                 "-loop", "1", "-i", str(img_path),
                 "-vf", vf,
                 "-t", str(clip_seconds),
@@ -367,6 +373,7 @@ def _build_pan_only(
             vf += ",format=yuv420p"
             cmd = [
                 config.FFMPEG_PATH, "-y",
+                *ffmpeg_thread_args(),
                 "-loop", "1", "-i", str(img_path),
                 "-vf", vf,
                 "-t", str(clip_seconds),
@@ -421,6 +428,7 @@ def _build_polaroid(
             )
             cmd = [
                 config.FFMPEG_PATH, "-y",
+                *ffmpeg_thread_args(),
                 "-loop", "1", "-t", str(clip_seconds), "-i", str(img_path),
                 "-f", "lavfi", "-i", f"color=c={bg_color}:s={width}x{height}:d={clip_seconds}",
                 "-filter_complex", filter_complex,

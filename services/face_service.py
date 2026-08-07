@@ -82,6 +82,11 @@ def _load_face_models():
         from facenet_pytorch import MTCNN, InceptionResnetV1
 
         _device = "cuda" if torch.cuda.is_available() else "cpu"
+        if _device == "cpu":
+            # See clip_service.py's identical cap - unbounded torch threads
+            # here starve the web server sharing this process.
+            from services.performance_settings_service import get_effective_max_cpu_threads
+            torch.set_num_threads(get_effective_max_cpu_threads())
         info("ML", f"Loading face detection/recognition models on device: {_device}...")
 
         def _create():

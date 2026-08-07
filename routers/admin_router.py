@@ -2,6 +2,7 @@
 import asyncio
 import shutil
 import sys
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select, func
@@ -194,6 +195,53 @@ async def update_gpu_idle_unload(
     await log_action(db, admin, "ml.set_gpu_idle_unload", detail={"enabled": req.enabled, "minutes": req.minutes})
     await db.commit()
     return {"enabled": config.GPU_IDLE_UNLOAD_ENABLED, "minutes": config.GPU_IDLE_UNLOAD_MINUTES}
+
+
+@router.get("/performance")
+async def get_performance_settings(admin: User = Depends(get_admin_user)):
+    """Current job CPU-priority/thread settings, the selectable profiles,
+    and a hardware-based recommendation - see
+    services/performance_settings_service.py."""
+    from services import performance_settings_service
+    return performance_settings_service.get_status()
+
+
+class UpdatePerformanceRequest(BaseModel):
+    # A profile name applies its preset values; low_priority/max_cpu_threads
+    # let an admin who wants exact numbers set them directly. Profile wins
+    # when both are sent, since that's the more explicit intent.
+    profile: Optional[str] = None
+    low_priority: Optional[bool] = None
+    max_cpu_threads: Optional[int] = None
+
+
+@router.put("/performance")
+async def update_performance_settings(
+    req: UpdatePerformanceRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retunes how much of the machine background jobs may take. Takes
+    effect on the next ffmpeg dispatch / model load - no restart - though
+    an ALREADY-RUNNING ffmpeg keeps the priority and thread count it was
+    started with."""
+    from services import performance_settings_service
+
+    if req.profile is not None:
+        if req.profile not in performance_settings_service.PROFILES:
+            raise HTTPException(status_code=400, detail="Unknown profile")
+        values = performance_settings_service.resolve_profile(req.profile)
+        low_priority, max_threads = values["low_priority"], values["max_cpu_threads"]
+    else:
+        low_priority, max_threads = req.low_priority, req.max_cpu_threads
+
+    performance_settings_service.update_settings(low_priority, max_threads)
+    await log_action(
+        db, admin, "system.set_performance",
+        detail={"profile": req.profile, "low_priority": low_priority, "max_cpu_threads": max_threads},
+    )
+    await db.commit()
+    return performance_settings_service.get_status()
 
 
 @router.get("/users")

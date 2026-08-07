@@ -222,8 +222,26 @@ async def get_current_user(
     # whichever comes first.
     jti = payload.get("jti")
     if jti:
-        session_result = await db.execute(select(Session).where(Session.jti == jti))
-        session = session_result.scalar_one_or_none()
+        # One JOINed round-trip for the session-revocation check AND the
+        # user row, not two separate SELECTs. This dependency runs on
+        # EVERY authenticated request, and a single gallery page fires ~60
+        # thumbnail requests, so the second query was costing ~60 extra
+        # round-trips per page view - which is exactly when it hurts most,
+        # since a background job is already competing for the same SQLite
+        # connection and the same GIL.
+        #
+        # outerjoin (not join): a missing session row has to reach the
+        # "Session revoked" branch below rather than silently collapsing
+        # into "user not found", which is a different status/message and
+        # would change behaviour for a revoked token.
+        row = (await db.execute(
+            select(User, Session)
+            .outerjoin(Session, Session.jti == jti)
+            .where(User.id == user_id)
+        )).first()
+        user = row[0] if row else None
+        session = row[1] if row else None
+
         if not session or session.revoked:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -236,9 +254,11 @@ async def get_current_user(
         if not last_seen or now - last_seen > SESSION_LAST_SEEN_THROTTLE:
             session.last_seen_at = now
             await db.commit()
+    else:
+        # Pre-jti token (see the comment above) - no session row to join
+        # against, so this stays a plain user lookup.
+        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
