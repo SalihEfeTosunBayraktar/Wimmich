@@ -707,6 +707,7 @@ function _updateSidebarUserInfo() {
 function showApp() {
     $('auth-screen').classList.add('hidden');
     $('app').classList.remove('hidden');
+    playBrandTypewriter();
     _updateSidebarUserInfo();
     if (!state.user.is_admin) $('nav-admin').classList.add('hidden');
     else $('nav-admin').classList.remove('hidden');

@@ -48,6 +48,27 @@
     background-clip: text;
 }
 
+/* Typewriter caret for the brand (see playBrandTypewriter). The brand paints
+   its gradient through -webkit-text-fill-color: transparent, which a
+   pseudo-element inherits - so the caret has to set its own fill back or it
+   renders invisible. It stays a flat accent colour on purpose: a caret
+   sliced out of a gradient reads as a rendering glitch, not a cursor. */
+.sidebar-brand.is-typing::after {
+    content: '_';
+    -webkit-text-fill-color: var(--accent-primary);
+    color: var(--accent-primary);
+    animation: brandCaretBlink 1s steps(1, end) infinite;
+}
+
+@keyframes brandCaretBlink {
+    0%, 49.99% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-brand.is-typing::after { content: none; }
+}
+
 .sidebar-credit {
     font-size: 0.65rem;
     color: var(--text-muted);
@@ -221,3 +242,53 @@
     margin-bottom: var(--space-lg);
 }
 
+
+/* ─── Sidebar micro-interactions ────────────────────────── */
+
+/* Settings gear: exactly one turn per tap (see initGearSpin). */
+.sidebar-footer #profile-settings-btn svg.is-spinning {
+    /* An SVG element's transform-origin defaults to its own 0 0, so without
+       this the gear orbits the corner instead of turning in place. */
+    transform-origin: 50% 50%;
+    transform-box: fill-box;
+    animation: gearOneTurn 620ms cubic-bezier(0.34, 1.2, 0.64, 1) 1;
+}
+
+/* Explicit 0deg start. An implicit from-frame takes the element's computed
+   transform, which is `none` here, and Chrome would not interpolate that
+   into a rotation at all - the animation ran but nothing moved. */
+@keyframes gearOneTurn {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Hearts falling out of the Favourites nav item. The layer is inert and
+   sits above page content but below modals (2000) and the sidebar (1000) -
+   it must never intercept a click meant for what it is falling over. */
+.heart-rain {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    pointer-events: none;
+}
+
+.heart-rain-drop {
+    position: absolute;
+    color: var(--danger, #ef4444);
+    animation-name: heartFall;
+    animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0.4);
+    animation-fill-mode: both;
+}
+
+.heart-rain-drop svg { display: block; }
+
+@keyframes heartFall {
+    0% { opacity: 0; transform: translate(0, -6px) scale(0.5) rotate(0deg); }
+    18% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--drift), 190px) scale(0.8) rotate(var(--spin)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-footer #profile-settings-btn svg.is-spinning { animation: none; }
+    .heart-rain { display: none; }
+}
