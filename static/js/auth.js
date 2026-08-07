@@ -12,11 +12,6 @@ registerTranslations({
         'profile.password_leave_blank': 'Leave blank to keep unchanged',
         'profile.updated': 'Profile updated',
         'profile.name_email_required': 'Name and email cannot be empty',
-        'profile.trash_retention_label': 'Trash Retention (days)',
-        'profile.trash_retention_placeholder': 'Server default ({days} days)',
-        'profile.trash_retention_hint': 'How long your own deleted photos/videos stay in Trash before being permanently removed. Leave blank to use the server default.',
-        'profile.trash_retention_invalid': 'Enter a number between 1 and 365, or leave it blank',
-        'profile.trash_retention_saved': 'Trash retention updated',
         'profile.change_password_label': 'Change password',
         'profile.sessions_label': 'Active Sessions',
         'profile.sessions_loading': 'Loading...',
@@ -82,11 +77,6 @@ registerTranslations({
         'profile.password_leave_blank': 'Değiştirmemek için boş bırakın',
         'profile.updated': 'Profil güncellendi',
         'profile.name_email_required': 'İsim ve e-posta boş olamaz',
-        'profile.trash_retention_label': 'Çöp Kutusu Süresi (gün)',
-        'profile.trash_retention_placeholder': 'Sunucu varsayılanı ({days} gün)',
-        'profile.trash_retention_hint': 'Sildiğiniz fotoğraf/videoların kalıcı olarak silinmeden önce Çöp Kutusu\'nda ne kadar kalacağı. Sunucu varsayılanını kullanmak için boş bırakın.',
-        'profile.trash_retention_invalid': '1 ile 365 arasında bir sayı girin veya boş bırakın',
-        'profile.trash_retention_saved': 'Çöp kutusu süresi güncellendi',
         'profile.change_password_label': 'Şifre değiştir',
         'profile.sessions_label': 'Aktif Oturumlar',
         'profile.sessions_loading': 'Yükleniyor...',
@@ -152,11 +142,6 @@ registerTranslations({
         'profile.password_leave_blank': 'Laisser vide pour ne pas changer',
         'profile.updated': 'Profil mis à jour',
         'profile.name_email_required': "Le nom et l'e-mail ne peuvent pas être vides",
-        'profile.trash_retention_label': 'Durée de conservation de la corbeille (jours)',
-        'profile.trash_retention_placeholder': 'Valeur par défaut du serveur ({days} jours)',
-        'profile.trash_retention_hint': 'Combien de temps vos photos/vidéos supprimées restent dans la corbeille avant suppression définitive. Laissez vide pour utiliser la valeur par défaut du serveur.',
-        'profile.trash_retention_invalid': 'Entrez un nombre entre 1 et 365, ou laissez vide',
-        'profile.trash_retention_saved': 'Durée de conservation de la corbeille mise à jour',
         'profile.change_password_label': 'Changer le mot de passe',
         'profile.sessions_label': 'Sessions actives',
         'profile.sessions_loading': 'Chargement...',
@@ -222,11 +207,6 @@ registerTranslations({
         'profile.password_leave_blank': 'Leer lassen, um unverändert zu lassen',
         'profile.updated': 'Profil aktualisiert',
         'profile.name_email_required': 'Name und E-Mail dürfen nicht leer sein',
-        'profile.trash_retention_label': 'Papierkorb-Aufbewahrung (Tage)',
-        'profile.trash_retention_placeholder': 'Server-Standard ({days} Tage)',
-        'profile.trash_retention_hint': 'Wie lange Ihre eigenen gelöschten Fotos/Videos im Papierkorb bleiben, bevor sie endgültig entfernt werden. Leer lassen, um den Server-Standard zu verwenden.',
-        'profile.trash_retention_invalid': 'Geben Sie eine Zahl zwischen 1 und 365 ein oder lassen Sie das Feld leer',
-        'profile.trash_retention_saved': 'Papierkorb-Aufbewahrung aktualisiert',
         'profile.change_password_label': 'Passwort ändern',
         'profile.sessions_label': 'Aktive Sitzungen',
         'profile.sessions_loading': 'Wird geladen...',
@@ -385,8 +365,6 @@ function showProfileModal() {
     $('profile-email').value = state.user.email;
     $('profile-current-password').value = '';
     $('profile-new-password').value = '';
-    $('profile-trash-days').value = state.user.trash_days || '';
-    $('profile-trash-days').placeholder = t('profile.trash_retention_placeholder', { days: state.user.trash_days_effective });
     $('profile-modal').classList.remove('hidden');
     $('profile-name').focus();
     renderProfileSessions();
@@ -449,24 +427,6 @@ async function requestDataExport() {
             toast(e.message, 'error');
         }
         renderProfileExportStatus();
-    }
-}
-
-async function saveTrashRetention() {
-    const raw = $('profile-trash-days').value.trim();
-    const days = raw ? parseInt(raw, 10) : null;
-    if (raw && (!days || days < 1 || days > 365)) {
-        toast(t('profile.trash_retention_invalid'), 'warning');
-        return;
-    }
-    try {
-        const result = await API.updateTrashRetention(days);
-        state.user.trash_days = result.trash_days;
-        state.user.trash_days_effective = result.trash_days_effective;
-        $('profile-trash-days').placeholder = t('profile.trash_retention_placeholder', { days: result.trash_days_effective });
-        toast(t('profile.trash_retention_saved'), 'success');
-    } catch (e) {
-        toast(e.message, 'error');
     }
 }
 
@@ -691,7 +651,6 @@ function initProfileModal() {
     $('profile-modal-close').onclick = close;
     $('profile-modal-cancel').onclick = close;
     $('profile-api-key-create-btn').onclick = createProfileApiKey;
-    $('profile-trash-days-save-btn').onclick = saveTrashRetention;
     $('profile-export-request-btn').onclick = requestDataExport;
 
     $('profile-modal-save').onclick = async () => {
