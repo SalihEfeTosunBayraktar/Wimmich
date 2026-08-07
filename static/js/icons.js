@@ -85,5 +85,8 @@ const ICONS = {
 function icon(name, size = 16) {
     const paths = ICONS[name];
     if (!paths) return '';
-    return `<svg class="btn-icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+    // data-icon is what flair.js matches on to pick a click animation that
+    // suits the symbol (a trash can shakes, an upload arrow lifts). Nothing
+    // else reads it, so an unknown or missing icon simply gets no flair.
+    return `<svg class="btn-icon-svg" data-icon="${name}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 }

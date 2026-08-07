@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAppFullscreen();
     initGearSpin();
     initHeartRain();
+    initIconFlair();
     initLocalNetworkBanner();
 
     // A shared-link visitor never has (or needs) an auth session - dispatch
