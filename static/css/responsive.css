@@ -18,14 +18,21 @@
        content - but at mobile widths that same corner is also where the
        off-canvas sidebar's own footer (avatar/settings/logout) and the
        selection bar (95% width, spans nearly the whole bottom edge) sit,
-       both at lower z-index. The button was winning that stack and
-       rendering on top of both, looking like it was "crowding into" the
-       selection bar and covering the sidebar's account info. The
-       Fullscreen API is marginal on mobile anyway (unsupported in iOS
-       Safari), so hiding it here is a straightforward fix rather than
-       juggling per-state visibility for every element it could collide
-       with. */
-    .app-fullscreen-btn { display: none; }
+       both at lower z-index, and the button was rendering on top of both.
+       It used to be hidden outright here, which also took it away in the
+       ~99% of the time nothing is colliding with it. Instead it now steps
+       aside only while one of those two is actually on screen. */
+    .app-fullscreen-btn {
+        width: 36px;
+        height: 36px;
+        bottom: calc(var(--space-md) + 60px);
+    }
+
+    /* #selection-bar is created and removed from <body> outright (see
+       selection.js), so its mere presence is the signal - no extra state
+       class to keep in sync. */
+    body:has(#selection-bar) .app-fullscreen-btn,
+    body:has(.sidebar.open) .app-fullscreen-btn { display: none; }
 
     /* Mobile selection bar styles. Some pages offer 7-8 actions at once
        (favorite/album/share/download/edit-date/archive/delete, plus the
@@ -194,6 +201,14 @@
         flex: 1;
         max-width: none;
     }
+
+    /* ...but the OCR toggle is NOT part of that group - it's a direct
+       sibling of the search box (see gallery.js) and must stay beside it.
+       The input's 320px flex-basis plus a 44px touch-target button
+       overflows a ~360px phone, so the toggle was wrapping onto a line of
+       its own and the row read as broken. The input is the only element
+       here that can give up width harmlessly, so let it shrink. */
+    .search-input-wrapper { flex: 1 1 140px; min-width: 0; }
 }
 
 @media (max-width: 480px) {

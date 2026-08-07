@@ -357,3 +357,12 @@
     font-size: 0.78rem;
     flex-shrink: 0;
 }
+
+/* Leaflet parks its control panes at z-index 1000 - exactly what the mobile
+   off-canvas sidebar uses - and the map markup comes later in the document,
+   so the zoom buttons won that tie and drew on top of the open drawer. The
+   controls only ever need to clear the map's own tile/overlay panes (400-500),
+   so drop them below the sidebar rather than raising the sidebar and starting
+   the same race with whatever component picks 1001 next. */
+.leaflet-top,
+.leaflet-bottom { z-index: 600; }

@@ -13,4 +13,23 @@ function initSidebar() {
             $('sidebar').classList.remove('open');
         }
     });
+
+    // The sidebar's own footer buttons (profile settings, keyboard
+    // shortcuts) open a modal instead of routing, so navigateTo()'s close
+    // never ran and on mobile the open drawer sat on top of the modal.
+    // Watching the overlays rather than wiring up each button means a modal
+    // added later gets the same behaviour without anyone remembering to -
+    // and the click that opened it is, by definition, the last thing the
+    // drawer was needed for.
+    const closeOnModalOpen = new MutationObserver(records => {
+        for (const r of records) {
+            if (!r.target.classList.contains('hidden')) {
+                $('sidebar').classList.remove('open');
+                return;
+            }
+        }
+    });
+    qsa('.modal-overlay').forEach(m => {
+        closeOnModalOpen.observe(m, { attributes: true, attributeFilter: ['class'] });
+    });
 }

@@ -85,6 +85,31 @@ registerTranslations({
         'admin_render.import_dest_path_placeholder': "Destination folder (optional - leave blank for the app's default storage)",
         'admin_render.import_dest_path_hint': 'Only used in Copy mode - lets copies land on a different drive/folder than the app default. Ignored in Reference mode.',
         'admin_render.server_status_heading': 'Server Status',
+        'admin_dash.click_hint': 'Click a figure for details',
+        'admin_dash.about_heading': 'About',
+        'admin_dash.version_label': 'Current version',
+        'admin_dash.version_unknown': 'unknown',
+        'admin_dash.source_git': 'git install',
+        'admin_dash.source_zip': 'zip install',
+        'admin_dash.jobs_label': 'Jobs',
+        'admin_dash.jobs_running': 'running',
+        'admin_dash.jobs_pending': 'queued',
+        'admin_dash.jobs_completed': 'done',
+        'admin_dash.detail_library': 'Library',
+        'admin_dash.detail_content': 'Content',
+        'admin_dash.detail_users': 'Users',
+        'admin_dash.detail_jobs': 'Jobs',
+        'admin_dash.total_assets': 'Total items',
+        'admin_dash.disk_free': 'Free disk space',
+        'admin_dash.quota': 'Storage limit',
+        'admin_dash.shared_links': 'Share links',
+        'admin_dash.jobs_failed': 'Failed',
+        'admin_dash.goto_users': 'Open user management',
+        'admin_dash.goto_people': 'Open People page',
+        'admin_dash.goto_storage': 'Open storage settings',
+        'admin_dash.goto_jobs': 'Open job panel',
+        'admin_dash.close': 'Close',
+        'admin_dash.no_limit': 'No limit set',
         'admin_render.ping_checking': 'Checking...',
         'admin_render.ping_label': 'Ping: {ms}ms',
         'admin_render.ping_offline': 'Unreachable',
@@ -260,6 +285,31 @@ registerTranslations({
         'admin_render.import_dest_path_placeholder': 'Hedef klasör (opsiyonel - boş bırakılırsa uygulamanın varsayılan depolama alanı kullanılır)',
         'admin_render.import_dest_path_hint': 'Sadece Kopyalama modunda kullanılır - kopyaların uygulamanın varsayılanından farklı bir disk/klasöre gitmesini sağlar. Referans modunda göz ardı edilir.',
         'admin_render.server_status_heading': 'Sunucu Durumu',
+        'admin_dash.click_hint': 'Ayrıntı için bir değere tıklayın',
+        'admin_dash.about_heading': 'Hakkında',
+        'admin_dash.version_label': 'Mevcut sürüm',
+        'admin_dash.version_unknown': 'bilinmiyor',
+        'admin_dash.source_git': 'git kurulumu',
+        'admin_dash.source_zip': 'zip kurulumu',
+        'admin_dash.jobs_label': 'İşler',
+        'admin_dash.jobs_running': 'çalışan',
+        'admin_dash.jobs_pending': 'bekleyen',
+        'admin_dash.jobs_completed': 'tamamlanan',
+        'admin_dash.detail_library': 'Kitaplık',
+        'admin_dash.detail_content': 'İçerik',
+        'admin_dash.detail_users': 'Kullanıcılar',
+        'admin_dash.detail_jobs': 'İşler',
+        'admin_dash.total_assets': 'Toplam öğe',
+        'admin_dash.disk_free': 'Boş disk alanı',
+        'admin_dash.quota': 'Depolama sınırı',
+        'admin_dash.shared_links': 'Paylaşım bağlantıları',
+        'admin_dash.jobs_failed': 'Başarısız',
+        'admin_dash.goto_users': 'Kullanıcı yönetimini aç',
+        'admin_dash.goto_people': 'Kişiler sayfasını aç',
+        'admin_dash.goto_storage': 'Depolama ayarlarını aç',
+        'admin_dash.goto_jobs': 'İş panelini aç',
+        'admin_dash.close': 'Kapat',
+        'admin_dash.no_limit': 'Sınır belirlenmemiş',
         'admin_render.ping_checking': 'Kontrol ediliyor...',
         'admin_render.ping_label': 'Ping: {ms}ms',
         'admin_render.ping_offline': 'Erişilemiyor',
@@ -435,6 +485,31 @@ registerTranslations({
         'admin_render.import_dest_path_placeholder': "Dossier de destination (facultatif - laissez vide pour le stockage par défaut de l'application)",
         'admin_render.import_dest_path_hint': "Utilisé uniquement en mode Copie - permet aux copies d'atterrir sur un autre disque/dossier que celui par défaut. Ignoré en mode Référence.",
         'admin_render.server_status_heading': 'État du serveur',
+        'admin_dash.click_hint': "Cliquez sur une valeur pour les détails",
+        'admin_dash.about_heading': "À propos",
+        'admin_dash.version_label': "Version actuelle",
+        'admin_dash.version_unknown': "inconnue",
+        'admin_dash.source_git': "installation git",
+        'admin_dash.source_zip': "installation zip",
+        'admin_dash.jobs_label': "Tâches",
+        'admin_dash.jobs_running': "en cours",
+        'admin_dash.jobs_pending': "en attente",
+        'admin_dash.jobs_completed': "terminées",
+        'admin_dash.detail_library': "Bibliothèque",
+        'admin_dash.detail_content': "Contenu",
+        'admin_dash.detail_users': "Utilisateurs",
+        'admin_dash.detail_jobs': "Tâches",
+        'admin_dash.total_assets': "Éléments au total",
+        'admin_dash.disk_free': "Espace disque libre",
+        'admin_dash.quota': "Limite de stockage",
+        'admin_dash.shared_links': "Liens de partage",
+        'admin_dash.jobs_failed': "Échouées",
+        'admin_dash.goto_users': "Ouvrir la gestion des utilisateurs",
+        'admin_dash.goto_people': "Ouvrir la page Personnes",
+        'admin_dash.goto_storage': "Ouvrir les paramètres de stockage",
+        'admin_dash.goto_jobs': "Ouvrir le panneau des tâches",
+        'admin_dash.close': "Fermer",
+        'admin_dash.no_limit': "Aucune limite définie",
         'admin_render.ping_checking': 'Vérification...',
         'admin_render.ping_label': 'Ping : {ms}ms',
         'admin_render.ping_offline': 'Injoignable',
@@ -591,6 +666,31 @@ registerTranslations({
         'admin_render.import_dest_path_placeholder': 'Zielordner (optional - leer lassen für den Standardspeicher der App)',
         'admin_render.import_dest_path_hint': 'Nur im Kopiermodus verwendet - lässt Kopien auf einem anderen Laufwerk/Ordner als dem App-Standard landen. Im Referenzmodus ignoriert.',
         'admin_render.server_status_heading': 'Serverstatus',
+        'admin_dash.click_hint': 'Für Details auf einen Wert klicken',
+        'admin_dash.about_heading': 'Über',
+        'admin_dash.version_label': 'Aktuelle Version',
+        'admin_dash.version_unknown': 'unbekannt',
+        'admin_dash.source_git': 'git-Installation',
+        'admin_dash.source_zip': 'zip-Installation',
+        'admin_dash.jobs_label': 'Aufgaben',
+        'admin_dash.jobs_running': 'laufend',
+        'admin_dash.jobs_pending': 'wartend',
+        'admin_dash.jobs_completed': 'erledigt',
+        'admin_dash.detail_library': 'Bibliothek',
+        'admin_dash.detail_content': 'Inhalt',
+        'admin_dash.detail_users': 'Benutzer',
+        'admin_dash.detail_jobs': 'Aufgaben',
+        'admin_dash.total_assets': 'Elemente insgesamt',
+        'admin_dash.disk_free': 'Freier Speicherplatz',
+        'admin_dash.quota': 'Speicherlimit',
+        'admin_dash.shared_links': 'Freigabelinks',
+        'admin_dash.jobs_failed': 'Fehlgeschlagen',
+        'admin_dash.goto_users': 'Benutzerverwaltung öffnen',
+        'admin_dash.goto_people': 'Personen-Seite öffnen',
+        'admin_dash.goto_storage': 'Speichereinstellungen öffnen',
+        'admin_dash.goto_jobs': 'Aufgabenbereich öffnen',
+        'admin_dash.close': 'Schließen',
+        'admin_dash.no_limit': 'Kein Limit gesetzt',
         'admin_render.ping_checking': 'Wird geprüft...',
         'admin_render.ping_label': 'Ping: {ms}ms',
         'admin_render.ping_offline': 'Nicht erreichbar',
@@ -690,7 +790,7 @@ async function renderAdmin() {
     pc.innerHTML = '<div class="skeleton" style="height:400px;border-radius:12px"></div>';
 
     try {
-        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, performance, gpuIdleUnload, memvidSettings, memvidStyles, memvidFormats] = await Promise.all([
+        const [stats, users, tunnelStatus, tailscaleStatus, storageConfig, backupSettings, referenceRootsData, jobConcurrency, auditLog, networkStatus, performance, gpuIdleUnload, memvidSettings, memvidStyles, memvidFormats, versionInfo] = await Promise.all([
             API.getAdminStats(),
             API.getAdminUsers(),
             API.getTunnelStatus().catch(() => ({ status: 'error', available: false })),
@@ -706,16 +806,76 @@ async function renderAdmin() {
             API.getMemoryVideoSettings().catch(() => ({ enabled: false, style: 'ken_burns', format: 'landscape', show_date: false })),
             API.getMemoryVideoStyles().catch(() => ({ styles: [] })),
             API.getMemoryVideoFormats().catch(() => ({ formats: [] })),
+            // /api/health already carries the build identity (version.py
+            // computes it once at import), so the About panel needs no
+            // endpoint of its own and no round trip to GitHub.
+            API.getHealth().catch(() => ({})),
         ]);
 
+        _adminStats = stats;
+
         pc.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_photos')}</div><div class="stat-card-value" id="stat-photos">${stats.photos}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_videos')}</div><div class="stat-card-value" id="stat-videos">${stats.videos}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_total_size')}</div><div class="stat-card-value" id="stat-total-size">${formatSize(stats.total_size)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_people')}</div><div class="stat-card-value" id="stat-people">${stats.people}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_albums')}</div><div class="stat-card-value" id="stat-albums">${stats.albums}</div></div>
-                <div class="stat-card"><div class="stat-card-label">${t('admin_render.stat_users')}</div><div class="stat-card-value" id="stat-users">${stats.users}</div></div>
+            <div class="admin-dash">
+                <div class="admin-dash-col">
+                    <div class="admin-status-card admin-dash-head">
+                        <div class="admin-dash-facts">
+                            ${_dashFact('library', t('admin_render.stat_photos'), stats.photos, 'stat-photos')}
+                            ${_dashFact('library', t('admin_render.stat_videos'), stats.videos, 'stat-videos')}
+                            ${_dashFact('library', t('admin_render.stat_total_size'), formatSize(stats.total_size), 'stat-total-size')}
+                            ${_dashFact('content', t('admin_render.stat_albums'), stats.albums, 'stat-albums')}
+                            ${_dashFact('content', t('admin_render.stat_people'), stats.people, 'stat-people')}
+                            ${_dashFact('users', t('admin_render.stat_users'), stats.users, 'stat-users')}
+                            <p class="admin-dash-hint">${t('admin_dash.click_hint')}</p>
+                        </div>
+
+                        <div class="admin-dash-server">
+                            <div class="admin-dash-server-title">${icon('radio', 14)} ${t('admin_render.server_status_heading')}</div>
+                            <div class="admin-dash-server-lines">
+                                <span class="badge" id="server-ping-badge">${t('admin_render.ping_checking')}</span>
+                                <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                                <span class="badge ${stats.ml.face_detection_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_face_detection', { status: stats.ml.face_detection_available ? t('admin_render.status_active_opencv') : t('admin_render.status_unavailable') })}</span>
+                                <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                                <span class="badge ${stats.ffmpeg_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ffmpeg', { status: stats.ffmpeg_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                                <span class="badge ${stats.ml.geocoding_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_geocoding', { status: stats.ml.geocoding_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                                <span class="badge ${stats.ml.ocr_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ocr', { status: stats.ml.ocr_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
+                                ${stats.storage_warning.disk_free_gb != null ? `
+                                    <span class="badge ${stats.storage_warning.disk_warning ? 'badge-danger' : 'badge-success'}">${t('admin_render.badge_disk_free', { free: stats.storage_warning.disk_free_gb, total: stats.storage_warning.disk_total_gb })}</span>
+                                ` : ''}
+                                ${stats.storage_warning.total_storage_limit_mb > 0 ? `
+                                    <span class="badge ${stats.storage_warning.quota_warning ? 'badge-danger' : 'badge-success'}">${t('admin_render.badge_quota_usage', { used: formatSize(stats.total_size), limit: (stats.storage_warning.total_storage_limit_mb / 1024).toFixed(1) + ' GB' })}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <div class="admin-dash-jobsline">
+                            ${_dashJobsLine(stats.jobs)}
+                        </div>
+
+                        ${(!stats.ml.ocr_available || !stats.ml.person_clustering_available || stats.storage_warning.disk_warning || stats.storage_warning.quota_warning) ? `
+                            <div class="admin-dash-notes">
+                                ${!stats.ml.ocr_available ? `<p class="text-muted admin-field-hint">${t('admin_render.ocr_unavailable_hint')}</p>` : ''}
+                                ${!stats.ml.person_clustering_available ? `<p class="text-muted admin-field-hint">${t('admin_render.person_clustering_hint')}</p>` : ''}
+                                ${(stats.storage_warning.disk_warning || stats.storage_warning.quota_warning) ? `<p class="text-muted admin-field-hint" style="color:var(--danger)">${t('admin_render.storage_warning_hint')}</p>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div id="admin-dash-detail" class="admin-status-card admin-dash-detail" hidden></div>
+                </div>
+
+                <div class="admin-status-card admin-dash-about">
+                    <h4>${icon('rocket', 16)} ${t('admin_dash.about_heading')}</h4>
+                    <div class="admin-dash-version">
+                        <span class="admin-dash-version-label">${t('admin_dash.version_label')}</span>
+                        <span class="admin-dash-version-value">${versionInfo.full_version || t('admin_dash.version_unknown')}</span>
+                    </div>
+                    <p class="text-muted admin-field-hint">
+                        ${versionInfo.git_revision ? t('admin_dash.source_git') : t('admin_dash.source_zip')}${versionInfo.git_commit_date ? ' · ' + versionInfo.git_commit_date : ''}
+                    </p>
+                    <div id="update-status-container"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">${icon('search')} ${t('admin_render.check_update_btn')}</button>
+                    <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
+                </div>
             </div>
 
             <div class="admin-tabs">
@@ -730,36 +890,6 @@ async function renderAdmin() {
 
             <div id="admin-tab-overview" class="admin-tab-panel" ${activeAdminTab === 'overview' ? '' : 'hidden'}>
               <div class="admin-status-matrix">
-                <div class="admin-status-card">
-                    <h4>${icon('radio', 16)} ${t('admin_render.server_status_heading')}</h4>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <span class="badge" id="server-ping-badge">${t('admin_render.ping_checking')}</span>
-                        <span class="badge ${stats.ml.clip_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_clip_search', { status: stats.ml.clip_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                        <span class="badge ${stats.ml.face_detection_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_face_detection', { status: stats.ml.face_detection_available ? t('admin_render.status_active_opencv') : t('admin_render.status_unavailable') })}</span>
-                        <span class="badge ${stats.ml.person_clustering_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_person_clustering', { status: stats.ml.person_clustering_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                        <span class="badge ${stats.ffmpeg_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ffmpeg', { status: stats.ffmpeg_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                        <span class="badge ${stats.ml.geocoding_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_geocoding', { status: stats.ml.geocoding_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                        <span class="badge ${stats.ml.ocr_available ? 'badge-success' : 'badge-warning'}">${t('admin_render.badge_ocr', { status: stats.ml.ocr_available ? t('admin_render.status_active') : t('admin_render.status_unavailable') })}</span>
-                    </div>
-                    ${!stats.ml.ocr_available ? `
-                        <p class="text-muted admin-field-hint">${t('admin_render.ocr_unavailable_hint')}</p>
-                    ` : ''}
-                    ${!stats.ml.person_clustering_available ? `
-                        <p class="text-muted admin-field-hint">${t('admin_render.person_clustering_hint')}</p>
-                    ` : ''}
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-                        ${stats.storage_warning.disk_free_gb != null ? `
-                            <span class="badge ${stats.storage_warning.disk_warning ? 'badge-danger' : 'badge-success'}">${t('admin_render.badge_disk_free', { free: stats.storage_warning.disk_free_gb, total: stats.storage_warning.disk_total_gb })}</span>
-                        ` : ''}
-                        ${stats.storage_warning.total_storage_limit_mb > 0 ? `
-                            <span class="badge ${stats.storage_warning.quota_warning ? 'badge-danger' : 'badge-success'}">${t('admin_render.badge_quota_usage', { used: formatSize(stats.total_size), limit: (stats.storage_warning.total_storage_limit_mb / 1024).toFixed(1) + ' GB' })}</span>
-                        ` : ''}
-                    </div>
-                    ${(stats.storage_warning.disk_warning || stats.storage_warning.quota_warning) ? `
-                        <p class="text-muted admin-field-hint" style="color:var(--danger)">${t('admin_render.storage_warning_hint')}</p>
-                    ` : ''}
-                </div>
-
                 <div class="admin-status-card admin-status-card--jobs">
                     <h4>${icon('settings', 16)} ${t('admin_render.jobs_status_card_heading')}</h4>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
@@ -973,13 +1103,6 @@ async function renderAdmin() {
             <div id="admin-tab-system" class="admin-tab-panel" ${activeAdminTab === 'system' ? '' : 'hidden'}>
                 <div class="admin-grid">
                     <div class="admin-status-card">
-                        <h4>${icon('upload', 16)} ${t('admin_render.updates_heading')}</h4>
-                        <p class="text-muted admin-field-hint">${t('admin_render.git_pull_only_hint')}</p>
-                        <div id="update-status-container"></div>
-                        <button class="btn btn-secondary btn-sm" onclick="checkForUpdate()">${icon('search')} ${t('admin_render.check_update_btn')}</button>
-                    </div>
-
-                    <div class="admin-status-card">
                         <h4>${icon('film', 16)} ${t('admin_render.memvid_heading')} ${infoBtn(t('admin_render.memvid_info_hint'))}</h4>
                         <div id="memvid-settings-panel">${renderMemoryVideoSettingsPanel(memvidSettings, memvidStyles.styles, memvidFormats.formats)}</div>
                     </div>
@@ -1053,6 +1176,157 @@ async function refreshServerPing() {
 // open tabs, scroll position, etc. every 15s) so they stay live without
 // needing an F5. Self-clears exactly like pollAdminJobs() does if the
 // user has since navigated away from the admin page.
+// ---------------------------------------------------------------------------
+// Dashboard header: clickable figures with a drill-down that opens BELOW them.
+//
+// Every figure is a real <button>, not a styled <div> - that buys keyboard
+// focus, Enter/Space activation and the right screen-reader role for free,
+// which a clickable div would each have to reimplement badly.
+// ---------------------------------------------------------------------------
+
+// Last stats payload, kept so a drill-down opened minutes after page load
+// still shows current numbers rather than the ones baked into the markup.
+let _adminStats = null;
+let _openDashDetail = null;
+
+function _dashFact(detailKey, label, value, valueId) {
+    return `
+        <button type="button" class="dash-fact" data-dash="${detailKey}" data-fact="${valueId}"
+                aria-expanded="false" aria-controls="admin-dash-detail"
+                onclick="toggleDashDetail('${detailKey}')">
+            <span class="dash-fact-label">${label}</span>
+            <span class="dash-fact-sep">:</span>
+            <span class="dash-fact-value" id="${valueId}">${value}</span>
+        </button>`;
+}
+
+function _dashJobsLine(jobs) {
+    return `
+        <button type="button" class="dash-fact dash-fact--line" data-dash="jobs"
+                aria-expanded="false" aria-controls="admin-dash-detail"
+                onclick="toggleDashDetail('jobs')">
+            <span class="dash-fact-label">${t('admin_dash.jobs_label')}</span>
+            <span class="dash-fact-sep">:</span>
+            <span class="dash-fact-value">${jobs.running}</span>
+            <span class="dash-fact-unit">${t('admin_dash.jobs_running')}</span>
+            <span class="dash-fact-sep">·</span>
+            <span class="dash-fact-value">${jobs.pending}</span>
+            <span class="dash-fact-unit">${t('admin_dash.jobs_pending')}</span>
+            <span class="dash-fact-sep">·</span>
+            <span class="dash-fact-value">${jobs.completed}</span>
+            <span class="dash-fact-unit">${t('admin_dash.jobs_completed')}</span>
+        </button>`;
+}
+
+function _dashRow(label, value) {
+    return `<div class="dash-detail-row"><span>${label}</span><span class="dash-detail-value">${value}</span></div>`;
+}
+
+/** Body + title for one drill-down, built from the freshest stats we hold. */
+function _dashDetailContent(key) {
+    const s = _adminStats;
+    if (!s) return null;
+    const sw = s.storage_warning || {};
+
+    if (key === 'library') {
+        return {
+            title: t('admin_dash.detail_library'),
+            body: [
+                _dashRow(t('admin_render.stat_photos'), s.photos),
+                _dashRow(t('admin_render.stat_videos'), s.videos),
+                _dashRow(t('admin_dash.total_assets'), s.total_assets),
+                _dashRow(t('admin_render.stat_total_size'), formatSize(s.total_size)),
+                sw.disk_free_gb != null
+                    ? _dashRow(t('admin_dash.disk_free'), `${sw.disk_free_gb} / ${sw.disk_total_gb} GB`)
+                    : '',
+                _dashRow(t('admin_dash.quota'), sw.total_storage_limit_mb > 0
+                    ? (sw.total_storage_limit_mb / 1024).toFixed(1) + ' GB'
+                    : t('admin_dash.no_limit')),
+            ].join(''),
+            action: { label: t('admin_dash.goto_storage'), fn: "switchAdminTab('storage')" },
+        };
+    }
+    if (key === 'content') {
+        return {
+            title: t('admin_dash.detail_content'),
+            body: [
+                _dashRow(t('admin_render.stat_albums'), s.albums),
+                _dashRow(t('admin_render.stat_people'), s.people),
+                _dashRow(t('admin_dash.shared_links'), s.shared_links),
+            ].join(''),
+            action: { label: t('admin_dash.goto_people'), fn: "navigateTo('people')" },
+        };
+    }
+    if (key === 'users') {
+        return {
+            title: t('admin_dash.detail_users'),
+            body: _dashRow(t('admin_render.stat_users'), s.users),
+            action: { label: t('admin_dash.goto_users'), fn: "switchAdminTab('users')" },
+        };
+    }
+    if (key === 'jobs') {
+        return {
+            title: t('admin_dash.detail_jobs'),
+            body: [
+                _dashRow(t('admin_dash.jobs_running'), s.jobs.running),
+                _dashRow(t('admin_dash.jobs_pending'), s.jobs.pending),
+                _dashRow(t('admin_dash.jobs_completed'), s.jobs.completed),
+                _dashRow(t('admin_dash.jobs_failed'), s.jobs.failed),
+            ].join(''),
+            action: { label: t('admin_dash.goto_jobs'), fn: "switchAdminTab('overview')" },
+        };
+    }
+    return null;
+}
+
+function _paintDashDetail() {
+    const panel = $('admin-dash-detail');
+    if (!panel || !_openDashDetail) return;
+    const content = _dashDetailContent(_openDashDetail);
+    if (!content) return;
+    panel.innerHTML = `
+        <div class="dash-detail-head">
+            <h4>${content.title}</h4>
+            <button type="button" class="dash-detail-close" onclick="closeDashDetail()"
+                    aria-label="${t('admin_dash.close')}">
+                ${icon('close', 14)}
+            </button>
+        </div>
+        <div class="dash-detail-body">${content.body}</div>
+        ${content.action ? `
+            <button class="btn btn-secondary btn-sm" onclick="${content.action.fn}">${content.action.label}</button>
+        ` : ''}
+    `;
+}
+
+function _syncDashPressedState() {
+    document.querySelectorAll('.dash-fact').forEach(btn => {
+        const on = btn.dataset.dash === _openDashDetail;
+        btn.classList.toggle('dash-fact--open', on);
+        btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    });
+}
+
+/** Clicking the figure that is already open closes it again - the panel is a
+ *  toggle, so there is always a way back to the plain overview. */
+function toggleDashDetail(key) {
+    _openDashDetail = _openDashDetail === key ? null : key;
+    const panel = $('admin-dash-detail');
+    if (!panel) return;
+    if (!_openDashDetail) {
+        panel.hidden = true;
+        panel.innerHTML = '';
+    } else {
+        panel.hidden = false;
+        _paintDashDetail();
+    }
+    _syncDashPressedState();
+}
+
+function closeDashDetail() {
+    if (_openDashDetail) toggleDashDetail(_openDashDetail);
+}
+
 async function refreshAdminStats() {
     if (state.currentPage !== 'admin') {
         if (adminStatsPollInterval) {
@@ -1065,6 +1339,11 @@ async function refreshAdminStats() {
 
     try {
         const stats = await API.getAdminStats();
+        _adminStats = stats;
+        const jobsLine = document.querySelector('.admin-dash-jobsline');
+        if (jobsLine) jobsLine.innerHTML = _dashJobsLine(stats.jobs);
+        if (_openDashDetail) _paintDashDetail();
+        _syncDashPressedState();
         _setStatValue('stat-photos', stats.photos);
         _setStatValue('stat-videos', stats.videos);
         _setStatValue('stat-total-size', formatSize(stats.total_size));

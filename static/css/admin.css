@@ -232,3 +232,226 @@
     width: auto;
     min-width: 140px;
 }
+
+/* ===========================================================================
+   Admin dashboard header
+   The figures replace the old six read-only stat cards: each one is now a
+   button that opens a drill-down panel directly beneath the card, so the
+   detail appears where the user was already looking instead of in a modal
+   that covers the numbers they just clicked.
+   =========================================================================== */
+.admin-dash {
+    display: grid;
+    grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    align-items: start;
+}
+
+.admin-dash-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-width: 0;
+}
+
+.admin-dash-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-md);
+    align-items: start;
+}
+
+.admin-dash-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.admin-dash-jobsline,
+.admin-dash-notes { grid-column: 1 / -1; }
+
+.admin-dash-notes p:last-child { margin-bottom: 0; }
+
+.admin-dash-hint {
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.75;
+}
+
+/* --- the clickable figures ------------------------------------------------ */
+.dash-fact {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color 140ms ease, background 140ms ease,
+                transform 140ms ease, box-shadow 140ms ease;
+}
+
+.dash-fact:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-elevated, var(--bg-secondary));
+    transform: translateX(3px);
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.18);
+}
+
+.dash-fact:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* The open figure stays visibly tied to the panel below it. */
+.dash-fact--open {
+    border-color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.14);
+}
+
+.dash-fact-label { color: var(--text-secondary); }
+.dash-fact-sep { color: var(--text-secondary); opacity: 0.5; }
+.dash-fact-unit { color: var(--text-secondary); font-size: 0.78rem; }
+
+.dash-fact-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.dash-fact--line { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+
+/* --- server status: deliberately a console panel in both themes ----------- */
+.admin-dash-server {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: #0d0d15;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    min-width: 0;
+}
+
+.admin-dash-server-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8b8ba7;
+}
+
+.admin-dash-server-lines {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+/* Flat console lines rather than filled pills - the filled badges were built
+   for a light card and turn into a wall of colour on this dark ground. */
+.admin-dash-server-lines .badge {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: #9a9ab0;
+}
+
+.admin-dash-server-lines .badge-success { color: #4ade80; }
+.admin-dash-server-lines .badge-warning { color: #fbbf24; }
+.admin-dash-server-lines .badge-danger { color: #f87171; }
+.admin-dash-server-lines .badge-admin { color: #a78bfa; }
+
+/* --- the drill-down panel ------------------------------------------------- */
+.admin-dash-detail { animation: dashDetailIn 160ms ease both; }
+
+@keyframes dashDetailIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.dash-detail-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.dash-detail-head h4 { margin: 0; }
+
+.dash-detail-close {
+    display: inline-flex;
+    padding: 4px;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+}
+
+.dash-detail-close:hover { color: var(--text-primary); background: var(--bg-secondary); }
+
+.dash-detail-body {
+    display: flex;
+    flex-direction: column;
+    margin: var(--space-sm) 0;
+}
+
+.dash-detail-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: 7px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dash-detail-row:last-child { border-bottom: none; }
+
+.dash-detail-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- about / version ------------------------------------------------------ */
+.admin-dash-version {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-dash-version-label { font-size: 0.85rem; color: var(--text-secondary); }
+
+.admin-dash-version-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+}
+
+@media (max-width: 900px) {
+    .admin-dash,
+    .admin-dash-head { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-fact { transition: none; }
+    .dash-fact:hover { transform: none; }
+    .admin-dash-detail { animation: none; }
+}
