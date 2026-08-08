@@ -312,9 +312,90 @@
     100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
+/* --- rise: hearts drift up like bubbles, icon beats ---------------------- */
+.fav-heart-rise {
+    position: absolute;
+    bottom: 0;
+    color: var(--danger, #ef4444);
+    pointer-events: none;
+    animation-name: favRise;
+    animation-timing-function: ease-out;
+    animation-fill-mode: both;
+}
+
+@keyframes favRise {
+    0% { transform: translate(0, 6px) scale(0.6); opacity: 0; }
+    25% { opacity: 1; }
+    100% { transform: translate(var(--sway), -22px) scale(1); opacity: 0; }
+}
+
+.fav-icon-slot.is-beating > .fav-icon-main {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: favIconBeat 620ms ease-in-out;
+}
+
+@keyframes favIconBeat {
+    0% { transform: scale(1); }
+    22% { transform: scale(1.25); }
+    40% { transform: scale(1); }
+    60% { transform: scale(1.16); }
+    100% { transform: scale(1); }
+}
+
+/* --- burst: hearts scatter outward from the centre ----------------------- */
+.fav-heart-burst {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -3px 0 0 -3px;
+    color: var(--danger, #ef4444);
+    pointer-events: none;
+    animation: favBurst 560ms cubic-bezier(0.2, 0.7, 0.4, 1) both;
+}
+
+/* Fades out well before --dx/--dy would reach the slot edge, so the clip
+   reads as the heart receding rather than being sliced off. */
+@keyframes favBurst {
+    0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+    25% { opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.9); opacity: 0; }
+}
+
+.fav-icon-slot.is-popping > .fav-icon-main {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: favIconPop 520ms cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+@keyframes favIconPop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+/* --- pulse: the quiet one, no extra hearts ------------------------------- */
+.fav-icon-slot.is-pulsing > .fav-icon-main {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: favIconPulse 720ms ease-in-out;
+}
+
+@keyframes favIconPulse {
+    0% { transform: scale(1); filter: none; }
+    30% { transform: scale(1.18); filter: drop-shadow(0 0 5px var(--danger, #ef4444)); }
+    60% { transform: scale(1.04); filter: drop-shadow(0 0 3px var(--danger, #ef4444)); }
+    100% { transform: scale(1); filter: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sidebar-footer #profile-settings-btn svg.is-spinning { animation: none; }
     .fav-heart-mini,
-    .fav-heart-land { display: none; }
+    .fav-heart-land,
+    .fav-heart-rise,
+    .fav-heart-burst { display: none; }
+    .fav-icon-slot.is-beating > .fav-icon-main,
+    .fav-icon-slot.is-popping > .fav-icon-main,
+    .fav-icon-slot.is-pulsing > .fav-icon-main { animation: none; }
     .fav-icon-slot.is-raining > .fav-icon-main { opacity: 1; }
 }

@@ -91,11 +91,12 @@ function playBrandTypewriter() {
     setTimeout(tick, 200);
 }
 
-// Mini hearts per tap, and how long the one that becomes the icon takes to
-// settle. The throwaway ones are all done before it lands.
-const FAV_MINI_HEARTS = 5;
-const FAV_LAND_MS = 620;
-const FAV_RAIN_MS = 900;
+// The favourite effects share the app-wide odds (see flair.js). Same
+// reasoning as every other button: a reaction that fires on every single
+// tap stops being a small delight and turns into a tic. Four variants
+// rather than one, so the quarter of taps that do fire aren't predictable
+// either.
+const FAV_EFFECT_CHANCE = FLAIR_CHANCE;
 
 function _prefersReducedMotion() {
     return matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -117,11 +118,88 @@ function initGearSpin() {
     });
 }
 
-/** Tiny hearts falling INSIDE the Favourites icon - clipped to its own 20px
- *  box, so nothing spills into the nav row - with the last one growing into
- *  the icon itself as it lands. The real icon is only hidden while that is
- *  in flight and comes back underneath the lander's final frame, which is
- *  the same heart at the same size and position, so the swap is invisible. */
+function _favHeart(className, size) {
+    const el = document.createElement('span');
+    el.className = className;
+    el.innerHTML = icon('heart', size);
+    return el;
+}
+
+const _rand = (min, max) => min + Math.random() * (max - min);
+
+/**
+ * Effects for the Favourites icon. Every one of them plays INSIDE the
+ * icon's own 20px box, which is clipped - the containment is structural,
+ * not a matter of tuned distances, so no effect can ever spill into the
+ * nav row no matter what numbers it uses.
+ *
+ * Each returns how long it needs, so the caller knows when to clean up.
+ * `hidesIcon` is only for effects where a heart takes the icon's place;
+ * the others animate the real icon rather than replacing it.
+ */
+const FAV_EFFECTS = {
+    // Hearts fall through the box, and the last one grows into the icon.
+    rain(slot, spawn) {
+        for (let i = 0; i < 5; i++) {
+            const mini = _favHeart('fav-heart-mini', Math.round(_rand(5, 8)));
+            mini.style.left = _rand(10, 80).toFixed(0) + '%';
+            mini.style.animationDelay = (i * 70 + _rand(0, 60)).toFixed(0) + 'ms';
+            mini.style.animationDuration = _rand(420, 640).toFixed(0) + 'ms';
+            spawn(mini);
+        }
+        const lander = _favHeart('fav-heart-land', 20);
+        lander.style.animationDelay = '280ms';
+        spawn(lander);
+        return { duration: 900, hidesIcon: true };
+    },
+
+    // Hearts drift upward like bubbles while the icon beats once - the
+    // opposite direction to `rain`, which is what keeps the two distinct
+    // at this size.
+    rise(slot, spawn) {
+        for (let i = 0; i < 6; i++) {
+            const mini = _favHeart('fav-heart-rise', Math.round(_rand(4, 7)));
+            mini.style.left = _rand(8, 82).toFixed(0) + '%';
+            mini.style.setProperty('--sway', _rand(-5, 5).toFixed(1) + 'px');
+            mini.style.animationDelay = (i * 55 + _rand(0, 50)).toFixed(0) + 'ms';
+            mini.style.animationDuration = _rand(480, 700).toFixed(0) + 'ms';
+            spawn(mini);
+        }
+        slot.classList.add('is-beating');
+        return { duration: 900 };
+    },
+
+    // Hearts scatter outward from the middle. They fade before the edge, so
+    // the clip reads as distance rather than as a cut-off.
+    burst(slot, spawn) {
+        const count = 7;
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2 + _rand(-0.3, 0.3);
+            const distance = _rand(9, 15);
+            const mini = _favHeart('fav-heart-burst', Math.round(_rand(4, 7)));
+            mini.style.setProperty('--dx', (Math.cos(angle) * distance).toFixed(1) + 'px');
+            mini.style.setProperty('--dy', (Math.sin(angle) * distance).toFixed(1) + 'px');
+            mini.style.animationDelay = _rand(0, 60).toFixed(0) + 'ms';
+            spawn(mini);
+        }
+        slot.classList.add('is-popping');
+        return { duration: 700 };
+    },
+
+    // No extra hearts at all - just the icon itself beating and glowing.
+    // Worth having as the quiet one: four loud effects in a row would make
+    // the odds feel higher than they are.
+    pulse(slot) {
+        slot.classList.add('is-pulsing');
+        return { duration: 720 };
+    },
+};
+
+const FAV_EFFECT_NAMES = Object.keys(FAV_EFFECTS);
+const FAV_EFFECT_CLASSES = ['is-raining', 'is-beating', 'is-popping', 'is-pulsing'];
+
+/** Wraps the Favourites icon in a clipping slot and plays one of the
+ *  effects above on some taps. */
 function initHeartRain() {
     const nav = $('nav-favorites');
     const mainIcon = nav?.querySelector('svg');
@@ -139,33 +217,21 @@ function initHeartRain() {
     let running = false;
     nav.addEventListener('click', () => {
         if (running || _prefersReducedMotion()) return;
+        if (Math.random() >= FAV_EFFECT_CHANCE) return;
+
         running = true;
-        slot.classList.add('is-raining');
-
+        const name = FAV_EFFECT_NAMES[Math.floor(Math.random() * FAV_EFFECT_NAMES.length)];
         const spawned = [];
-        for (let i = 0; i < FAV_MINI_HEARTS; i++) {
-            const mini = document.createElement('span');
-            mini.className = 'fav-heart-mini';
-            mini.innerHTML = icon('heart', 5 + Math.round(Math.random() * 3));
-            mini.style.left = (10 + Math.random() * 70).toFixed(0) + '%';
-            mini.style.animationDelay = (i * 70 + Math.random() * 60).toFixed(0) + 'ms';
-            mini.style.animationDuration = (420 + Math.random() * 220).toFixed(0) + 'ms';
-            slot.appendChild(mini);
-            spawned.push(mini);
-        }
+        const spawn = (el) => { slot.appendChild(el); spawned.push(el); };
 
-        const lander = document.createElement('span');
-        lander.className = 'fav-heart-land';
-        lander.innerHTML = icon('heart', 20);
-        lander.style.animationDelay = (FAV_RAIN_MS - FAV_LAND_MS) + 'ms';
-        slot.appendChild(lander);
-        spawned.push(lander);
+        const { duration, hidesIcon } = FAV_EFFECTS[name](slot, spawn);
+        if (hidesIcon) slot.classList.add('is-raining');
 
         setTimeout(() => {
-            slot.classList.remove('is-raining');
+            slot.classList.remove(...FAV_EFFECT_CLASSES);
             spawned.forEach(el => el.remove());
             running = false;
-        }, FAV_RAIN_MS);
+        }, duration);
     });
 }
 
