@@ -43,6 +43,24 @@ Für ein Familienarchiv, bei dem der Telefonspeicher ständig voll wird, sich da
 - Wählt automatisch die beste Kopie aus (Auflösung → echte Standortdaten → Dateigröße, in dieser Reihenfolge).
 - **Diashow-Modus**: Gruppen werden nacheinander mit Countdown präsentiert; läuft die Zeit ab, wird automatisch die beste Kopie behalten, oder Sie überspringen bzw. löschen die ganze Gruppe selbst.
 
+### 📝 OCR-Textsuche
+
+- Liest mit Tesseract den Text in Screenshots, Belegen und gescannten Dokumenten und macht ihn durchsuchbar — tippen Sie ein Wort ein, an das Sie sich erinnern, und das Foto damit taucht auf.
+- Treffer werden direkt auf dem Foto hervorgehoben, wenn Sie es aus einer Suche heraus öffnen.
+- Vollständig optional: Ist Tesseract nicht installiert, deaktiviert sich die Funktion selbst, sonst ändert sich nichts.
+
+### 🎬 Erinnerungsvideos
+
+- Erstellt automatisch Diashow-Videos aus Ihrer Bibliothek — sieben Stile (Ken Burns, Überblendung, harter Schnitt, schnelle Montage, Schwenk, Polaroid), Quer- oder Hochformat, wahlweise mit Datumseinblendung.
+- Läuft zeitgesteuert im Hintergrund; einstellbar im Admin-Bereich.
+
+### 🔐 Konten und Zugriff
+
+- **Zwei-Faktor-Authentifizierung** (TOTP — Google Authenticator, Authy usw.), QR-Code wird serverseitig erzeugt.
+- **API-Schlüssel** mit optionalem Ablauf (7/30/90 Tage, 1 Jahr oder nie) für Skripte und Automatisierungen.
+- **Liste aktiver Sitzungen** — sehen Sie jedes angemeldete Gerät und melden Sie es aus der Ferne ab.
+- Speicherkontingente pro Benutzer, Gastkonten (ansehen/herunterladen, aber niemals hochladen) und eine Admin-Freigabe für neue Registrierungen.
+
 ### 🔗 Ähnliche Fotos
 
 - Beim Öffnen eines Fotos erscheint ein Badge mit anderen, visuell ähnlichen Fotos — liest aus einer im Hintergrund vorberechneten Zuordnungstabelle, statt bei jedem Öffnen neu zu scannen.
@@ -130,6 +148,10 @@ Dann eines der beiden fertigen Installationsskripte ausführen:
 |---|---|
 | `install_full.bat` | Alles — einschließlich CLIP-semantischer Suche und Gesichtserkennung (einige GB, mit GPU deutlich schneller). |
 | `install_minimal.bat` | Alles außer den KI-Funktionen — kleinere, schnellere Installation. |
+
+Beide Installer holen außerdem FFmpeg (Video) und Tesseract (OCR-Textsuche) für Sie, und beide brechen bei einer Python-Version älter als 3.10 mit einer klaren Meldung ab statt mit einer Wand aus pip-Fehlern.
+
+Um Wimmich später zu entfernen, führen Sie `uninstall.bat` aus — es löscht die Python-Umgebung und nennt Ihnen genau den Ort Ihrer Bibliothek, ohne sie anzutasten.
 
 Nach der Installation den Server mit `start.bat` starten (`http://localhost:3000`). Der erste registrierte Benutzer wird automatisch Administrator. Ein erneuter Aufruf von `start.bat` startet den Server direkt, wenn das venv bereits existiert — der Installationsschritt wird nicht wiederholt.
 

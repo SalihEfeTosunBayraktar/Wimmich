@@ -43,6 +43,24 @@ For a family archive where phone storage keeps filling up, the same photo from s
 - Automatically picks the best-quality copy (by resolution → real location data → file size, in that order).
 - **Slideshow mode**: groups are presented one at a time with a countdown; when time runs out the best copy is kept automatically, or you can skip or delete the whole group yourself.
 
+### 📝 OCR text search
+
+- Reads the text inside screenshots, receipts, and scanned documents with Tesseract, then makes it searchable — type a word you remember seeing and the photo that contains it comes back.
+- Matches are highlighted directly on the photo when you open it from a search.
+- Fully optional: if Tesseract isn't installed the feature disables itself and nothing else changes.
+
+### 🎬 Memory videos
+
+- Automatically builds slideshow videos from your library — seven styles (Ken Burns, crossfade, simple cut, fast montage, pan, polaroid), landscape or vertical, with an optional date overlay.
+- Runs on a schedule in the background; configurable from the admin panel.
+
+### 🔐 Accounts & access
+
+- **Two-factor authentication** (TOTP — Google Authenticator, Authy, etc.), with a QR code generated server-side.
+- **API keys** with optional expiry (7/30/90 days, 1 year, or never) for scripts and automations.
+- **Active session list** — see every signed-in device and sign any of them out remotely.
+- Per-user storage quotas, guest accounts (view/download but never upload), and an admin approval step for new registrations.
+
 ### 🔗 Similar Photos
 
 - Opening a photo shows a badge for other photos that are visually similar to it — reads from a precomputed matching table in the background instead of re-scanning on every open.
@@ -131,11 +149,15 @@ Then run one of the two ready-made installer scripts:
 | `install_full.bat` | Everything — including CLIP semantic search and face recognition (a few GB, much faster with a GPU). |
 | `install_minimal.bat` | Everything except the AI features — a smaller, faster setup. |
 
+Both installers also fetch FFmpeg (video) and Tesseract (OCR text search) for you, and both refuse to run on Python older than 3.10 with one clear message rather than a wall of pip errors.
+
+To remove Wimmich later, run `uninstall.bat` — it deletes the Python environment and tells you exactly where your library folder is, without touching it.
+
 Once installed, launch the server with `start.bat` (`http://localhost:3000`). The first user to register automatically becomes an admin. Running `start.bat` again just starts the server directly if the venv already exists — it won't repeat the install step.
 
 ## API Access
 
-Everything the web UI does goes through a plain REST API underneath — useful for scripts, automations, or a mobile client (see [Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android) below).
+Everything the web UI does goes through a plain REST API underneath — useful for scripts, automations, or your own client.
 
 **1. Get a key** — Profile Settings → API Keys → Create Key. Give it a name and, optionally, an expiry (7/30/90 days, 1 year, or never). The key is shown once; copy it right away.
 
@@ -160,10 +182,6 @@ curl -X POST http://localhost:3000/api/assets/upload \
 ```
 
 Revoke a key anytime from the same Profile Settings screen — a revoked or expired key is rejected on its very next request.
-
-## Android App
-
-A native Kotlin/Compose Android client lives in a separate repo: **[Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android)**. It handles login, background auto-backup of your phone's photos/videos, and basic gallery browsing against this same server — no changes needed here to use it.
 
 ## Technology
 

@@ -4,6 +4,25 @@ A self-hosted alternative to Immich, running natively on Windows.
 """
 import sys
 
+# Minimum supported Python. Checked here rather than left to the first
+# ImportError from a dependency, because that failure mode is a wall of pip
+# or traceback output that says nothing about the actual cause. Kept in
+# plain 2.7-compatible syntax on purpose: this has to still PARSE on an
+# interpreter old enough to fail the check, or the user sees a SyntaxError
+# instead of the message telling them what to do.
+MIN_PYTHON = (3, 10)
+
+if sys.version_info < MIN_PYTHON:
+    sys.stderr.write(
+        "\n  Wimmich needs Python %d.%d or newer - this is Python %d.%d.%d.\n"
+        "  Install a newer version from https://www.python.org/downloads/\n"
+        "  (tick 'Add python.exe to PATH'), then run this again.\n\n"
+        % (MIN_PYTHON[0], MIN_PYTHON[1],
+           sys.version_info[0], sys.version_info[1], sys.version_info[2])
+    )
+    sys.exit(1)
+
+
 # Nothing in this codebase currently prints non-ASCII text to the console
 # (verified: every utils/log.py call site is plain ASCII), but Windows'
 # default console codepage often isn't UTF-8, especially on Turkish-locale

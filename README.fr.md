@@ -43,6 +43,24 @@ Pour une archive familiale où la mémoire du téléphone se remplit sans cesse,
 - Sélectionne automatiquement la meilleure copie (résolution → données de localisation réelles → taille du fichier, dans cet ordre).
 - **Mode diaporama** : les groupes défilent un par un avec un compte à rebours ; à la fin du délai, la meilleure copie est conservée automatiquement, ou vous pouvez passer au suivant ou supprimer tout le groupe vous-même.
 
+### 📝 Recherche de texte (OCR)
+
+- Lit le texte contenu dans les captures d'écran, les reçus et les documents numérisés avec Tesseract, puis le rend consultable — tapez un mot dont vous vous souvenez et la photo qui le contient ressort.
+- Les correspondances sont surlignées sur la photo lorsque vous l'ouvrez depuis une recherche.
+- Entièrement facultatif : si Tesseract n'est pas installé, la fonction se désactive et rien d'autre ne change.
+
+### 🎬 Vidéos souvenirs
+
+- Génère automatiquement des diaporamas vidéo à partir de votre bibliothèque — sept styles (Ken Burns, fondu enchaîné, coupe simple, montage rapide, panoramique, polaroid), format paysage ou vertical, date en surimpression facultative.
+- S'exécute en arrière-plan selon une planification ; configurable depuis le panneau d'administration.
+
+### 🔐 Comptes et accès
+
+- **Authentification à deux facteurs** (TOTP — Google Authenticator, Authy, etc.), avec un QR code généré côté serveur.
+- **Clés API** avec expiration facultative (7/30/90 jours, 1 an, ou jamais) pour les scripts et les automatisations.
+- **Liste des sessions actives** — voyez chaque appareil connecté et déconnectez-en n'importe lequel à distance.
+- Quotas de stockage par utilisateur, comptes invités (consultation/téléchargement mais jamais d'envoi) et validation par un administrateur pour les nouvelles inscriptions.
+
 ### 🔗 Photos similaires
 
 - Ouvrir une photo affiche un badge indiquant d'autres photos qui lui ressemblent visuellement — lit une table de correspondance précalculée en arrière-plan au lieu de rescanner à chaque ouverture.
@@ -130,6 +148,10 @@ Puis exécutez l'un des deux scripts d'installation prêts à l'emploi :
 |---|---|
 | `install_full.bat` | Tout — y compris la recherche sémantique CLIP et la reconnaissance faciale (quelques Go, bien plus rapide avec un GPU). |
 | `install_minimal.bat` | Tout sauf les fonctionnalités IA — une installation plus légère et plus rapide. |
+
+Les deux installateurs récupèrent également FFmpeg (vidéo) et Tesseract (recherche de texte OCR) pour vous, et tous deux refusent de s'exécuter sur une version de Python antérieure à 3.10 avec un message clair plutôt qu'un mur d'erreurs pip.
+
+Pour désinstaller Wimmich plus tard, lancez `uninstall.bat` — il supprime l'environnement Python et vous indique précisément où se trouve votre bibliothèque, sans y toucher.
 
 Une fois installé, lancez le serveur avec `start.bat` (`http://localhost:3000`). Le premier utilisateur à s'inscrire devient automatiquement administrateur. Relancer `start.bat` démarre directement le serveur si le venv existe déjà — l'étape d'installation n'est pas répétée.
 

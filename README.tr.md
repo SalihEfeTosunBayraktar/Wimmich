@@ -43,6 +43,24 @@ Telefon hafızası dolan, Sosyal Medyalardan gelen aynı fotoğrafın onlarca ko
 - En kaliteli kopyayı otomatik seçer (çözünürlük → gerçek konum verisi → dosya boyutu sırasıyla).
 - **Slayt modu**: gruplar tek tek, sayaçlı olarak önünüze gelir; süre dolarsa en kaliteli otomatik korunur, isterseniz atlayın ya da hepsini silin.
 
+### 📝 OCR metin arama
+
+- Ekran görüntüleri, fişler ve taranmış belgelerin içindeki yazıyı Tesseract ile okuyup aranabilir hale getirir — hatırladığınız bir kelimeyi yazın, o kelimenin geçtiği fotoğraf gelsin.
+- Aramadan açtığınızda eşleşen yerler fotoğrafın üzerinde işaretlenir.
+- Tamamen opsiyonel: Tesseract kurulu değilse özellik kendini kapatır, başka hiçbir şey etkilenmez.
+
+### 🎬 Anı videoları
+
+- Kitaplığınızdan otomatik slayt gösterisi videoları üretir — yedi stil (Ken Burns, çapraz geçiş, düz kesme, hızlı montaj, kaydırma, polaroid), yatay veya dikey format, isteğe bağlı tarih yazısı.
+- Arka planda zamanlanmış olarak çalışır; yönetim panelinden ayarlanır.
+
+### 🔐 Hesaplar ve erişim
+
+- **İki adımlı doğrulama** (TOTP — Google Authenticator, Authy vb.), QR kodu sunucu tarafında üretilir.
+- Betikler ve otomasyonlar için **API anahtarları**, isteğe bağlı süreyle (7/30/90 gün, 1 yıl veya süresiz).
+- **Aktif oturum listesi** — giriş yapmış her cihazı görün ve dilediğinizi uzaktan sonlandırın.
+- Kullanıcı başına depolama kotası, misafir hesaplar (görüntüler/indirir ama asla yükleyemez) ve yeni kayıtlar için yönetici onayı.
+
 ### 🔗 Benzer Fotoğraflar
 
 - Bir fotoğrafı açtığınızda, ona görsel olarak benzeyen diğer fotoğrafları gösteren bir rozet — arka planda önceden hesaplanmış bir eşleme tablosundan okur, her açılışta yeniden taramaz.
@@ -131,11 +149,15 @@ Sonra hazır kurulum paketlerinden birini çalıştırın:
 | `install_full.bat` | Her şey — CLIP semantik arama ve yüz tanıma dahil (birkaç GB, GPU ile çok daha hızlı). |
 | `install_minimal.bat` | AI özellikleri hariç her şey — daha küçük, daha hızlı kurulum. |
 
+Her iki kurulum betiği FFmpeg'i (video) ve Tesseract'ı (OCR metin arama) da sizin için indirir; ayrıca Python 3.10'dan eskiyse sayfalarca pip hatası yerine tek satırlık net bir mesajla durur.
+
+Wimmich'i kaldırmak isterseniz `uninstall.bat` çalıştırın — Python ortamını siler ve kitaplık klasörünüzün tam olarak nerede olduğunu söyler, ona dokunmaz.
+
 Kurulum bitince `start.bat` ile sunucuyu başlatın (`http://localhost:3000`). İlk kayıt olan kullanıcı otomatik olarak yönetici olur. `start.bat`'ı tekrar çalıştırdığınızda venv zaten varsa direkt sunucuyu başlatır, kurulum adımını atlamaz.
 
 ## API Kullanımı
 
-Web arayüzünün yaptığı her şey aslında sade bir REST API üzerinden yürüyor — betikler, otomasyonlar veya bir mobil istemci için kullanışlı (aşağıdaki [Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android)'a bakın).
+Web arayüzünün yaptığı her şey aslında sade bir REST API üzerinden yürüyor — betikler, otomasyonlar veya kendi istemciniz için kullanışlı.
 
 **1. Bir anahtar alın** — Profil Ayarları → API Anahtarları → Anahtar Oluştur. Bir isim verin ve isterseniz bir son kullanma süresi seçin (7/30/90 gün, 1 yıl veya süresiz). Anahtar yalnızca bir kez gösterilir; hemen kopyalayın.
 
@@ -160,10 +182,6 @@ curl -X POST http://localhost:3000/api/assets/upload \
 ```
 
 Bir anahtarı istediğiniz zaman aynı Profil Ayarları ekranından iptal edebilirsiniz — iptal edilmiş veya süresi dolmuş bir anahtar bir sonraki istekte reddedilir.
-
-## Android Uygulaması
-
-Kotlin/Compose ile yazılmış native bir Android istemcisi ayrı bir repoda yaşıyor: **[Wimmich Android](https://github.com/SalihEfeTosunBayraktar/Wimmich-Android)**. Giriş, telefonunuzdaki fotoğraf/videoların otomatik arka plan yedeklemesini ve temel galeri gezintisini bu sunucuya karşı yönetir — burada hiçbir değişiklik yapmanıza gerek yoktur.
 
 ## Teknoloji
 

@@ -954,9 +954,25 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json({"status": "started"})
 
 
+# Same floor as main.py's own guard. Checked before any real work so a too-old
+# interpreter is caught in one clear line, not as a pip resolution failure
+# several minutes into a multi-gigabyte install.
+MIN_PYTHON = (3, 10)
+
+
 def main():
     if platform.system() != "Windows":
         print("Wimmich currently only supports Windows. Exiting.")
+        sys.exit(1)
+
+    if sys.version_info < MIN_PYTHON:
+        print(
+            "\n  Wimmich needs Python %d.%d or newer - this is Python %d.%d.%d.\n"
+            "  Install a newer version from https://www.python.org/downloads/\n"
+            "  (tick 'Add python.exe to PATH'), then run this again.\n"
+            % (MIN_PYTHON[0], MIN_PYTHON[1],
+               sys.version_info[0], sys.version_info[1], sys.version_info[2])
+        )
         sys.exit(1)
 
     try:
