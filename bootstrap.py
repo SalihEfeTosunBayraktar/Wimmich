@@ -11,6 +11,7 @@ anything from the rest of the Wimmich codebase, only the standard library.
 """
 import io
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -18,6 +19,7 @@ import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import webbrowser
 import zipfile
@@ -491,6 +493,17 @@ PAGE_HTML = """<!doctype html>
     border-radius: 8px; padding: 10px 12px; color: var(--text-primary); font-size: 0.95rem;
   }
   input:focus { outline: none; border-color: var(--accent-primary); }
+  /* The path and its picker are one control, so they share a row and the
+     text field takes the slack. */
+  .path-row { display: flex; gap: 8px; align-items: stretch; }
+  .path-row input[type="text"] { flex: 1; min-width: 0; }
+  button.browse {
+    flex-shrink: 0; width: auto; margin: 0; padding: 0 14px; border-radius: 8px; cursor: pointer;
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);
+    font-size: 0.85rem; white-space: nowrap;
+  }
+  button.browse:hover { border-color: var(--accent-primary); }
+  button.browse:disabled { opacity: 0.6; cursor: default; }
   .profiles { display: flex; gap: 10px; margin-top: 6px; }
   .profile-card {
     flex: 1; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px;
@@ -575,7 +588,10 @@ PAGE_HTML = """<!doctype html>
     <p class="subtitle">Let's get your setup finished before we begin.</p>
 
     <label>Install to folder</label>
-    <input type="text" id="install_dir">
+    <div class="path-row">
+      <input type="text" id="install_dir">
+      <button type="button" class="browse" id="browse_btn" onclick="browseForFolder()">Browse...</button>
+    </div>
 
     <label>Port</label>
     <input type="number" id="port" min="1024" max="65535">
@@ -644,6 +660,29 @@ async function loadSystemCheck() {
     document.getElementById('gpu').checked = !!data.gpu_hint;
     if (!data.git_available) document.getElementById('git-note').style.display = 'block';
   } catch (e) { /* form still usable with blank defaults */ }
+}
+
+async function browseForFolder() {
+  const input = document.getElementById('install_dir');
+  const btn = document.getElementById('browse_btn');
+  // The request doesn't return until the dialog is dismissed, so the button
+  // has to say so - otherwise a picker that opened behind this window looks
+  // like a page that stopped responding.
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Choose a folder...';
+  try {
+    const res = await fetch('/api/browse?start=' + encodeURIComponent(input.value.trim()));
+    const data = await res.json();
+    // Empty means Cancel, or a machine where the dialog couldn't open. Either
+    // way the typed path is still the answer - don't wipe it.
+    if (data.path) input.value = data.path;
+  } catch (e) {
+    /* typing the path still works */
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
 }
 
 function selectProfile(profile) {
@@ -842,6 +881,62 @@ window.addEventListener('DOMContentLoaded', () => {
 """
 
 
+# PowerShell rather than tkinter: tkinter is technically stdlib but is an
+# optional component that some Python builds ship without, and this file has
+# exactly one job - it must not fail on a machine where the picker is the
+# only thing missing. PowerShell is part of Windows itself, and bootstrap
+# already refuses to run anywhere else.
+#
+# -STA is required: FolderBrowserDialog is a WinForms control and WinForms
+# needs a single-threaded apartment. Without it the dialog never appears and
+# the call returns an error instead.
+#
+# The starting folder arrives in an environment variable, not as an
+# argument: with `powershell -Command <script> <extra>`, everything after
+# the script is appended to the command TEXT rather than bound to $args, so
+# the path silently never arrived (confirmed directly - $args[0] came back
+# empty and the path ran as its own statement). An env var also keeps a
+# user-typed path with a quote or a $ in it out of the command string
+# entirely.
+_FOLDER_PICKER_PS = r"""
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = 'Choose where to install Wimmich'
+$dialog.ShowNewFolderButton = $true
+$start = $env:WIMMICH_PICKER_START
+if ($start -and (Test-Path $start)) { $dialog.SelectedPath = $start }
+# Parent it to a temporary topmost form, or the dialog can open behind the
+# browser window the user is looking at and read as a freeze.
+$owner = New-Object System.Windows.Forms.Form
+$owner.TopMost = $true
+if ($dialog.ShowDialog($owner) -eq [System.Windows.Forms.DialogResult]::OK) {
+    [Console]::Out.Write($dialog.SelectedPath)
+}
+$owner.Dispose()
+"""
+
+
+def _pick_folder_dialog(start_dir: str = "") -> dict:
+    """Open the native folder picker and return {"path": ...}.
+
+    Every failure resolves to an empty path rather than an error: the text
+    field beside the button still works, so a missing or refused dialog
+    should cost the user a button, not the install.
+    """
+    env = dict(os.environ, WIMMICH_PICKER_START=start_dir or "")
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-STA", "-Command", _FOLDER_PICKER_PS],
+            capture_output=True, text=True, timeout=300, env=env,
+        )
+    except Exception as e:
+        _log(f"Folder picker unavailable ({e}) - type the path instead.")
+        return {"path": ""}
+
+    # Empty stdout is the normal "user pressed Cancel" path, not a failure.
+    return {"path": result.stdout.strip()}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass  # keep console output limited to our own _log() lines
@@ -869,6 +964,14 @@ class Handler(BaseHTTPRequestHandler):
                 "default_install_dir": str(Path.home() / "Wimmich"),
                 "default_port": 3000,
             })
+        elif self.path.startswith("/api/browse"):
+            # The dialog is a native Windows window opened by THIS process -
+            # a browser page cannot ask the OS for a folder path (file
+            # inputs hand over file contents, never a path), so the picker
+            # has to live on the server side of the local loopback.
+            query = urllib.parse.urlparse(self.path).query
+            start = urllib.parse.parse_qs(query).get("start", [""])[0]
+            self._send_json(_pick_folder_dialog(start))
         elif self.path == "/api/progress":
             with STATE_LOCK:
                 self._send_json(dict(STATE))
