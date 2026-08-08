@@ -155,6 +155,15 @@ To remove Wimmich later, run `uninstall.bat` — it deletes the Python environme
 
 Once installed, launch the server with `start.bat` (`http://localhost:3000`). The first user to register automatically becomes an admin. Running `start.bat` again just starts the server directly if the venv already exists — it won't repeat the install step.
 
+## Running the tests
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
+
+37 tests covering authentication and session revocation, cross-user access (IDOR), guest and admin permissions, public share links (scope, password, expiry, revocation), SQLite's bound-parameter ceiling, and media Range/caching behaviour. They run against the real app in-process with an isolated temporary database — nothing touches your library.
+
 ## API Access
 
 Everything the web UI does goes through a plain REST API underneath — useful for scripts, automations, or your own client.
