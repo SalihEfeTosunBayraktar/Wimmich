@@ -39,6 +39,13 @@ def test_chunked_respects_an_explicit_size():
     assert [len(c) for c in chunks] == [4, 4, 2]
 
 
+@pytest.mark.skipif(
+    not hasattr(__import__("sqlite3").Connection, "setlimit"),
+    reason="sqlite3.Connection.setlimit() needs Python 3.11+; without it the "
+           "999-variable ceiling cannot be forced, and a test that silently "
+           "ran against this machine's own (possibly 32766) limit would prove "
+           "nothing. The invariants above still run everywhere.",
+)
 async def test_a_large_in_clause_survives_the_999_variable_ceiling(app):
     """The real thing, run against a connection forced down to the old
     999-variable limit so this machine's newer SQLite can't hide the bug.
