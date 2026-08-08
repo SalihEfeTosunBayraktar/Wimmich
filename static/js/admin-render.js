@@ -18,7 +18,11 @@ registerTranslations({
         'admin_render.custom_domain_label': 'Your Custom Domain Name (used together with the Token)',
         'admin_render.custom_domain_placeholder': 'e.g. myphotos.example.com',
         'admin_render.custom_domain_hint': "If you've connected this tunnel to a domain in the Zero Trust panel, enter that domain here so the panel can show you the real connection address.",
-        'admin_render.storage_limit_label': 'Server Total Storage Limit (MB - 0 for Unlimited)',
+        'admin_render.storage_limit_label': 'Server Total Storage Limit',
+        'admin_render.storage_limit_unlimited_hint': '0 means no limit.',
+        'admin_render.storage_limit_equals': '= {size} ({mb} MB).',
+        'admin_render.storage_limit_cap_hint': 'This drive can hold at most {max} for the library.',
+        'admin_render.storage_limit_too_big': "That's more than this drive can hold - the most you can set is {max}.",
         'admin_render.tunnel_autostart_label': 'Automatically start the tunnel when the server starts',
         'admin_render.save_settings_btn': 'Save Settings',
         'admin_render.reset_defaults_btn': 'Reset to Defaults',
@@ -212,7 +216,11 @@ registerTranslations({
         'admin_render.custom_domain_label': 'Özel Domain Adınız (Token ile birlikte kullanılır)',
         'admin_render.custom_domain_placeholder': 'Örn: fotograflarim.example.com',
         'admin_render.custom_domain_hint': 'Zero Trust panelinde bu tüneli bir domaine bağladıysanız, o domaini buraya yazın ki panel size gerçek bağlantı adresini gösterebilsin.',
-        'admin_render.storage_limit_label': 'Sunucu Toplam Depolama Sınırı (MB - Sınırsız için 0)',
+        'admin_render.storage_limit_label': 'Sunucu Toplam Depolama Sınırı',
+        'admin_render.storage_limit_unlimited_hint': '0 girerseniz sınır olmaz.',
+        'admin_render.storage_limit_equals': '= {size} ({mb} MB).',
+        'admin_render.storage_limit_cap_hint': 'Bu disk kitaplık için en fazla {max} tutabilir.',
+        'admin_render.storage_limit_too_big': 'Bu, diskin tutabileceğinden fazla - en çok {max} girebilirsiniz.',
         'admin_render.tunnel_autostart_label': 'Sunucu açılırken tüneli otomatik başlat',
         'admin_render.save_settings_btn': 'Ayarları Kaydet',
         'admin_render.reset_defaults_btn': 'Varsayılanlara Sıfırla',
@@ -406,7 +414,11 @@ registerTranslations({
         'admin_render.custom_domain_label': 'Votre nom de domaine personnalisé (utilisé avec le jeton)',
         'admin_render.custom_domain_placeholder': 'ex. mesphotos.example.com',
         'admin_render.custom_domain_hint': "Si vous avez relié ce tunnel à un domaine dans le panneau Zero Trust, indiquez ce domaine ici afin que le panneau puisse vous montrer la véritable adresse de connexion.",
-        'admin_render.storage_limit_label': 'Limite de stockage totale du serveur (Mo - 0 pour illimité)',
+        'admin_render.storage_limit_label': "Limite de stockage totale du serveur",
+        'admin_render.storage_limit_unlimited_hint': "0 signifie aucune limite.",
+        'admin_render.storage_limit_equals': "= {size} ({mb} Mo).",
+        'admin_render.storage_limit_cap_hint': "Ce disque peut contenir au plus {max} pour la bibliothèque.",
+        'admin_render.storage_limit_too_big': "C'est plus que ce que ce disque peut contenir - le maximum est {max}.",
         'admin_render.tunnel_autostart_label': 'Démarrer automatiquement le tunnel au démarrage du serveur',
         'admin_render.save_settings_btn': 'Enregistrer les paramètres',
         'admin_render.reset_defaults_btn': 'Réinitialiser aux valeurs par défaut',
@@ -600,7 +612,11 @@ registerTranslations({
         'admin_render.custom_domain_label': 'Ihr benutzerdefinierter Domainname (wird zusammen mit dem Token verwendet)',
         'admin_render.custom_domain_placeholder': 'z.B. meinefotos.example.com',
         'admin_render.custom_domain_hint': 'Wenn Sie diesen Tunnel im Zero-Trust-Panel mit einer Domain verbunden haben, geben Sie diese Domain hier ein, damit das Panel Ihnen die tatsächliche Verbindungsadresse anzeigen kann.',
-        'admin_render.storage_limit_label': 'Gesamtes Speicherlimit des Servers (MB - 0 für unbegrenzt)',
+        'admin_render.storage_limit_label': 'Gesamtes Speicherlimit des Servers',
+        'admin_render.storage_limit_unlimited_hint': '0 bedeutet kein Limit.',
+        'admin_render.storage_limit_equals': '= {size} ({mb} MB).',
+        'admin_render.storage_limit_cap_hint': 'Dieses Laufwerk fasst höchstens {max} für die Bibliothek.',
+        'admin_render.storage_limit_too_big': 'Das ist mehr, als dieses Laufwerk fassen kann - höchstens {max}.',
         'admin_render.tunnel_autostart_label': 'Tunnel beim Serverstart automatisch starten',
         'admin_render.save_settings_btn': 'Einstellungen speichern',
         'admin_render.reset_defaults_btn': 'Auf Standard zurücksetzen',
@@ -917,8 +933,8 @@ async function renderAdmin() {
                                 <p class="text-muted admin-field-hint">${t('admin_render.custom_domain_hint')}</p>
                             </div>
                             <div>
-                                <label class="admin-field-label">${t('admin_render.storage_limit_label')}</label>
-                                <input type="number" id="storage-limit-input" value="${storageConfig.total_storage_limit_mb || 0}" min="0" style="width:100%">
+                                <label class="admin-field-label" for="storage-limit-input">${t('admin_render.storage_limit_label')}</label>
+                                ${renderStorageLimitField(storageConfig.total_storage_limit_mb || 0, _storageCapMb(stats))}
                             </div>
                             <div><button class="btn btn-primary" onclick="saveStorageConfig()">${t('admin_render.save_settings_btn')}</button></div>
                             <p class="text-muted admin-field-hint admin-field-hint--bordered">
@@ -1059,6 +1075,11 @@ async function renderAdmin() {
             </div>
         `;
 
+        // The hint carries the drive's ceiling, which is worth seeing before
+        // typing rather than only after - the handlers alone would leave it
+        // blank until the field was touched.
+        _refreshStorageLimitHint();
+
         pollAdminJobs();
         if (!adminPollInterval) {
             adminPollInterval = setInterval(pollAdminJobs, ADMIN_POLL_INTERVAL_MS);
@@ -1114,6 +1135,122 @@ function _setPingTone(badge, tone) {
 // open tabs, scroll position, etc. every 15s) so they stay live without
 // needing an F5. Self-clears exactly like pollAdminJobs() does if the
 // user has since navigated away from the admin page.
+// ---------------------------------------------------------------------------
+// Storage limit: a number plus a unit, instead of a raw megabyte count.
+//
+// The field used to be labelled "(MB)" and nothing else, so setting a 1 TB
+// limit meant typing 1048576 - and the value already stored on this server
+// was 1000024, which is not a round anything. Nobody should be doing base-2
+// arithmetic to fill in a settings field.
+// ---------------------------------------------------------------------------
+
+const STORAGE_UNITS = [
+    { unit: 'TB', mb: 1024 * 1024 },
+    { unit: 'GB', mb: 1024 },
+    { unit: 'MB', mb: 1 },
+];
+
+/** Largest unit that represents `mb` EXACTLY. Deliberately exact rather than
+ *  "nearest nice-looking unit": showing 1000024 MB as "976.59 GB" and then
+ *  writing back 976.59 x 1024 would silently change a value the admin never
+ *  touched. An awkward number stays in MB until they choose otherwise. */
+function _splitStorageMb(mb) {
+    for (const { unit, mb: size } of STORAGE_UNITS) {
+        if (mb >= size && mb % size === 0) return { value: mb / size, unit };
+    }
+    return { value: mb, unit: 'MB' };
+}
+
+function _formatStorageMb(mb) {
+    const { value, unit } = _splitStorageMb(mb);
+    return `${value.toLocaleString()} ${unit}`;
+}
+
+/** For a CEILING, where the exact-multiple rule above is the wrong tool: a
+ *  drive's spare room is never a round number, so it would always print as
+ *  a seven-digit megabyte count. Rounded DOWN on purpose - a maximum must
+ *  never advertise more room than actually exists. */
+function _formatStorageCap(mb) {
+    for (const { unit, mb: size } of STORAGE_UNITS) {
+        if (mb >= size) {
+            const value = Math.floor((mb / size) * 10) / 10;
+            return `${value.toLocaleString()} ${unit}`;
+        }
+    }
+    return `${mb} MB`;
+}
+
+/** The largest limit this drive could actually honour: what the library
+ *  already occupies plus what is still free. Free space alone would be
+ *  wrong - it would refuse a limit that merely covers the photos already
+ *  stored. */
+function _storageCapMb(stats) {
+    const free = stats?.storage_warning?.disk_free_gb;
+    if (free == null) return 0;   // unknown disk - fall back to no client cap
+    return Math.floor(free * 1024 + (stats.total_size || 0) / (1024 * 1024));
+}
+
+function renderStorageLimitField(currentMb, capMb) {
+    const { value, unit } = _splitStorageMb(currentMb);
+    const options = STORAGE_UNITS
+        .map(u => `<option value="${u.mb}" ${u.unit === unit ? 'selected' : ''}>${u.unit}</option>`)
+        .join('');
+    return `
+        <div class="storage-limit-row">
+            <input type="number" id="storage-limit-input" value="${value}" min="0" step="any"
+                   data-cap-mb="${capMb}" data-exact-mb="${currentMb}"
+                   oninput="_onStorageLimitInput()">
+            <select id="storage-limit-unit" onchange="_onStorageUnitChange()">${options}</select>
+        </div>
+        <p class="text-muted admin-field-hint" id="storage-limit-hint"></p>`;
+}
+
+/** The unit RE-LABELS the number rather than converting it: picking TB after
+ *  typing 1 means 1 TB.
+ *
+ *  Converting instead was the first attempt and it broke the main job this
+ *  field exists for. The field opens showing whatever is stored - often in
+ *  MB - so someone setting a 1 TB cap types 1 and picks TB, and conversion
+ *  turned that into 0.000001 TB. Reading the size back in another unit is
+ *  the rarer need, so the hint carries it instead of the input. */
+function _onStorageUnitChange() {
+    _onStorageLimitInput();
+}
+
+/** Typing makes the number on screen authoritative again. */
+function _onStorageLimitInput() {
+    const input = $('storage-limit-input');
+    const unit = Number($('storage-limit-unit')?.value || 1);
+    input.dataset.exactMb = String(Math.round((parseFloat(input.value) || 0) * unit));
+    _refreshStorageLimitHint();
+}
+
+function _refreshStorageLimitHint() {
+    const hint = $('storage-limit-hint');
+    if (!hint) return;
+    const capMb = Number($('storage-limit-input').dataset.capMb) || 0;
+    const mb = storageLimitMb();
+
+    const parts = [];
+    if (!mb) {
+        parts.push(t('admin_render.storage_limit_unlimited_hint'));
+    } else {
+        // The size in the other units, since the input itself no longer
+        // converts - this is where "how big is that really" gets answered.
+        parts.push(t('admin_render.storage_limit_equals', { size: _formatStorageCap(mb), mb: mb.toLocaleString() }));
+    }
+    if (capMb > 0) parts.push(t('admin_render.storage_limit_cap_hint', { max: _formatStorageCap(capMb) }));
+    hint.textContent = parts.join(' ');
+    hint.style.color = capMb > 0 && mb > capMb ? 'var(--danger)' : '';
+}
+
+/** The field's value in megabytes, which is the only unit the API knows. */
+function storageLimitMb() {
+    const input = $('storage-limit-input');
+    if (!input) return 0;
+    return Number(input.dataset.exactMb || 0);
+}
+
 // ---------------------------------------------------------------------------
 // Dashboard header: clickable figures with a drill-down that opens BELOW them.
 //

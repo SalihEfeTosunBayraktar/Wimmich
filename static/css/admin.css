@@ -489,3 +489,19 @@
    drill-down already provides the card, so drop the second layer. */
 .admin-dash-detail .admin-tab-panel { margin-top: var(--space-sm); }
 .admin-dash-detail .admin-tab-panel > .admin-section { padding: 0; border: none; background: none; }
+
+/* Storage limit: a number and its unit read as one control, so they sit in
+   one row with the number taking the slack. */
+.storage-limit-row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.storage-limit-row input {
+    flex: 1;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.storage-limit-row select { width: auto; flex-shrink: 0; }

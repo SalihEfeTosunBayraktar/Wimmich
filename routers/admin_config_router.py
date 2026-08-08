@@ -12,6 +12,78 @@ from services.audit_log_service import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
+_MB = 1024 * 1024
+
+
+def _format_mb(mb: int) -> str:
+    """Largest EXACT unit - for values the admin typed, where re-rounding
+    would show them a different number than the one that is stored."""
+    for unit, size in (("TB", 1024 * 1024), ("GB", 1024), ("MB", 1)):
+        if mb >= size and mb % size == 0:
+            return f"{mb // size} {unit}"
+    return f"{mb} MB"
+
+
+def _format_cap_mb(mb: int) -> str:
+    """Largest unit, rounded DOWN - for a ceiling. A drive's spare room is
+    never a round number, so the exact-multiple rule above would always
+    print it as a seven-digit megabyte count. Mirrors _formatStorageCap in
+    admin-render.js so this error and the hint under the field render the
+    same ceiling the same way; two spellings of one number reads like a bug.
+    Rounded down because a maximum must never promise more than exists."""
+    for unit, size in (("TB", 1024 * 1024), ("GB", 1024), ("MB", 1)):
+        if mb >= size:
+            return f"{mb / size:.1f} {unit}".replace(".0 ", " ")
+    return f"{mb} MB"
+
+
+async def _reject_limit_bigger_than_the_disk(db: AsyncSession, req, target_path: str) -> None:
+    """A storage limit the drive cannot honour is not a limit, it's a number
+    that does nothing - the disk fills first and the warning badges never
+    fire. Checked server-side because the panel's own check can be bypassed
+    by anything talking to the API directly.
+
+    The ceiling is free space PLUS what the library already occupies: free
+    space alone would refuse a limit that merely covers the photos already
+    stored, which is a perfectly reasonable thing to set.
+
+    Checked against the requested path, not the current one - if both are
+    changing at once, the new drive is the one that has to hold it.
+    """
+    import shutil
+    from pathlib import Path
+
+    from sqlalchemy import func, select
+
+    from models import Asset
+
+    limit_mb = req.total_storage_limit_mb or 0
+    if limit_mb <= 0:
+        return  # 0 means unlimited, nothing to compare against
+
+    # Walk up to the nearest folder that exists - a not-yet-created target
+    # still lives on a real drive, and that drive is what we can measure.
+    probe = Path(target_path)
+    while not probe.exists() and probe.parent != probe:
+        probe = probe.parent
+
+    try:
+        free_bytes = shutil.disk_usage(probe).free
+    except OSError:
+        return  # unreachable/disconnected drive - not our error to raise here
+
+    used_bytes = (await db.execute(select(func.sum(Asset.file_size)))).scalar() or 0
+    max_mb = (free_bytes + used_bytes) // _MB
+
+    if limit_mb > max_mb:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Bu sınır diskin tutabileceğinden fazla - "
+                f"en çok {_format_cap_mb(max_mb)} ayarlayabilirsiniz."
+            ),
+        )
+
 
 class UpdateConfigParameters(BaseModel):
     data_dir: str
@@ -47,6 +119,8 @@ async def update_config(
     path_str = req.data_dir.strip()
     if not path_str:
         raise HTTPException(status_code=400, detail="Depolama yolu boş olamaz")
+
+    await _reject_limit_bigger_than_the_disk(db, req, path_str)
 
     try:
         config.update_config(

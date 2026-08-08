@@ -288,10 +288,23 @@ async function saveStorageConfig() {
     const path = $('storage-path-input').value.trim();
     const token = $('storage-token-input').value.trim();
     const domain = $('storage-domain-input').value.trim();
-    const totalLimit = parseInt($('storage-limit-input').value) || 0;
+    const totalLimit = storageLimitMb();
     const autoStart = $('storage-autostart-input').checked;
 
     if (!path) { toast(t('admin_users.storage_path_required'), 'warning'); return; }
+
+    // Immediate feedback for a limit the drive can't honour. The server
+    // checks this too - it knows the disk and a client check is only a
+    // courtesy - but bouncing off a round trip to be told "too big" is a
+    // worse way to find out.
+    const capMb = Number($('storage-limit-input').dataset.capMb) || 0;
+    if (capMb > 0 && totalLimit > capMb) {
+        // _formatStorageCap, not _formatStorageMb: the hint under the field
+        // shows this same ceiling, and two different renderings of one
+        // number ("270.8 GB" here, "277401 MB" there) reads like a bug.
+        toast(t('admin_render.storage_limit_too_big', { max: _formatStorageCap(capMb) }), 'warning');
+        return;
+    }
 
     try {
         const result = await API.updateStorageConfig(path, token, totalLimit, autoStart, domain);
