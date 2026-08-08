@@ -155,6 +155,10 @@ To remove Wimmich later, run `uninstall.bat` — it deletes the Python environme
 
 Once installed, launch the server with `start.bat` (`http://localhost:3000`). The first user to register automatically becomes an admin. Running `start.bat` again just starts the server directly if the venv already exists — it won't repeat the install step.
 
+## Configuration
+
+Everything worth changing day to day is in the admin panel. For the rest, `config.py` reads 43 environment variables — see **[`.env.example`](.env.example)** for the full annotated list. Copy it to `.env` and uncomment only what you need; an empty `.env` behaves exactly like no `.env` at all.
+
 ## Running the tests
 
 ```

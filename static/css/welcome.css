@@ -1,0 +1,174 @@
+/* ─── First-run welcome ─────────────────────────────────────
+   Replaces the empty gallery on a fresh install. Reads as a short document
+   rather than a dashboard: someone here has nothing to operate yet, they
+   just need to know what to do next.
+   ─────────────────────────────────────────────────────────── */
+.welcome {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--space-lg) 0 var(--space-xl, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl, 40px);
+}
+
+.welcome-hero {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.welcome-logo {
+    width: 88px;
+    height: auto;
+    border-radius: var(--radius-lg);
+}
+
+.welcome-hero h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    text-wrap: balance;
+}
+
+.welcome-hero p {
+    margin: 0;
+    max-width: 46ch;
+    color: var(--text-secondary);
+}
+
+/* --- the numbered steps -------------------------------------------------- */
+.welcome-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    counter-reset: none; /* the numbers are real content, not generated */
+}
+
+.welcome-step {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+    padding: var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+}
+
+.welcome-step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.welcome-step-text { min-width: 0; }
+
+.welcome-step-text h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 6px;
+    font-size: 1rem;
+}
+
+.welcome-step-text p {
+    margin: 0 0 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.welcome-step-text p:last-child { margin-bottom: 0; }
+
+/* --- capability list ----------------------------------------------------- */
+.welcome-caps h3,
+.welcome-tips h3 {
+    margin: 0 0 var(--space-sm);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.welcome-caps ul,
+.welcome-tips ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.welcome-cap {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 4px var(--space-sm);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.welcome-cap:last-child { border-bottom: none; }
+
+.welcome-cap-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    align-self: center;
+}
+
+.welcome-cap.is-on .welcome-cap-dot { background: var(--success); }
+.welcome-cap.is-off .welcome-cap-dot { background: var(--warning); }
+
+.welcome-cap-state {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.welcome-cap.is-on .welcome-cap-state { color: var(--success); }
+
+/* The hint sits under the row it belongs to, spanning the label and state
+   columns - a missing capability is only useful paired with how to fix it. */
+.welcome-cap-hint {
+    grid-column: 2 / -1;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* --- tips ---------------------------------------------------------------- */
+.welcome-tips li {
+    padding: 7px 0;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+.welcome-tips kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--border-color);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+}
+
+@media (max-width: 600px) {
+    .welcome { gap: var(--space-lg); }
+    .welcome-step { flex-direction: column; gap: var(--space-sm); }
+}

@@ -57,9 +57,47 @@ from utils.log import info, success, warn, error
 _DIVIDER = "\033[2m" + "=" * 60 + "\033[0m"
 
 
+# Disconnects that are the client's business, not ours.
+_DISCONNECT_ERRORS = (ConnectionResetError, ConnectionAbortedError, BrokenPipeError)
+
+
+def _silence_disconnect_noise() -> None:
+    """Stop a browser walking away mid-request from printing a traceback.
+
+    On Windows, asyncio's proactor transport calls socket.shutdown() while
+    tearing a connection down. If the peer has already gone - a cancelled
+    thumbnail request, a closed tab, a reload - that raises
+    ConnectionResetError inside a callback nobody is awaiting, and the
+    default handler dumps eight lines of traceback for it. The request
+    itself already completed; nothing is wrong. A server that logs a
+    traceback every time someone closes a tab teaches you to ignore its
+    logs, which is the real cost.
+
+    Installed on the RUNNING loop rather than by patching
+    asyncio.new_event_loop: uvicorn builds its own loop, and asyncio.run
+    resolves that name from inside its own module, so a patch here would
+    silently never apply.
+
+    Narrow on purpose - only these three types, and only when the context
+    carries no request/protocol detail to lose. Everything else goes to the
+    default handler untouched.
+    """
+    def handler(loop, context):
+        if isinstance(context.get("exception"), _DISCONNECT_ERRORS):
+            return
+        loop.default_exception_handler(context)
+
+    try:
+        asyncio.get_running_loop().set_exception_handler(handler)
+    except RuntimeError:
+        pass  # no running loop (e.g. imported by a test) - nothing to quiet
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
+    _silence_disconnect_noise()
+
     # Startup
     print(_DIVIDER)
     print("\033[1m  Wimmich - Photo/Video Management Server\033[0m")

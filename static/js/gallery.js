@@ -611,7 +611,14 @@ async function loadGalleryPage() {
 
         if (g.page === 1) container.innerHTML = '';
         if (!data.groups.length && g.page === 1) {
-            container.innerHTML = renderEmptyState(t('gallery.no_photos_for_filter'), t('gallery.try_different_filters'));
+            // "You have no photos yet" and "this filter matched nothing" are
+            // different situations: the first is an invitation, the second a
+            // dead end to back out of. Only the genuinely empty library gets
+            // the welcome screen.
+            const unfiltered = !g.searchQuery && !g.selectedLabel && g.filterBy === 'all';
+            container.innerHTML = unfiltered
+                ? await renderWelcomeScreen()
+                : renderEmptyState(t('gallery.no_photos_for_filter'), t('gallery.try_different_filters'));
             g.loading = false;
             return;
         }

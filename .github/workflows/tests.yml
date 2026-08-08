@@ -1,0 +1,46 @@
+name: Tests
+
+# Runs the suite on every push and pull request. Before this existed the
+# tests only ran when someone remembered to run them locally, which makes a
+# test suite a document rather than a safety net.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    # Wimmich is a Windows server (start.bat, PowerShell process handling,
+    # Program Files paths), so testing it on Linux would be testing something
+    # the project does not ship.
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor the installers enforce, and the newest release the
+        # dependency set is known to work on - the two ends most likely to
+        # break. Anything in between is covered by implication.
+        python-version: ['3.10', '3.13']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        # The ML stack (torch, open_clip, facenet) is deliberately NOT
+        # installed: it is several gigabytes, needs a GPU to be meaningful,
+        # and every feature that uses it already degrades gracefully when
+        # absent. The tests cover the paths that must work regardless.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -q
